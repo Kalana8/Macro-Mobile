@@ -1,0 +1,115 @@
+"use client";
+
+import { useActionState, useEffect, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { Modal } from "@/components/Modal";
+import { LocationField } from "@/components/LocationField";
+import { FieldLabel, PrimaryButton, Select, TextInput } from "@/components/ui";
+import { createCompanyAction, updateCompanyAction, type CompanyFormState } from "./actions";
+import type { Company } from "@macro/shared/types";
+
+const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
+
+function SubmitButton({ label }: { label: string }) {
+  const { pending } = useFormStatus();
+  return <PrimaryButton type="submit" disabled={pending}>{pending ? "Saving…" : label}</PrimaryButton>;
+}
+
+export function CompanyModal({ company, onClose }: { company?: Company; onClose: () => void }) {
+  const isEdit = Boolean(company);
+  const action = isEdit ? updateCompanyAction : createCompanyAction;
+  const [state, formAction] = useActionState<CompanyFormState, FormData>(action, {});
+  // 4 rows x 7 columns = 28 independently-toggleable cells (matches the
+  // original mockup's grid). Each cell's weekday is cellIndex % 7; the
+  // saved visit_days value is the deduped set of weekdays across whichever
+  // cells are selected — the 4 rows are just a visual grid, not 4 separate weeks.
+  const [selectedCells, setSelectedCells] = useState<number[]>(company?.visit_days ?? []);
+
+  useEffect(() => {
+    if (state.success) onClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.success]);
+
+  // Each of the 28 cells toggles independently — selecting one cell must
+  // never select the other cells that happen to share the same weekday.
+  function toggleCell(cellIndex: number) {
+    setSelectedCells((prev) =>
+      prev.includes(cellIndex) ? prev.filter((c) => c !== cellIndex) : [...prev, cellIndex]
+    );
+  }
+
+  return (
+    <Modal title={isEdit ? "Edit Company" : "Add Company"} onClose={onClose}>
+      <form action={formAction} className="flex flex-col gap-3.5">
+        {isEdit && <input type="hidden" name="id" value={company!.id} />}
+
+        <div>
+          <FieldLabel>Company Name</FieldLabel>
+          <TextInput name="name" required defaultValue={company?.name} placeholder="e.g. Acme Corp" />
+        </div>
+
+        {!isEdit && (
+          <div>
+            <FieldLabel>Site Name</FieldLabel>
+            <TextInput name="siteName" required placeholder="e.g. Main Office" />
+          </div>
+        )}
+
+        {isEdit ? (
+          <div>
+            <FieldLabel>Location</FieldLabel>
+            <TextInput name="location" defaultValue={company?.location ?? ""} placeholder="e.g. 123 Main St, Colombo (optional)" />
+          </div>
+        ) : (
+          <LocationField addressFieldName="location" latFieldName="siteLat" lngFieldName="siteLng" />
+        )}
+
+        <div>
+          <FieldLabel>Status</FieldLabel>
+          <Select name="status" defaultValue={company?.status ?? "active"}>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </Select>
+        </div>
+
+        <div>
+          <FieldLabel>Visit Days &amp; Time</FieldLabel>
+          <div className="rounded-xl border border-border p-3">
+            <div className="grid grid-cols-7 gap-1.5">
+              {Array.from({ length: 28 }, (_, cellIndex) => {
+                const active = selectedCells.includes(cellIndex);
+                return (
+                  <button
+                    type="button"
+                    key={cellIndex}
+                    onClick={() => toggleCell(cellIndex)}
+                    className={`rounded-lg py-2.5 text-xs font-bold ${
+                      active ? "bg-primary text-white" : "bg-bg text-text-muted"
+                    }`}
+                  >
+                    {DAY_LETTERS[cellIndex % 7]}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-3">
+              <TextInput type="time" name="visitTime" defaultValue={company?.visit_time ?? ""} />
+            </div>
+          </div>
+          {Array.from(new Set(selectedCells.map((c) => c % 7))).map((weekday) => (
+            <input key={weekday} type="hidden" name="visitDays" value={weekday} />
+          ))}
+        </div>
+
+        {state.error && <div className="text-[12.5px] text-error-text">{state.error}</div>}
+
+        <div className="mt-2 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="rounded-[12px] border border-border px-4 py-2.5 text-sm font-semibold text-text-dark">
+            Cancel
+          </button>
+          <SubmitButton label={isEdit ? "Save Changes" : "Register"} />
+        </div>
+      </form>
+    </Modal>
+  );
+}

@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html,body{margin:0;padding:0;box-sizing:border-box;}
+    *{box-sizing:border-box;}
+    body{background:#EEF1F6;}
+    a{color:#0E62D1;text-decoration:none;}
+    a:hover{color:#034581;}
+    input::placeholder, textarea::placeholder{color:#9AA4B2;}
+    ::-webkit-scrollbar{width:0;height:0;}
+  </style>
+</helmet>
+<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;padding:48px 24px;font-family:Inter,system-ui,sans-serif;">
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+    <div style="height:100%;display:flex;flex-direction:column;background:{{ bg }};position:relative;">
+      <div style="flex:1;overflow:auto;padding-top:56px;">
+
+        <!-- LOGIN -->
+        <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+          <div style="min-height:830px;display:flex;flex-direction:column;background:#fff;padding:56px 28px 32px;color:#16202E;">
+            <div style="display:flex;justify-content:center;margin-bottom:36px;">
+              <img src="uploads/footer.webp" alt="MACRO Property Services" style="height:84px;width:auto;display:block;" />
+            </div>
+            <div style="font-size:26px;font-weight:700;line-height:1.25;margin-bottom:6px;color:#16202E;text-align:center;">Welcome back</div>
+            <div style="font-size:15px;color:#6E7887;margin-bottom:32px;text-align:center;">Sign in to continue to your workspace</div>
+
+            <form onSubmit="{{ loginSubmit }}" style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="font-size:12px;font-weight:600;color:#6E7887;margin-bottom:6px;">EMAIL</div>
+                <input type="email" value="{{ email }}" onChange="{{ onEmailChange }}" placeholder="you@company.com" style="width:100%;padding:14px 16px;border-radius:14px;border:1px solid #E4E8EF;background:#F5F7FA;font-size:15px;font-family:Inter,sans-serif;color:#16202E;outline:none;" />
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:#6E7887;margin-bottom:6px;">PASSWORD</div>
+                <input type="password" value="{{ password }}" onChange="{{ onPasswordChange }}" placeholder="••••••••" style="width:100%;padding:14px 16px;border-radius:14px;border:1px solid #E4E8EF;background:#F5F7FA;font-size:15px;font-family:Inter,sans-serif;color:#16202E;outline:none;" />
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin:2px 2px 6px;">
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#16202E;cursor:pointer;">
+                  <input type="checkbox" checked="{{ remember }}" onChange="{{ toggleRemember }}" style="width:16px;height:16px;accent-color:{{ orange }};" />
+                  Remember me
+                </label>
+                <div style="font-size:13px;color:{{ primary }};font-weight:600;cursor:pointer;">Forgot Password?</div>
+              </div>
+              <button type="submit" style="width:100%;padding:15px 0;border-radius:14px;border:none;background:{{ orange }};color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;">Log In</button>
+              <div style="font-size:11.5px;color:#6E7887;text-align:center;margin-top:2px;">Tip: use an email containing "admin" to sign in to the Admin console</div>
+            </form>
+
+            <div style="flex:1;"></div>
+            <div style="text-align:center;font-size:12px;color:#9AA4B2;">v2.4 · Field Audit & Attendance</div>
+          </div>
+        </sc-if>
+
+        <!-- ADMIN DASHBOARD -->
+        <sc-if value="{{ isAdminDash }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};position:sticky;top:0;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <img src="uploads/footer.webp" alt="MACRO" style="height:30px;width:auto;display:block;" />
+                <div style="width:1px;height:22px;background:{{ border }};"></div>
+                <div style="font-size:12.5px;font-weight:600;color:{{ textMuted }};">Admin Console</div>
+              </div>
+              <div onClick="{{ logout }}" style="width:36px;height:36px;border-radius:10px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textMuted }};">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"></path><path d="M10 12h10"></path><path d="M17 8l4 4-4 4"></path></svg>
+              </div>
+            </div>
+
+            <div style="padding:18px 20px 8px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;">
+                  <div style="font-size:22px;font-weight:800;color:{{ textDark }};">3</div>
+                  <div style="font-size:12.5px;color:{{ textMuted }};margin-top:2px;">Companies</div>
+                </div>
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;">
+                  <div style="font-size:22px;font-weight:800;color:{{ textDark }};">44</div>
+                  <div style="font-size:12.5px;color:{{ textMuted }};margin-top:2px;">Employees</div>
+                </div>
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;">
+                  <div style="font-size:22px;font-weight:800;color:{{ textDark }};">31</div>
+                  <div style="font-size:12.5px;color:{{ textMuted }};margin-top:2px;">Active Employees</div>
+                </div>
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;">
+                  <div style="font-size:22px;font-weight:800;color:{{ primary }};">27</div>
+                  <div style="font-size:12.5px;color:{{ textMuted }};margin-top:2px;">Today's Attendance</div>
+                </div>
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;">
+                  <div style="font-size:22px;font-weight:800;color:{{ orange }};">6</div>
+                  <div style="font-size:12.5px;color:{{ textMuted }};margin-top:2px;">Pending Audits</div>
+                </div>
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;">
+                  <div style="font-size:22px;font-weight:800;color:#5C6900;">18</div>
+                  <div style="font-size:12.5px;color:{{ textMuted }};margin-top:2px;">Completed Audits</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="padding:14px 20px 8px;display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:15px;font-weight:700;color:{{ textDark }};">Companies</div>
+              <div onClick="{{ goAddCompany }}" style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:{{ orange }};color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                Add Company
+              </div>
+            </div>
+            <div style="padding:0 20px 24px;display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ companies }}" as="c" hint-placeholder-count="3">
+                <div onClick="{{ c.select }}" style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;">
+                  <div style="width:44px;height:44px;border-radius:12px;flex-shrink:0;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 6px,#EDF0F5 6px,#EDF0F5 12px);"></div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:14.5px;font-weight:700;color:{{ textDark }};">{{ c.name }}</div>
+                    <div style="font-size:12.5px;color:{{ textMuted }};margin-top:2px;">{{ c.employeesCount }} employees · {{ c.location }}</div>
+                  </div>
+                  <div style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;{{ c.statusBadgeStyle }}">{{ c.status }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ADMIN COMPANY DETAIL -->
+        <sc-if value="{{ isAdminCompany }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};">
+              <div onClick="{{ backToAdmin }}" style="cursor:pointer;color:{{ textDark }};">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M11 18l-6-6 6-6"></path></svg>
+              </div>
+              <div style="font-size:16px;font-weight:700;color:{{ textDark }};">{{ selectedCompany.name }}</div>
+            </div>
+            <div style="padding:16px 20px;font-size:12.5px;color:{{ textMuted }};">{{ selectedCompany.location }} · {{ selectedCompany.employeesCount }} employees</div>
+            <div style="padding:0 20px 24px;display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ selectedCompany.employees }}" as="e" hint-placeholder-count="3">
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+                  <div style="width:38px;height:38px;border-radius:50%;flex-shrink:0;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 5px,#EDF0F5 5px,#EDF0F5 10px);"></div>
+                  <div style="flex:1;">
+                    <div style="font-size:14px;font-weight:600;color:{{ textDark }};">{{ e.name }}</div>
+                    <div style="font-size:12px;color:{{ textMuted }};">{{ e.role }}</div>
+                  </div>
+                  <div style="font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:7px;{{ e.statusBadgeStyle }}">{{ e.status }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ADD COMPANY -->
+        <sc-if value="{{ isAddCompany }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};">
+              <div onClick="{{ backToAdminFromAdd }}" style="cursor:pointer;color:{{ textDark }};">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M11 18l-6-6 6-6"></path></svg>
+              </div>
+              <div style="font-size:16px;font-weight:700;color:{{ textDark }};">Register Company</div>
+            </div>
+            <form onSubmit="{{ submitNewCompany }}" style="padding:18px 20px 40px;display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">COMPANY NAME</div>
+                <input value="{{ newCompanyName }}" onChange="{{ onNewCompanyName }}" placeholder="e.g. Acme Corp" style="width:100%;padding:13px 15px;border-radius:13px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">LOCATION</div>
+                <input value="{{ newCompanyLocation }}" onChange="{{ onNewCompanyLocation }}" placeholder="City, State" style="width:100%;padding:13px 15px;border-radius:13px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">NUMBER OF EMPLOYEES</div>
+                <input type="number" min="0" value="{{ newCompanyEmployeesCount }}" onChange="{{ onNewCompanyEmployeesCount }}" placeholder="0" style="width:100%;padding:13px 15px;border-radius:13px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">STATUS</div>
+                <div style="display:flex;gap:8px;">
+                  <div onClick="{{ setNewCompanyStatusActive }}" style="flex:1;text-align:center;padding:10px 0;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;{{ newCompanyStatusActiveStyle }}">Active</div>
+                  <div onClick="{{ setNewCompanyStatusInactive }}" style="flex:1;text-align:center;padding:10px 0;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;{{ newCompanyStatusInactiveStyle }}">Inactive</div>
+                </div>
+              </div>
+              <button type="submit" style="width:100%;padding:15px 0;border-radius:14px;border:none;background:{{ orange }};color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:6px;">Register Company</button>
+            </form>
+          </div>
+        </sc-if>
+
+        <!-- EMPLOYEE HOME -->
+        <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;border-radius:10px;background:{{ primary }};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;">B</div>
+                <div>
+                  <div style="font-size:15px;font-weight:700;color:{{ textDark }};">Acme Corp</div>
+                  <div style="font-size:11.5px;color:{{ textMuted }};">Field Employee</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <div onClick="{{ goNotifications }}" style="width:36px;height:36px;border-radius:10px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textMuted }};">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </div>
+                <div onClick="{{ goProfile }}" style="width:36px;height:36px;border-radius:10px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textMuted }};">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"></path></svg>
+                </div>
+                <div onClick="{{ logout }}" style="width:36px;height:36px;border-radius:10px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textMuted }};">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"></path><path d="M10 12h10"></path><path d="M17 8l4 4-4 4"></path></svg>
+                </div>
+              </div>
+            </div>
+
+            <div style="padding:18px 20px 6px;">
+              <sc-if value="{{ showLocationBadge }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:8px;background:{{ bg }};border-radius:12px;padding:9px 14px;margin-bottom:10px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ primary }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <div style="font-size:12px;color:{{ textMuted }};font-weight:600;">{{ locationLabel }}</div>
+                </div>
+              </sc-if>
+              <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid {{ border }};border-radius:16px;padding:13px 16px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ textMuted }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+                <input value="{{ siteSearch }}" onChange="{{ onSiteSearchChange }}" placeholder="Search sites" style="border:none;outline:none;flex:1;font-size:14.5px;font-family:Inter,sans-serif;color:{{ textDark }};background:transparent;" />
+              </div>
+            </div>
+
+            <div style="padding:6px 20px 100px;display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ filteredSites }}" as="s" hint-placeholder-count="3">
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;overflow:hidden;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+                    <div style="width:24px;"></div>
+                    <div style="flex:1;text-align:center;font-size:14.5px;font-weight:700;color:{{ textDark }};">{{ s.name }}</div>
+                    <div onClick="{{ s.select }}" style="width:32px;height:32px;border-radius:9px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:{{ textDark }};">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+                    </div>
+                  </div>
+                  <div style="width:100%;height:110px;border-radius:14px;margin-bottom:12px;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 8px,#EDF0F5 8px,#EDF0F5 16px);display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:11px;color:{{ textMuted }};">company logo</div>
+                  <button onClick="{{ s.toggleClock }}" style="width:100%;padding:13px 0;border-radius:100px;border:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:700;cursor:pointer;{{ s.clockBtnStyle }}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"></path><path d="M10 12h10"></path><path d="M17 8l4 4-4 4"></path></svg>
+                    {{ s.clockLabel }}
+                  </button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- SITE DETAILS -->
+        <sc-if value="{{ isSiteDetails }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};">
+              <div onClick="{{ backToHome }}" style="cursor:pointer;color:{{ textDark }};">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M11 18l-6-6 6-6"></path></svg>
+              </div>
+              <div style="font-size:16px;font-weight:700;color:{{ textDark }};">{{ selectedSite.name }}</div>
+            </div>
+            <div style="padding:18px 20px;">
+              <div style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;margin-bottom:18px;">
+                <div style="font-size:12px;color:{{ textMuted }};margin-bottom:4px;">Company</div>
+                <div style="font-size:14px;font-weight:600;color:{{ textDark }};margin-bottom:12px;">Acme Corp</div>
+                <div style="font-size:12px;color:{{ textMuted }};margin-bottom:4px;">Location</div>
+                <div style="font-size:14px;font-weight:600;color:{{ textDark }};">{{ selectedSite.address }}</div>
+              </div>
+
+              <div style="font-size:14px;font-weight:700;color:{{ textDark }};margin-bottom:10px;">Today's Tasks</div>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ green }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 12.5l2.5 2.5L16 9"></path></svg>
+                  <div style="font-size:13.5px;color:{{ textDark }};">Perimeter check</div>
+                </div>
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
+                  <div style="width:18px;height:18px;border-radius:50%;border:2px solid {{ border }};flex-shrink:0;"></div>
+                  <div style="font-size:13.5px;color:{{ textDark }};">Equipment log</div>
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px;">
+                <div onClick="{{ goAuditList }}" style="background:{{ primary }};color:#fff;border-radius:14px;padding:12px 6px;text-align:center;cursor:pointer;font-size:12.5px;font-weight:700;">Audit</div>
+                <div onClick="{{ goPrpv }}" style="background:{{ darkBlue }};color:#fff;border-radius:14px;padding:12px 6px;text-align:center;cursor:pointer;font-size:12.5px;font-weight:700;">PRPV</div>
+                <div onClick="{{ goCommunication }}" style="background:{{ orange }};color:#fff;border-radius:14px;padding:12px 6px;text-align:center;cursor:pointer;font-size:12.5px;font-weight:700;">Message</div>
+              </div>
+
+              <div style="font-size:14px;font-weight:700;color:{{ textDark }};margin-bottom:10px;">Documents & Images</div>
+              <div style="display:flex;gap:8px;overflow-x:auto;">
+                <div style="width:76px;height:76px;flex-shrink:0;border-radius:14px;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 7px,#EDF0F5 7px,#EDF0F5 14px);display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:9px;color:{{ textMuted }};text-align:center;padding:4px;">photo</div>
+                <div style="width:76px;height:76px;flex-shrink:0;border-radius:14px;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 7px,#EDF0F5 7px,#EDF0F5 14px);display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:9px;color:{{ textMuted }};text-align:center;padding:4px;">doc.pdf</div>
+                <div style="width:76px;height:76px;flex-shrink:0;border-radius:14px;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 7px,#EDF0F5 7px,#EDF0F5 14px);display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:9px;color:{{ textMuted }};text-align:center;padding:4px;">photo</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ATTENDANCE -->
+        <sc-if value="{{ isAttendance }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};">
+              <div style="font-size:16px;font-weight:700;color:{{ textDark }};">Attendance</div>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{ textMuted }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"></path><path d="M10 21a2 2 0 0 0 4 0"></path></svg>
+            </div>
+            <div style="padding:18px 20px;">
+              <div style="background:linear-gradient(160deg,#034581,#0E62D1);border-radius:22px;padding:24px 20px;color:#fff;margin-bottom:18px;">
+                <div style="font-size:38px;font-weight:800;letter-spacing:0.5px;">{{ clockTimeStr }}</div>
+                <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:2px;">{{ clockDateStr }}</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;">
+                  <div>
+                    <div style="font-size:11.5px;color:rgba(255,255,255,0.65);">Working Hours</div>
+                    <div style="font-size:16px;font-weight:700;margin-top:2px;">{{ workingHoursStr }}</div>
+                  </div>
+                  <div style="font-size:11px;font-weight:700;padding:6px 12px;border-radius:9px;{{ clockStatusBadgeStyle }}">{{ clockStatusLabel }}</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px;">
+                <button onClick="{{ clockIn }}" disabled="{{ clockInDisabled }}" style="padding:14px 0;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;{{ clockInBtnStyle }}">Clock In</button>
+                <button onClick="{{ clockOut }}" disabled="{{ clockOutDisabled }}" style="padding:14px 0;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;{{ clockOutBtnStyle }}">Clock Out</button>
+                <button onClick="{{ breakStart }}" disabled="{{ breakStartDisabled }}" style="padding:14px 0;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;{{ breakStartBtnStyle }}">Break Start</button>
+                <button onClick="{{ breakEnd }}" disabled="{{ breakEndDisabled }}" style="padding:14px 0;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;{{ breakEndBtnStyle }}">Break End</button>
+              </div>
+
+              <div style="font-size:14px;font-weight:700;color:{{ textDark }};margin-bottom:10px;">Attendance History</div>
+              <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:90px;">
+                <sc-for list="{{ attendanceHistory }}" as="h" hint-placeholder-count="2">
+                  <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:13px 16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                      <div style="font-size:13.5px;font-weight:700;color:{{ textDark }};">{{ h.date }}</div>
+                      <div style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(183,212,0,0.18);color:#5C6900;">{{ h.status }}</div>
+                    </div>
+                    <div style="font-size:12px;color:{{ textMuted }};">{{ h.clockIn }} – {{ h.clockOut }} · {{ h.hours }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- AUDIT LIST -->
+        <sc-if value="{{ isAuditList }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};">
+              <div style="font-size:16px;font-weight:700;color:{{ textDark }};">Audits</div>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{ textMuted }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16"></path><path d="M7 12h10"></path><path d="M10 19h4"></path></svg>
+            </div>
+            <div style="padding:16px 20px 4px;">
+              <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid {{ border }};border-radius:16px;padding:12px 16px;margin-bottom:14px;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{ textMuted }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+                <input placeholder="Search audits" style="border:none;outline:none;flex:1;font-size:14px;font-family:Inter,sans-serif;color:{{ textDark }};background:transparent;" />
+              </div>
+              <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;">
+                <div onClick="{{ setAuditTabActive }}" style="padding:8px 14px;border-radius:10px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer;{{ auditTabActiveStyle }}">Submit</div>
+                <div onClick="{{ setAuditTabInProgress }}" style="padding:8px 14px;border-radius:10px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer;{{ auditTabInProgressStyle }}">Verify</div>
+                <div onClick="{{ setAuditTabCompleted }}" style="padding:8px 14px;border-radius:10px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer;{{ auditTabCompletedStyle }}">Complete</div>
+              </div>
+            </div>
+            <div style="padding:0 20px 100px;display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ filteredAudits }}" as="a" hint-placeholder-count="2">
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;display:flex;align-items:center;gap:12px;">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:14px;font-weight:700;color:{{ textDark }};margin-bottom:4px;">{{ a.displayTitle }}</div>
+                    <div style="font-size:12px;color:{{ textMuted }};margin-bottom:6px;">{{ a.site }}</div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                      <div style="font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;{{ a.statusBadgeStyle }}">{{ a.statusLabel }}</div>
+                      <div style="font-size:11px;color:{{ textMuted }};">{{ a.images }} images</div>
+                    </div>
+                    <sc-if value="{{ a.hasMarks }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="font-size:11.5px;font-weight:600;color:{{ textMuted }};">Marks</div>
+                        <div style="font-size:12.5px;font-weight:700;color:{{ textDark }};background:{{ bg }};border-radius:8px;padding:4px 10px;">{{ a.marks }} / 100</div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ a.awaitingResults }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:11.5px;color:{{ textMuted }};font-style:italic;">Awaiting results from admin</div>
+                    </sc-if>
+                  </div>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{ textMuted }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+                </div>
+              </sc-for>
+            </div>
+            <div onClick="{{ goCreateAudit }}" style="position:sticky;bottom:96px;left:100%;width:52px;height:52px;margin-right:20px;border-radius:16px;background:{{ orange }};display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 20px rgba(255,122,26,0.35);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- CREATE AUDIT -->
+        <sc-if value="{{ isCreateAudit }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};">
+              <div onClick="{{ backToAuditList }}" style="cursor:pointer;color:{{ textDark }};">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M11 18l-6-6 6-6"></path></svg>
+              </div>
+              <div style="font-size:16px;font-weight:700;color:{{ textDark }};">New Audit</div>
+            </div>
+            <form onSubmit="{{ submitAudit }}" style="padding:18px 20px 100px;display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">AUDIT TITLE</div>
+                <input value="{{ newAuditTitle }}" onChange="{{ onNewAuditTitle }}" placeholder="e.g. Fire Safety Check" style="width:100%;padding:13px 15px;border-radius:13px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">DESCRIPTION</div>
+                <textarea value="{{ newAuditDescription }}" onChange="{{ onNewAuditDescription }}" placeholder="Describe the audit scope" rows="3" style="width:100%;padding:13px 15px;border-radius:13px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;resize:none;"></textarea>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <div style="flex:1;">
+                  <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">DATE</div>
+                  <input type="date" value="{{ newAuditDate }}" onChange="{{ onNewAuditDate }}" style="width:100%;padding:12px 12px;border-radius:13px;border:1px solid {{ border }};font-size:13.5px;font-family:Inter,sans-serif;outline:none;" />
+                </div>
+                <div style="flex:1;">
+                  <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">LOCATION</div>
+                  <input value="{{ newAuditLocation }}" onChange="{{ onNewAuditLocation }}" placeholder="Site" style="width:100%;padding:13px 15px;border-radius:13px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+                </div>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">PRIORITY</div>
+                <div style="display:flex;gap:8px;">
+                  <div onClick="{{ setPriorityLow }}" style="flex:1;text-align:center;padding:10px 0;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;{{ priorityLowStyle }}">Low</div>
+                  <div onClick="{{ setPriorityMedium }}" style="flex:1;text-align:center;padding:10px 0;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;{{ priorityMediumStyle }}">Medium</div>
+                  <div onClick="{{ setPriorityHigh }}" style="flex:1;text-align:center;padding:10px 0;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;{{ priorityHighStyle }}">High</div>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">UPLOAD IMAGES</div>
+                <div style="display:flex;gap:10px;margin-bottom:10px;">
+                  <div onClick="{{ addImage }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 0;border-radius:13px;border:1.5px dashed {{ border }};cursor:pointer;color:{{ textMuted }};font-size:13px;font-weight:600;">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7l1.5-3h5L16 7"></path><circle cx="12" cy="13.5" r="3.5"></circle></svg>
+                    Camera
+                  </div>
+                  <div onClick="{{ addImage }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 0;border-radius:13px;border:1.5px dashed {{ border }};cursor:pointer;color:{{ textMuted }};font-size:13px;font-weight:600;">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="8.5" cy="9.5" r="1.5"></circle><path d="M21 16l-5-5-4 4-2-2-5 5"></path></svg>
+                    Gallery
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <sc-for list="{{ newAuditImagePlaceholders }}" as="img" hint-placeholder-count="0">
+                    <div style="width:60px;height:60px;border-radius:12px;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 6px,#EDF0F5 6px,#EDF0F5 12px);display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:8.5px;color:{{ textMuted }};">img</div>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">NOTES</div>
+                <textarea value="{{ newAuditNotes }}" onChange="{{ onNewAuditNotes }}" placeholder="Additional notes" rows="2" style="width:100%;padding:13px 15px;border-radius:13px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;resize:none;"></textarea>
+              </div>
+              <button type="submit" style="width:100%;padding:15px 0;border-radius:14px;border:none;background:{{ orange }};color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:6px;">Submit Audit</button>
+            </form>
+          </div>
+        </sc-if>
+
+        <!-- CHECKLIST -->
+        <sc-if value="{{ isPrpv }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};">
+              <div style="font-size:16px;font-weight:700;color:{{ textDark }};">Checklist</div>
+            </div>
+            <div style="padding:6px 20px 4px;font-size:12px;color:{{ textMuted }};">Daily checklists sent by admin</div>
+            <div style="padding:10px 20px 100px;display:flex;flex-direction:column;gap:12px;">
+              <sc-for list="{{ checklists }}" as="ck" hint-placeholder-count="2">
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;">
+                  <div onClick="{{ ck.open }}" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;cursor:pointer;">
+                    <div style="font-size:12px;color:{{ textMuted }};">{{ ck.assignedDate }} · {{ ck.company }}</div>
+                    <div style="font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;{{ ck.statusBadgeStyle }}">{{ ck.statusLabel }}</div>
+                  </div>
+                  <div onClick="{{ ck.open }}" style="font-size:14px;font-weight:700;color:{{ textDark }};margin-bottom:12px;cursor:pointer;">{{ ck.site }} · {{ ck.title }}</div>
+                  <button onClick="{{ ck.open }}" style="width:100%;padding:11px 0;border-radius:12px;border:none;font-size:13px;font-weight:700;cursor:pointer;background:{{ primary }};color:#fff;">Open Checklist</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- CHECKLIST DETAIL -->
+        <sc-if value="{{ isChecklistDetail }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};">
+              <div onClick="{{ backToChecklistList }}" style="cursor:pointer;color:{{ textDark }};">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M11 18l-6-6 6-6"></path></svg>
+              </div>
+              <div style="font-size:16px;font-weight:700;color:{{ textDark }};">{{ selectedChecklist.title }}</div>
+            </div>
+            <form onSubmit="{{ sendChecklistToAdmin }}" style="padding:18px 20px 40px;display:flex;flex-direction:column;gap:14px;">
+              <div style="font-size:12.5px;color:{{ textMuted }};">{{ selectedChecklist.assignedDate }} · {{ selectedChecklist.company }}</div>
+              <div style="font-size:13px;color:{{ textMuted }};margin-top:-8px;">{{ selectedChecklist.site }}</div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:8px;">MAIN TASK</div>
+                <div onClick="{{ selectedChecklist.toggleMain }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;background:{{ bg }};border-radius:12px;padding:14px;margin-bottom:16px;">
+                  <div style="font-size:15px;font-weight:700;color:{{ textDark }};">{{ selectedChecklist.title }}</div>
+                  <div style="width:24px;height:24px;border-radius:7px;border:2px solid {{ border }};flex-shrink:0;display:flex;align-items:center;justify-content:center;{{ selectedChecklist.mainCheckStyle }}">
+                    <sc-if value="{{ selectedChecklist.mainDone }}" hint-placeholder-val="{{ false }}">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+                    </sc-if>
+                  </div>
+                </div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:8px;">SUBTASKS</div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <sc-for list="{{ selectedChecklist.subtasks }}" as="t" hint-placeholder-count="3">
+                    <div style="background:{{ bg }};border-radius:12px;padding:12px 14px;">
+                      <div onClick="{{ t.toggle }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;margin-bottom:8px;">
+                        <div style="font-size:14px;color:{{ textDark }};">{{ t.text }}</div>
+                        <div style="width:22px;height:22px;border-radius:6px;border:2px solid {{ border }};flex-shrink:0;display:flex;align-items:center;justify-content:center;{{ t.checkStyle }}">
+                          <sc-if value="{{ t.done }}" hint-placeholder-val="{{ false }}">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+                          </sc-if>
+                        </div>
+                      </div>
+                      <input value="{{ t.comment }}" onChange="{{ t.onCommentChange }}" placeholder="Add a comment for this subtask" style="width:100%;padding:9px 12px;border-radius:9px;border:1px solid {{ border }};font-size:13px;font-family:Inter,sans-serif;outline:none;background:#fff;" />
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">IMAGES</div>
+                <div style="display:flex;gap:10px;margin-bottom:10px;">
+                  <div onClick="{{ addChecklistImage }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 0;border-radius:13px;border:1.5px dashed {{ border }};cursor:pointer;color:{{ textMuted }};font-size:13px;font-weight:600;">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7l1.5-3h5L16 7"></path><circle cx="12" cy="13.5" r="3.5"></circle></svg>
+                    Camera
+                  </div>
+                  <div onClick="{{ addChecklistImage }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 0;border-radius:13px;border:1.5px dashed {{ border }};cursor:pointer;color:{{ textMuted }};font-size:13px;font-weight:600;">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="8.5" cy="9.5" r="1.5"></circle><path d="M21 16l-5-5-4 4-2-2-5 5"></path></svg>
+                    Gallery
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <sc-for list="{{ checklistImagePlaceholders }}" as="img" hint-placeholder-count="0">
+                    <div style="width:60px;height:60px;border-radius:12px;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 6px,#EDF0F5 6px,#EDF0F5 12px);display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:8.5px;color:{{ textMuted }};">img</div>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">NOTES</div>
+                <textarea value="{{ checklistDraftNotes }}" onChange="{{ onChecklistNotesChange }}" placeholder="Add notes for the admin" rows="4" style="width:100%;padding:13px 15px;border-radius:13px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;resize:none;"></textarea>
+              </div>
+              <button type="submit" disabled="{{ submitChecklistDisabled }}" style="width:100%;padding:15px 0;border-radius:14px;border:none;background:{{ orange }};color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:6px;opacity:{{ submitChecklistOpacity }};">Send to Admin</button>
+              <sc-if value="{{ submitChecklistDisabled }}" hint-placeholder-val="{{ false }}">
+                <div style="text-align:center;font-size:12px;color:{{ textMuted }};">Complete all subtasks before submitting.</div>
+              </sc-if>
+            </form>
+          </div>
+        </sc-if>
+
+        <!-- COMMUNICATION -->
+        <sc-if value="{{ isCommunication }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="background:{{ darkBlue }};padding:16px 20px 18px;">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+                <div onClick="{{ goHome }}" style="cursor:pointer;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+                </div>
+                <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:0.5px;">COMMUNICATION</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;border:1.5px solid {{ orange }};border-radius:999px;padding:11px 16px;">
+                <input placeholder="Filter communication" style="flex:1;background:transparent;border:none;outline:none;font-size:14px;color:#fff;font-family:Inter,sans-serif;" />
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{ orange }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+              </div>
+            </div>
+            <div style="background:{{ darkBlue }};padding:0 20px;display:flex;gap:28px;border-bottom:1px solid rgba(255,255,255,0.15);">
+              <div onClick="{{ setCommTabOpen }}" style="padding:12px 0;font-size:14px;font-weight:700;cursor:pointer;color:{{ commTabOpenTextColor }};border-bottom:3px solid {{ commTabOpenBorderColor }};">Comm Log</div>
+              <div onClick="{{ setCommTabClosed }}" style="padding:12px 0;font-size:14px;font-weight:700;cursor:pointer;color:{{ commTabClosedTextColor }};border-bottom:3px solid {{ commTabClosedBorderColor }};">Closed</div>
+            </div>
+            <div style="padding:14px 20px 100px;display:flex;flex-direction:column;gap:10px;background:{{ bg }};min-height:400px;">
+              <sc-for list="{{ filteredCommunications }}" as="m" hint-placeholder-count="2">
+                <div style="background:#fff;border:1px solid {{ border }};border-radius:18px;padding:16px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <div style="font-size:14px;font-weight:700;color:{{ textDark }};">{{ m.title }}</div>
+                    <div style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;{{ m.priorityBadgeStyle }}">{{ m.priority }}</div>
+                  </div>
+                  <div style="font-size:12px;color:{{ textMuted }};margin-bottom:4px;">{{ m.employee }} · {{ m.time }}</div>
+                  <div style="font-size:12.5px;color:{{ textDark }};">{{ m.lastUpdate }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div onClick="{{ addCommunication }}" style="position:sticky;bottom:96px;left:100%;width:52px;height:52px;margin-right:20px;border-radius:16px;background:{{ orange }};display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 20px rgba(183,212,0,0.35);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ darkBlue }}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8v8"></path><path d="M8 12h8"></path></svg>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- CHANGE PASSWORD -->
+        <sc-if value="{{ isChangePassword }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};">
+              <sc-if value="{{ isFirstLogin }}" hint-placeholder-val="{{ true }}">
+                <div style="font-size:16px;font-weight:700;color:{{ textDark }};">Set a New Password</div>
+              </sc-if>
+              <sc-if value="{{ isChangePasswordNotFirst }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ backFromChangePassword }}" style="cursor:pointer;color:{{ textDark }};">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M11 18l-6-6 6-6"></path></svg>
+                </div>
+                <div style="font-size:16px;font-weight:700;color:{{ textDark }};">Change Password</div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ isFirstLogin }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:16px 20px 0;font-size:12.5px;color:{{ textMuted }};">For security, please set a new password before continuing.</div>
+            </sc-if>
+            <form onSubmit="{{ submitPasswordChange }}" style="padding:18px 20px 40px;display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">CURRENT PASSWORD</div>
+                <input type="password" value="{{ passwordCurrent }}" onChange="{{ onPasswordCurrentChange }}" placeholder="••••••••" style="width:100%;padding:13px 15px;border-radius:13px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">NEW PASSWORD</div>
+                <input type="password" value="{{ passwordNext }}" onChange="{{ onPasswordNextChange }}" placeholder="••••••••" style="width:100%;padding:13px 15px;border-radius:13px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">CONFIRM NEW PASSWORD</div>
+                <input type="password" value="{{ passwordConfirm }}" onChange="{{ onPasswordConfirmChange }}" placeholder="••••••••" style="width:100%;padding:13px 15px;border-radius:13px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+              </div>
+              <button type="submit" style="width:100%;padding:15px 0;border-radius:14px;border:none;background:{{ primary }};color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:6px;">Save New Password</button>
+              <sc-if value="{{ isFirstLogin }}" hint-placeholder-val="{{ true }}">
+                <div onClick="{{ skipChangePassword }}" style="text-align:center;font-size:13px;font-weight:600;color:{{ textMuted }};cursor:pointer;margin-top:4px;">Skip for now</div>
+              </sc-if>
+            </form>
+          </div>
+        </sc-if>
+
+        <!-- PROFILE -->
+        <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;padding:18px 20px 14px;background:#fff;border-bottom:1px solid {{ border }};">
+              <div style="font-size:16px;font-weight:700;color:{{ textDark }};">Profile</div>
+            </div>
+            <div style="padding:24px 20px;display:flex;flex-direction:column;align-items:center;">
+              <div style="width:84px;height:84px;border-radius:50%;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 7px,#EDF0F5 7px,#EDF0F5 14px);margin-bottom:14px;"></div>
+              <div style="font-size:17px;font-weight:700;color:{{ textDark }};">Jordan Reyes</div>
+              <div style="font-size:13px;color:{{ textMuted }};margin-top:2px;">Field Auditor</div>
+            </div>
+            <div style="padding:0 20px;display:flex;flex-direction:column;gap:10px;">
+              <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;">
+                <div style="font-size:12.5px;color:{{ textMuted }};">Email</div>
+                <div style="font-size:13.5px;font-weight:600;color:{{ textDark }};">jordan.reyes@acme.com</div>
+              </div>
+              <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;">
+                <div style="font-size:12.5px;color:{{ textMuted }};">Company</div>
+                <div style="font-size:13.5px;font-weight:600;color:{{ textDark }};">Acme Corp</div>
+              </div>
+              <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;">
+                <div style="font-size:12.5px;color:{{ textMuted }};">Department</div>
+                <div style="font-size:13.5px;font-weight:600;color:{{ textDark }};">Field Operations</div>
+              </div>
+              <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;">
+                <div style="font-size:12.5px;color:{{ textMuted }};">Phone</div>
+                <div style="font-size:13.5px;font-weight:600;color:{{ textDark }};">(303) 555-0148</div>
+              </div>
+              <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:14px 16px;cursor:pointer;font-size:13.5px;font-weight:600;color:{{ textDark }};">Settings</div>
+              <div onClick="{{ goChangePasswordFromProfile }}" style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:14px 16px;cursor:pointer;font-size:13.5px;font-weight:600;color:{{ textDark }};">Change Password</div>
+              <div onClick="{{ logout }}" style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:14px 16px;cursor:pointer;font-size:13.5px;font-weight:700;color:#C0392B;text-align:center;margin-top:8px;margin-bottom:90px;">Log Out</div>
+            </div>
+          </div>
+        </sc-if>
+
+      </div>
+
+      <!-- BOTTOM NAV -->
+      <sc-if value="{{ showBottomNav }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,0.96);backdrop-filter:blur(10px);border-top:1px solid {{ border }};display:flex;padding:10px 8px 22px;">
+          <div onClick="{{ goHome }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:{{ navHomeColor }};">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"></path><path d="M6 10v9h12v-9"></path><path d="M10 19v-5h4v5"></path></svg>
+            <div style="font-size:10.5px;font-weight:600;">Home</div>
+          </div>
+          <div onClick="{{ goAttendance }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:{{ navAttendanceColor }};">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>
+            <div style="font-size:10.5px;font-weight:600;">Attendance</div>
+          </div>
+          <div onClick="{{ goPrpvFromNav }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:{{ navPrpvColor }};">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5-9-5Z"></path><path d="M3 12l9 5 9-5"></path><path d="M3 16l9 5 9-5"></path></svg>
+            <div style="font-size:10.5px;font-weight:600;">Checklist</div>
+          </div>
+          <div onClick="{{ goAuditListFromNav }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:{{ navAuditColor }};">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="16" rx="2"></rect><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"></path><path d="M9 10h6M9 14h6M9 18h3"></path></svg>
+            <div style="font-size:10.5px;font-weight:600;">Audits</div>
+          </div>
+          <div onClick="{{ goCommunicationFromNav }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:{{ navCommunicationColor }};">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4V5Z"></path></svg>
+            <div style="font-size:10.5px;font-weight:600;">Comms</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- SUCCESS OVERLAY -->
+      <sc-if value="{{ showAuditSuccess }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:rgba(255,255,255,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;">
+          <div style="width:76px;height:76px;border-radius:50%;background:rgba(183,212,0,0.18);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#5C6900" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 12.5l2.5 2.5L16 9"></path></svg>
+          </div>
+          <div style="font-size:16px;font-weight:700;color:{{ textDark }};">Audit Submitted</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showChecklistSuccess }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:rgba(255,255,255,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;">
+          <div style="width:76px;height:76px;border-radius:50%;background:rgba(183,212,0,0.18);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#5C6900" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 12.5l2.5 2.5L16 9"></path></svg>
+          </div>
+          <div style="font-size:16px;font-weight:700;color:{{ textDark }};">Sent to Admin</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showPasswordSuccess }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:rgba(255,255,255,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;">
+          <div style="width:76px;height:76px;border-radius:50%;background:rgba(183,212,0,0.18);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#5C6900" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 12.5l2.5 2.5L16 9"></path></svg>
+          </div>
+          <div style="font-size:16px;font-weight:700;color:{{ textDark }};">Password Updated</div>
+        </div>
+      </sc-if>
+
+    </div>
+  </x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    screen: 'login',
+    role: 'employee',
+    email: '', password: '', remember: false,
+    selectedSiteId: null,
+    selectedCompanyIdx: null,
+    clockStatus: 'out', clockInAt: null, breakStartAt: null, totalBreakMs: 0,
+    auditTab: 'submit',
+    commTab: 'open',
+    siteSearch: '',
+    showAuditSuccess: false,
+    now: new Date(),
+    newAudit: { title: '', description: '', date: '', location: '', priority: 'Medium', notes: '', images: 0 },
+    audits: [
+      { id: 1, title: 'Fire Safety Check', company: 'Acme Corp', site: 'Site A', date: 'Jul 19', images: 3, status: 'submit', marks: '', sent: false },
+      { id: 2, title: 'Equipment Inspection', company: 'Acme Corp', site: 'Site B', date: 'Jul 17', images: 5, status: 'verify', marks: '', sent: false },
+      { id: 3, title: 'Monthly Cleaning Audit', company: 'Acme Corp', site: 'Site A', date: 'Jul 10', images: 8, status: 'complete', marks: 92, sent: true },
+      { id: 4, title: 'Security Walkthrough', company: 'Acme Corp', site: 'Site C', date: 'Jul 5', images: 2, status: 'complete', marks: 78, sent: false },
+    ],
+    attendanceHistory: [
+      { date: 'Jul 19', clockIn: '8:02 AM', clockOut: '5:05 PM', hours: '9.0h', status: 'Complete' },
+      { date: 'Jul 18', clockIn: '8:00 AM', clockOut: '4:58 PM', hours: '8.9h', status: 'Complete' },
+    ],
+    communications: [
+      { id: 1, title: 'Broken window at Site B', priority: 'High', employee: 'J. Rivera', time: '2h ago', status: 'open', lastUpdate: 'Awaiting parts' },
+      { id: 2, title: 'Restock cleaning supplies', priority: 'Medium', employee: 'A. Chen', time: '1d ago', status: 'closed', lastUpdate: 'Resolved' },
+      { id: 3, title: 'Gate access code issue', priority: 'Low', employee: 'M. Diallo', time: '3d ago', status: 'open', lastUpdate: 'Contacted site manager' },
+    ],
+    companies: [
+      { name: 'Acme Corp', employeesCount: 24, location: 'Denver, CO', status: 'Active', employees: [
+        { name: 'Jordan Reyes', role: 'Field Auditor', status: 'Active' },
+        { name: 'Priya Nair', role: 'Site Supervisor', status: 'Active' },
+        { name: 'Sam Cole', role: 'Field Auditor', status: 'On Leave' },
+      ] },
+      { name: 'Bright Facilities', employeesCount: 12, location: 'Austin, TX', status: 'Active', employees: [
+        { name: 'Lena Ortiz', role: 'Field Auditor', status: 'Active' },
+        { name: 'Marcus Webb', role: 'Technician', status: 'Active' },
+      ] },
+      { name: 'Northgate Services', employeesCount: 8, location: 'Chicago, IL', status: 'Inactive', employees: [
+        { name: 'Dana Brooks', role: 'Field Auditor', status: 'Inactive' },
+      ] },
+    ],
+    newCompany: { name: '', location: '', employeesCount: '', status: 'Active' },
+    siteClockStatus: { 1: 'in', 2: 'out', 3: 'out' },
+    checklists: [
+      { id: 1, title: 'Room Clean', company: 'Acme Corp', site: 'Site A', assignedDate: 'Jul 12', status: 'pending', notes: '', images: 0, mainDone: false,
+        subtasks: [{ id: 1, text: 'Vacuum carpets', done: false, comment: '' }, { id: 2, text: 'Empty trash bins', done: false, comment: '' }, { id: 3, text: 'Sanitize surfaces', done: false, comment: '' }] },
+      { id: 2, title: 'Lighting Upgrade', company: 'Acme Corp', site: 'Site B', assignedDate: 'Jul 8', status: 'submitted', notes: 'All fixtures replaced, tested working.', images: 4, mainDone: true,
+        subtasks: [{ id: 1, text: 'Replace hallway bulbs', done: true, comment: 'New LED bulbs installed.' }, { id: 2, text: 'Test emergency lighting', done: true, comment: '' }] },
+      { id: 3, title: 'Roof Leak Inspection', company: 'Acme Corp', site: 'Site C', assignedDate: 'Jul 2', status: 'pending', notes: '', images: 0, mainDone: false,
+        subtasks: [{ id: 1, text: 'Inspect roof membrane', done: false, comment: '' }, { id: 2, text: 'Check gutters', done: false, comment: '' }] },
+    ],
+    selectedChecklistId: null,
+    checklistDraftNotes: '',
+    checklistDraftImages: 0,
+    showChecklistSuccess: false,
+    isFirstLogin: true,
+    changePasswordReturnTo: 'home',
+    passwordForm: { current: '', next: '', confirm: '' },
+    showPasswordSuccess: false,
+  };
+
+  sitesData = [
+    { id: 1, name: 'Site A - Downtown Plaza', address: '120 Main St, Denver, CO', status: 'Open', lastVisit: 'Jul 18' },
+    { id: 2, name: 'Site B - Riverside Mall', address: '45 River Rd, Denver, CO', status: 'Open', lastVisit: 'Jul 15' },
+    { id: 3, name: 'Site C - Tech Park', address: '900 Innovation Way, Denver, CO', status: 'Closed', lastVisit: 'Jul 10' },
+  ];
+
+  colors = { primary: '#0E62D1', darkBlue: '#034581', green: '#B7D400', orange: '#FF7A1A', bg: '#F5F7FA', border: '#E4E8EF', textDark: '#16202E', textMuted: '#6E7887' };
+
+  componentDidMount() {
+    this._t = setInterval(() => this.setState({ now: new Date() }), 1000);
+  }
+  detectLocation() {
+    if (!navigator.geolocation) { this.setState({ locationStatus: 'unavailable' }); return; }
+    this.setState({ locationStatus: 'locating' });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => this.setState({ locationStatus: 'found', locationCoords: `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}` }),
+      () => this.setState({ locationStatus: 'denied' }),
+      { timeout: 8000 }
+    );
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  badge(bg, color) { return `background:${bg};color:${color};`; }
+
+  statusBadgeStyle(status) {
+    const s = (status || '').toLowerCase();
+    if (s === 'open' || s === 'complete') return this.badge('rgba(183,212,0,0.18)', '#5C6900');
+    if (s === 'inactive' || s === 'closed') return this.badge('#EEF0F3', '#6E7887');
+    if (s === 'pending' || s === 'active' || s === 'submit') return this.badge('rgba(14,98,209,0.12)', '#0E62D1');
+    if (s === 'in progress' || s === 'verify') return this.badge('rgba(235,149,0,0.15)', '#93600A');
+    return this.badge('#EEF0F3', '#6E7887');
+  }
+  priorityBadgeStyle(p) {
+    const s = (p || '').toLowerCase();
+    if (s === 'high') return this.badge('rgba(235,149,0,0.15)', '#93600A');
+    if (s === 'medium') return this.badge('rgba(14,98,209,0.12)', '#0E62D1');
+    return this.badge('#EEF0F3', '#6E7887');
+  }
+
+  goTo(screen) { this.setState({ screen }); }
+
+  renderVals() {
+    const s = this.state;
+    const c = this.colors;
+    const isLogin = s.screen === 'login';
+    const isAdminDash = s.screen === 'adminDashboard';
+    const isAdminCompany = s.screen === 'adminCompany';
+    const isAddCompany = s.screen === 'addCompany';
+    const isHome = s.screen === 'home';
+    const isSiteDetails = s.screen === 'siteDetails';
+    const isAttendance = s.screen === 'attendance';
+    const isAuditList = s.screen === 'auditList';
+    const isCreateAudit = s.screen === 'createAudit';
+    const isPrpv = s.screen === 'prpv';
+    const isChecklistDetail = s.screen === 'checklistDetail';
+    const isCommunication = s.screen === 'communication';
+    const isProfile = s.screen === 'profile';
+    const isChangePassword = s.screen === 'changePassword';
+    const showBottomNav = isHome || isAttendance || isAuditList || isPrpv || isProfile || isCommunication;
+
+    const navBase = '';
+    const navActive = c.primary;
+    const navInactive = c.textMuted;
+
+    const companies = s.companies.map((comp, idx) => ({
+      name: comp.name, employeesCount: comp.employeesCount, location: comp.location, status: comp.status,
+      statusBadgeStyle: this.statusBadgeStyle(comp.status),
+      select: () => this.setState({ selectedCompanyIdx: idx, screen: 'adminCompany' }),
+    }));
+
+    const selectedCompanyRaw = s.selectedCompanyIdx !== null ? s.companies[s.selectedCompanyIdx] : null;
+    const selectedCompany = selectedCompanyRaw ? {
+      name: selectedCompanyRaw.name, location: selectedCompanyRaw.location, employeesCount: selectedCompanyRaw.employeesCount,
+      employees: selectedCompanyRaw.employees.map(e => ({ ...e, statusBadgeStyle: this.statusBadgeStyle(e.status) })),
+    } : { name: '', location: '', employeesCount: 0, employees: [] };
+
+    const filteredSites = this.sitesData
+      .filter(site => site.name.toLowerCase().includes(s.siteSearch.toLowerCase()))
+      .map(site => {
+        const isIn = (s.siteClockStatus[site.id] || 'out') === 'in';
+        return {
+          ...site, statusBadgeStyle: this.statusBadgeStyle(site.status),
+          select: () => this.setState({ selectedSiteId: site.id, screen: 'siteDetails' }),
+          clockLabel: isIn ? 'Clock Out' : 'Clock In',
+          clockBtnStyle: isIn ? `background:${c.orange};color:#fff;` : `background:${c.primary};color:#fff;`,
+          toggleClock: () => this.setState({ siteClockStatus: { ...s.siteClockStatus, [site.id]: isIn ? 'out' : 'in' } }),
+        };
+      });
+
+    const selectedSite = this.sitesData.find(x => x.id === s.selectedSiteId) || { name: '', address: '' };
+
+    const auditTabMap = { pending: 'pending', 'in progress': 'in progress', completed: 'completed', closed: 'closed' };
+    const filteredAudits = s.audits.filter(a => a.status === s.auditTab).map(a => ({
+      ...a, displayTitle: `${a.date} · ${a.company} · ${a.title}`,
+      statusLabel: a.status.replace(/\b\w/g, ch => ch.toUpperCase()), statusBadgeStyle: this.statusBadgeStyle(a.status),
+      hasMarks: a.sent && a.marks !== '' && a.marks !== undefined && a.marks !== null,
+      awaitingResults: a.status === 'complete' && !a.sent,
+    }));
+
+    const tabStyle = (active) => active ? `background:${c.primary};color:#fff;` : `background:${c.bg};color:${c.textMuted};`;
+
+    const filteredCommunications = s.communications.filter(m => m.status === s.commTab).map(m => ({
+      ...m, priorityBadgeStyle: this.priorityBadgeStyle(m.priority),
+    }));
+
+    const checklists = s.checklists.map(ck => ({
+      ...ck,
+      displayTitle: `${ck.assignedDate} · ${ck.company} · ${ck.title}`,
+      doneCount: ck.subtasks.filter(t => t.done).length,
+      subtasksCount: ck.subtasks.length,
+      statusLabel: ck.status === 'submitted' ? 'Submitted' : 'Pending Review',
+      statusBadgeStyle: this.statusBadgeStyle(ck.status === 'submitted' ? 'completed' : 'pending'),
+      open: () => this.setState({ selectedChecklistId: ck.id, checklistDraftNotes: ck.notes, checklistDraftImages: ck.images, screen: 'checklistDetail' }),
+    }));
+    const selectedChecklistRaw = s.checklists.find(x => x.id === s.selectedChecklistId) || null;
+    const selectedChecklist = selectedChecklistRaw ? {
+      ...selectedChecklistRaw,
+      displayTitle: `${selectedChecklistRaw.assignedDate} · ${selectedChecklistRaw.company} · ${selectedChecklistRaw.title}`,
+      mainCheckStyle: selectedChecklistRaw.mainDone ? `background:${c.primary};border-color:${c.primary};` : `background:#fff;border-color:${c.border};`,
+      toggleMain: () => this.setState({
+        checklists: s.checklists.map(x => x.id === selectedChecklistRaw.id ? { ...x, mainDone: !x.mainDone } : x),
+      }),
+      allDone: selectedChecklistRaw.mainDone && selectedChecklistRaw.subtasks.every(t => t.done),
+      subtasks: selectedChecklistRaw.subtasks.map(t => ({
+        ...t,
+        checkStyle: t.done ? `background:${c.primary};border-color:${c.primary};` : `background:#fff;border-color:${c.border};`,
+        toggle: () => this.setState({
+          checklists: s.checklists.map(x => x.id === selectedChecklistRaw.id
+            ? { ...x, subtasks: x.subtasks.map(st => st.id === t.id ? { ...st, done: !st.done } : st) }
+            : x),
+        }),
+        onCommentChange: (e) => {
+          const val = e.target.value;
+          this.setState({
+            checklists: s.checklists.map(x => x.id === selectedChecklistRaw.id
+              ? { ...x, subtasks: x.subtasks.map(st => st.id === t.id ? { ...st, comment: val } : st) }
+              : x),
+          });
+        },
+      })),
+    } : { title: '', displayTitle: '', site: '', assignedDate: '', subtasks: [], allDone: false, mainDone: false, mainCheckStyle: '' };
+    const checklistImagePlaceholders = Array.from({ length: s.checklistDraftImages });
+
+    // clock
+    const clockTimeStr = s.now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+    const clockDateStr = s.now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+    let workingHoursStr = '0h 0m';
+    if (s.clockStatus !== 'out' && s.clockInAt) {
+      const elapsedMs = (s.now - s.clockInAt) - s.totalBreakMs;
+      const mins = Math.max(0, Math.floor(elapsedMs / 60000));
+      workingHoursStr = `${Math.floor(mins / 60)}h ${mins % 60}m`;
+    }
+    const clockStatusLabel = s.clockStatus === 'in' ? 'Clocked In' : s.clockStatus === 'break' ? 'On Break' : 'Clocked Out';
+    const clockStatusBadgeStyle = s.clockStatus === 'in' ? this.badge('rgba(183,212,0,0.25)', '#fff')
+      : s.clockStatus === 'break' ? this.badge('rgba(235,149,0,0.4)', '#fff')
+      : this.badge('rgba(255,255,255,0.2)', '#fff');
+
+    const activeBtn = (bgc) => `background:${bgc};color:#fff;`;
+    const inactiveBtn = `background:${c.bg};color:${c.textMuted};`;
+
+    return {
+      bg: c.bg, primary: c.primary, darkBlue: c.darkBlue, green: c.green, orange: c.orange, border: c.border, textDark: c.textDark, textMuted: c.textMuted,
+      isLogin, isAdminDash, isAdminCompany, isAddCompany, isHome, isSiteDetails, isAttendance, isAuditList, isCreateAudit, isPrpv, isChecklistDetail, isCommunication, isProfile,
+      showBottomNav,
+      email: s.email, password: s.password, remember: s.remember,
+      onEmailChange: (e) => this.setState({ email: e.target.value }),
+      onPasswordChange: (e) => this.setState({ password: e.target.value }),
+      toggleRemember: () => this.setState({ remember: !s.remember }),
+      loginSubmit: (e) => {
+        e.preventDefault();
+        const isAdmin = s.email.toLowerCase().includes('admin');
+        const dest = isAdmin ? 'adminDashboard' : 'home';
+        this.setState({ role: isAdmin ? 'admin' : 'employee', screen: s.isFirstLogin ? 'changePassword' : dest, changePasswordReturnTo: dest });
+        if (!isAdmin) this.detectLocation();
+      },
+      isChangePassword: isChangePassword,
+      isChangePasswordNotFirst: isChangePassword && !s.isFirstLogin,
+      isFirstLogin: s.isFirstLogin,
+      passwordCurrent: s.passwordForm.current,
+      passwordNext: s.passwordForm.next,
+      passwordConfirm: s.passwordForm.confirm,
+      onPasswordCurrentChange: (e) => this.setState({ passwordForm: { ...s.passwordForm, current: e.target.value } }),
+      onPasswordNextChange: (e) => this.setState({ passwordForm: { ...s.passwordForm, next: e.target.value } }),
+      onPasswordConfirmChange: (e) => this.setState({ passwordForm: { ...s.passwordForm, confirm: e.target.value } }),
+      goChangePasswordFromProfile: () => this.setState({ screen: 'changePassword', changePasswordReturnTo: 'profile' }),
+      skipChangePassword: () => this.setState({ isFirstLogin: false, screen: s.changePasswordReturnTo }),
+      backFromChangePassword: () => this.setState({ screen: s.changePasswordReturnTo }),
+      submitPasswordChange: (e) => {
+        e.preventDefault();
+        this.setState({ isFirstLogin: false, showPasswordSuccess: true, passwordForm: { current: '', next: '', confirm: '' } });
+        setTimeout(() => this.setState({ showPasswordSuccess: false, screen: s.changePasswordReturnTo }), 1300);
+      },
+      showPasswordSuccess: s.showPasswordSuccess,
+      logout: () => this.setState({ screen: 'login', selectedSiteId: null, selectedCompanyIdx: null }),
+
+      companies, selectedCompany,
+      backToAdmin: () => this.setState({ screen: 'adminDashboard' }),
+      goAddCompany: () => this.setState({ screen: 'addCompany', newCompany: { name: '', location: '', employeesCount: '', status: 'Active' } }),
+      backToAdminFromAdd: () => this.setState({ screen: 'adminDashboard' }),
+      newCompanyName: s.newCompany.name,
+      newCompanyLocation: s.newCompany.location,
+      newCompanyEmployeesCount: s.newCompany.employeesCount,
+      onNewCompanyName: (e) => this.setState({ newCompany: { ...s.newCompany, name: e.target.value } }),
+      onNewCompanyLocation: (e) => this.setState({ newCompany: { ...s.newCompany, location: e.target.value } }),
+      onNewCompanyEmployeesCount: (e) => this.setState({ newCompany: { ...s.newCompany, employeesCount: e.target.value } }),
+      newCompanyStatusActiveStyle: s.newCompany.status === 'Active' ? activeBtn(c.primary) : inactiveBtn,
+      newCompanyStatusInactiveStyle: s.newCompany.status === 'Inactive' ? activeBtn(c.textMuted) : inactiveBtn,
+      setNewCompanyStatusActive: () => this.setState({ newCompany: { ...s.newCompany, status: 'Active' } }),
+      setNewCompanyStatusInactive: () => this.setState({ newCompany: { ...s.newCompany, status: 'Inactive' } }),
+      submitNewCompany: (e) => {
+        e.preventDefault();
+        if (!s.newCompany.name.trim()) return;
+        const rec = {
+          name: s.newCompany.name, location: s.newCompany.location || 'Unspecified',
+          employeesCount: Number(s.newCompany.employeesCount) || 0, status: s.newCompany.status, employees: [],
+        };
+        this.setState({ companies: [rec, ...s.companies], screen: 'adminDashboard', newCompany: { name: '', location: '', employeesCount: '', status: 'Active' } });
+      },
+
+      filteredSites, selectedSite,
+      siteSearch: s.siteSearch,
+      onSiteSearchChange: (e) => this.setState({ siteSearch: e.target.value }),
+      backToHome: () => this.setState({ screen: 'home' }),
+      goProfile: () => this.setState({ screen: 'profile' }),
+      goNotifications: () => this.setState({ screen: 'communication' }),
+      locationLabel: s.locationStatus === 'locating' ? 'Detecting your location…' : s.locationStatus === 'found' ? `Location detected (${s.locationCoords})` : s.locationStatus === 'denied' ? 'Location access denied' : s.locationStatus === 'unavailable' ? 'Location unavailable' : '',
+      showLocationBadge: !!s.locationStatus,
+      goAuditList: () => this.setState({ screen: 'auditList' }),
+      goPrpv: () => this.setState({ screen: 'prpv' }),
+      goCommunication: () => this.setState({ screen: 'communication' }),
+
+      clockTimeStr, clockDateStr, workingHoursStr, clockStatusLabel, clockStatusBadgeStyle,
+      clockInDisabled: s.clockStatus !== 'out',
+      clockOutDisabled: s.clockStatus === 'out',
+      breakStartDisabled: s.clockStatus !== 'in',
+      breakEndDisabled: s.clockStatus !== 'break',
+      clockInBtnStyle: s.clockStatus === 'out' ? activeBtn(c.primary) : inactiveBtn,
+      clockOutBtnStyle: s.clockStatus !== 'out' ? activeBtn(c.darkBlue) : inactiveBtn,
+      breakStartBtnStyle: s.clockStatus === 'in' ? activeBtn(c.orange) : inactiveBtn,
+      breakEndBtnStyle: s.clockStatus === 'break' ? activeBtn(c.orange) : inactiveBtn,
+      clockIn: () => this.setState({ clockStatus: 'in', clockInAt: new Date(), totalBreakMs: 0 }),
+      clockOut: () => {
+        const hrsMs = (new Date() - s.clockInAt) - s.totalBreakMs;
+        const mins = Math.max(0, Math.floor(hrsMs / 60000));
+        const rec = { date: 'Today', clockIn: s.clockInAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), clockOut: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), hours: `${(mins / 60).toFixed(1)}h`, status: 'Complete' };
+        this.setState({ clockStatus: 'out', clockInAt: null, totalBreakMs: 0, attendanceHistory: [rec, ...s.attendanceHistory] });
+      },
+      breakStart: () => this.setState({ clockStatus: 'break', breakStartAt: new Date() }),
+      breakEnd: () => this.setState({ clockStatus: 'in', totalBreakMs: s.totalBreakMs + (new Date() - s.breakStartAt) }),
+      attendanceHistory: s.attendanceHistory,
+
+      filteredAudits,
+      auditTabActiveStyle: tabStyle(s.auditTab === 'submit'),
+      auditTabInProgressStyle: tabStyle(s.auditTab === 'verify'),
+      auditTabCompletedStyle: tabStyle(s.auditTab === 'complete'),
+      setAuditTabActive: () => this.setState({ auditTab: 'submit' }),
+      setAuditTabInProgress: () => this.setState({ auditTab: 'verify' }),
+      setAuditTabCompleted: () => this.setState({ auditTab: 'complete' }),
+      goCreateAudit: () => this.setState({ screen: 'createAudit' }),
+      backToAuditList: () => this.setState({ screen: 'auditList' }),
+
+      newAuditTitle: s.newAudit.title, newAuditDescription: s.newAudit.description, newAuditDate: s.newAudit.date, newAuditLocation: s.newAudit.location, newAuditNotes: s.newAudit.notes,
+      onNewAuditTitle: (e) => this.setState({ newAudit: { ...s.newAudit, title: e.target.value } }),
+      onNewAuditDescription: (e) => this.setState({ newAudit: { ...s.newAudit, description: e.target.value } }),
+      onNewAuditDate: (e) => this.setState({ newAudit: { ...s.newAudit, date: e.target.value } }),
+      onNewAuditLocation: (e) => this.setState({ newAudit: { ...s.newAudit, location: e.target.value } }),
+      onNewAuditNotes: (e) => this.setState({ newAudit: { ...s.newAudit, notes: e.target.value } }),
+      priorityLowStyle: s.newAudit.priority === 'Low' ? activeBtn(c.textMuted) : inactiveBtn,
+      priorityMediumStyle: s.newAudit.priority === 'Medium' ? activeBtn(c.primary) : inactiveBtn,
+      priorityHighStyle: s.newAudit.priority === 'High' ? activeBtn(c.orange) : inactiveBtn,
+      setPriorityLow: () => this.setState({ newAudit: { ...s.newAudit, priority: 'Low' } }),
+      setPriorityMedium: () => this.setState({ newAudit: { ...s.newAudit, priority: 'Medium' } }),
+      setPriorityHigh: () => this.setState({ newAudit: { ...s.newAudit, priority: 'High' } }),
+      addImage: () => this.setState({ newAudit: { ...s.newAudit, images: s.newAudit.images + 1 } }),
+      newAuditImagePlaceholders: Array.from({ length: s.newAudit.images }),
+      submitAudit: (e) => {
+        e.preventDefault();
+        const id = s.audits.length + 1;
+        const rec = { id, title: s.newAudit.title || 'Untitled Audit', site: s.newAudit.location || 'Site A', date: 'Today', images: s.newAudit.images, status: 'submit' };
+        this.setState({ audits: [rec, ...s.audits], newAudit: { title: '', description: '', date: '', location: '', priority: 'Medium', notes: '', images: 0 }, showAuditSuccess: true });
+        setTimeout(() => this.setState({ showAuditSuccess: false, screen: 'auditList', auditTab: 'submit' }), 1400);
+      },
+      showAuditSuccess: s.showAuditSuccess,
+
+      checklists,
+      selectedChecklist,
+      submitChecklistDisabled: !selectedChecklist.allDone,
+      submitChecklistOpacity: selectedChecklist.allDone ? '1' : '0.5',
+      backToChecklistList: () => this.setState({ screen: 'prpv' }),
+      checklistDraftNotes: s.checklistDraftNotes,
+      onChecklistNotesChange: (e) => this.setState({ checklistDraftNotes: e.target.value }),
+      addChecklistImage: () => this.setState({ checklistDraftImages: s.checklistDraftImages + 1 }),
+      checklistImagePlaceholders,
+      sendChecklistToAdmin: (e) => {
+        e.preventDefault();
+        const ck = s.checklists.find(x => x.id === s.selectedChecklistId);
+        if (!ck || !ck.subtasks.every(t => t.done)) return;
+        this.setState({
+          checklists: s.checklists.map(x => x.id === s.selectedChecklistId ? { ...x, status: 'submitted', notes: s.checklistDraftNotes, images: s.checklistDraftImages } : x),
+          showChecklistSuccess: true,
+        });
+        setTimeout(() => this.setState({ showChecklistSuccess: false, screen: 'prpv' }), 1400);
+      },
+      showChecklistSuccess: s.showChecklistSuccess,
+
+      filteredCommunications,
+      commTabOpenStyle: tabStyle(s.commTab === 'open'),
+      commTabClosedStyle: tabStyle(s.commTab === 'closed'),
+      commTabOpenTextColor: s.commTab === 'open' ? c.orange : 'rgba(255,255,255,0.65)',
+      commTabClosedTextColor: s.commTab === 'closed' ? c.orange : 'rgba(255,255,255,0.65)',
+      commTabOpenBorderColor: s.commTab === 'open' ? c.orange : 'transparent',
+      commTabClosedBorderColor: s.commTab === 'closed' ? c.orange : 'transparent',
+      setCommTabOpen: () => this.setState({ commTab: 'open' }),
+      setCommTabClosed: () => this.setState({ commTab: 'closed' }),
+      addCommunication: () => {
+        const id = s.communications.length + 1;
+        this.setState({ communications: [{ id, title: 'New site issue reported', priority: 'Medium', employee: 'Jordan Reyes', time: 'Just now', status: 'open', lastUpdate: 'Awaiting review' }, ...s.communications] });
+      },
+
+      goHome: () => this.setState({ screen: 'home' }),
+      goAttendance: () => this.setState({ screen: 'attendance' }),
+      goAuditListFromNav: () => this.setState({ screen: 'auditList' }),
+      goCommunicationFromNav: () => this.setState({ screen: 'communication' }),
+      navCommunicationColor: isCommunication ? navActive : navInactive,
+      goPrpvFromNav: () => this.setState({ screen: 'prpv' }),
+      goProfileFromNav: () => this.setState({ screen: 'profile' }),
+      navHomeColor: isHome ? navActive : navInactive,
+      navAttendanceColor: isAttendance ? navActive : navInactive,
+      navAuditColor: isAuditList ? navActive : navInactive,
+      navPrpvColor: isPrpv ? navActive : navInactive,
+      navProfileColor: isProfile ? navActive : navInactive,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

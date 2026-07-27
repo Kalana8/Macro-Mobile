@@ -1,0 +1,2177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html,body{margin:0;padding:0;}
+    *{box-sizing:border-box;}
+    body{background:#F5F7FA;font-family:Inter,system-ui,sans-serif;}
+    a{color:#0E62D1;text-decoration:none;}
+    a:hover{color:#034581;}
+    input::placeholder, textarea::placeholder{color:#9AA4B2;}
+    table{border-collapse:collapse;width:100%;}
+    th{text-align:left;}
+  </style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;width:100%;">
+
+  <!-- SIDEBAR -->
+  <div style="width:240px;flex-shrink:0;background:#fff;border-right:1px solid {{ border }};display:flex;flex-direction:column;padding:24px 16px;position:sticky;top:0;height:100vh;">
+    <div style="display:flex;justify-content:center;margin-bottom:28px;">
+      <img src="uploads/footer.webp" alt="MACRO" style="height:52px;width:auto;" />
+    </div>
+    <div style="font-size:11px;font-weight:700;color:{{ textMuted }};letter-spacing:0.6px;padding:0 10px 8px;">ADMIN CONSOLE</div>
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div onClick="{{ goDashboard }}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;font-size:14px;font-weight:600;{{ navDashboardStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="8" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect><rect x="13" y="13" width="8" height="8" rx="1.5"></rect></svg>
+        Dashboard
+      </div>
+      <div onClick="{{ goCompanies }}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;font-size:14px;font-weight:600;{{ navCompaniesStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"></rect><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1"></path></svg>
+        Companies
+      </div>
+      <div onClick="{{ goEmployees }}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;font-size:14px;font-weight:600;{{ navEmployeesStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"></circle><path d="M2.5 19c1-3.5 4-5.2 6.5-5.2s5.5 1.7 6.5 5.2"></path><circle cx="18" cy="8.5" r="2.4"></circle><path d="M16 13.6c2 .2 3.8 1.5 4.5 4"></path></svg>
+        Employees
+      </div>
+      <div onClick="{{ goAttendance }}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;font-size:14px;font-weight:600;{{ navAttendanceStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>
+        Attendance
+      </div>
+      <div onClick="{{ goAudits }}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;font-size:14px;font-weight:600;{{ navAuditsStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="16" rx="2"></rect><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"></path><path d="M9 10h6M9 14h6M9 18h3"></path></svg>
+        Audits
+      </div>
+      <div onClick="{{ goChecklists }}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;font-size:14px;font-weight:600;{{ navChecklistsStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5-9-5Z"></path><path d="M3 12l9 5 9-5"></path><path d="M3 16l9 5 9-5"></path></svg>
+        Checklists
+      </div>
+      <div onClick="{{ goRoles }}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;font-size:14px;font-weight:600;{{ navRolesStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+        Roles &amp; Access
+      </div>
+    </div>
+    <div style="flex:1;"></div>
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:11px;cursor:pointer;font-size:13.5px;font-weight:600;color:{{ textMuted }};">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"></path><path d="M10 12h10"></path><path d="M17 8l4 4-4 4"></path></svg>
+      Log Out
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div style="flex:1;min-width:0;padding:32px 40px;">
+
+    <!-- DASHBOARD -->
+    <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="font-size:24px;font-weight:800;color:{{ textDark }};margin-bottom:4px;">Dashboard</div>
+        <div style="font-size:14px;color:{{ textMuted }};margin-bottom:28px;">Overview across all companies</div>
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:20px;margin-bottom:32px;">
+          <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:22px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+              <div style="font-size:14px;font-weight:700;color:{{ textDark }};">Attendance</div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div onClick="{{ prevDashboardWeek }}" style="width:28px;height:28px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textDark }};">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+                </div>
+                <div style="font-size:12.5px;font-weight:600;color:{{ textMuted }};min-width:90px;text-align:center;">{{ dashboardWeekLabel }}</div>
+                <div onClick="{{ nextDashboardWeek }}" style="width:28px;height:28px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textDark }};">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:14px;height:150px;">
+              <sc-for list="{{ attendanceChartBars }}" as="bar" hint-placeholder-count="7">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+                  <div style="font-size:11px;font-weight:700;color:{{ textDark }};">{{ bar.count }}</div>
+                  <div style="width:100%;max-width:34px;border-radius:8px 8px 3px 3px;background:{{ primary }};height:{{ bar.heightPx }};"></div>
+                  <div style="font-size:11px;color:{{ textMuted }};">{{ bar.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:22px;">
+            <div style="font-size:14px;font-weight:700;color:{{ textDark }};margin-bottom:18px;">Audit Status</div>
+            <div style="display:flex;align-items:flex-end;gap:14px;height:150px;">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+                <div style="font-size:11px;font-weight:700;color:{{ textDark }};">{{ auditStatusCounts.active }}</div>
+                <div style="width:100%;max-width:44px;border-radius:8px 8px 3px 3px;background:{{ orange }};height:{{ auditBarHeights.activeHeightPx }};"></div>
+                <div style="font-size:11px;color:{{ textMuted }};">Submit</div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+                <div style="font-size:11px;font-weight:700;color:{{ textDark }};">{{ auditStatusCounts.inProgress }}</div>
+                <div style="width:100%;max-width:44px;border-radius:8px 8px 3px 3px;background:#5C6900;height:{{ auditBarHeights.progressHeightPx }};"></div>
+                <div style="font-size:11px;color:{{ textMuted }};">Verify</div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
+                <div style="font-size:11px;font-weight:700;color:{{ textDark }};">{{ auditStatusCounts.completed }}</div>
+                <div style="width:100%;max-width:44px;border-radius:8px 8px 3px 3px;background:{{ primary }};height:{{ auditBarHeights.completedHeightPx }};"></div>
+                <div style="font-size:11px;color:{{ textMuted }};">Complete</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;padding:22px;margin-bottom:32px;">
+          <div style="font-size:14px;font-weight:700;color:{{ textDark }};margin-bottom:18px;">Employee Checklists</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
+            <sc-for list="{{ employeeChecklistRows }}" as="row" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;justify-content:space-between;background:{{ bg }};border-radius:10px;padding:10px 14px;">
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:{{ textDark }};">{{ row.name }}</div>
+                  <div style="font-size:11.5px;color:{{ textMuted }};">{{ row.company }}</div>
+                </div>
+                <div style="font-size:12px;font-weight:600;color:{{ textMuted }};">{{ row.summary }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="border:1px solid {{ border }};border-radius:12px;overflow:hidden;">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:{{ bg }};">
+                  <th style="padding:9px 12px;font-size:11px;color:{{ textMuted }};font-weight:700;text-align:left;">EMPLOYEE</th>
+                  <th style="padding:9px 12px;font-size:11px;color:{{ textMuted }};font-weight:700;text-align:left;">COMPANY</th>
+                  <th style="padding:9px 12px;font-size:11px;color:{{ textMuted }};font-weight:700;text-align:left;">SITE</th>
+                  <th style="padding:9px 12px;font-size:11px;color:{{ textMuted }};font-weight:700;text-align:left;">CLOCK IN</th>
+                  <th style="padding:9px 12px;font-size:11px;color:{{ textMuted }};font-weight:700;text-align:left;">CLOCK OUT</th>
+                  <th style="padding:9px 12px;font-size:11px;color:{{ textMuted }};font-weight:700;text-align:left;">CHECKLIST</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ checklistTableRows }}" as="ck" hint-placeholder-count="3">
+                  <tr style="border-top:1px solid {{ border }};">
+                    <td style="padding:9px 12px;font-size:12.5px;font-weight:600;color:{{ textDark }};">{{ ck.employee }}</td>
+                    <td style="padding:9px 12px;font-size:12.5px;color:{{ textMuted }};">{{ ck.company }}</td>
+                    <td style="padding:9px 12px;font-size:12.5px;color:{{ textMuted }};">{{ ck.site }}</td>
+                    <td style="padding:9px 12px;font-size:12.5px;color:{{ textMuted }};">{{ ck.clockIn }}</td>
+                    <td style="padding:9px 12px;font-size:12.5px;color:{{ textMuted }};">{{ ck.clockOut }}</td>
+                    <td style="padding:9px 12px;"><div style="display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:6px;{{ ck.statusBadgeStyle }}">{{ ck.statusLabel }}</div></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- PLACEHOLDER_COMPANIES_TAG -->
+    <!-- ROLES & ACCESS -->
+    <sc-if value="{{ isRoles }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+          <div>
+            <div style="font-size:24px;font-weight:800;color:{{ textDark }};margin-bottom:4px;">Roles &amp; Access</div>
+            <div style="font-size:14px;color:{{ textMuted }};">Control which pages each role can open in the App and the Dashboard</div>
+          </div>
+          <div onClick="{{ openAddRole }}" style="display:flex;align-items:center;gap:8px;background:{{ orange }};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+            New Role
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;overflow:hidden;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="background:{{ bg }};">
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;text-align:left;">ROLE</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;text-align:left;">DASHBOARD ACCESS</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;text-align:left;">APP ACCESS</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">EMPLOYEES</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+                <tr style="border-top:1px solid {{ border }};">
+                  <td style="padding:14px 20px;font-size:13.5px;font-weight:700;color:{{ textDark }};">{{ r.name }}</td>
+                  <td style="padding:14px 20px;font-size:12px;color:{{ textMuted }};max-width:220px;">{{ r.dashboardPagesDisplay }}</td>
+                  <td style="padding:14px 20px;font-size:12px;color:{{ textMuted }};max-width:220px;">{{ r.appPagesDisplay }}</td>
+                  <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};text-align:center;">{{ r.employeeCount }}</td>
+                  <td style="padding:14px 20px;">
+                    <div style="display:flex;gap:8px;">
+                      <div onClick="{{ r.openEdit }}" style="width:32px;height:32px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textDark }};" title="Edit">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                      </div>
+                      <div onClick="{{ r.deleteRole }}" style="width:32px;height:32px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:#C0392B;" title="Delete">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- COMPANIES -->
+    <sc-if value="{{ isCompanies }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+          <div>
+            <div style="font-size:24px;font-weight:800;color:{{ textDark }};margin-bottom:4px;">Companies</div>
+            <div style="font-size:14px;color:{{ textMuted }};">Register and manage client companies</div>
+          </div>
+          <div onClick="{{ openAddCompany }}" style="display:flex;align-items:center;gap:8px;padding:11px 18px;border-radius:11px;background:{{ orange }};color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+            Add Company
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;overflow:hidden;">
+          <table>
+            <thead>
+              <tr style="background:{{ bg }};">
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;"></th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">COMPANY</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">LOCATION</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">EMPLOYEES</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">STATUS</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ companies }}" as="c" hint-placeholder-count="3">
+                <tr style="border-top:1px solid {{ border }};">
+                  <td onClick="{{ c.toggleExpand }}" style="padding:14px 10px 14px 20px;cursor:pointer;width:20px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ textMuted }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.15s;{{ c.arrowStyle }}"><path d="M9 6l6 6-6 6"></path></svg>
+                  </td>
+                  <td onClick="{{ c.openDetail }}" style="padding:14px 20px;font-size:13.5px;font-weight:600;color:{{ textDark }};cursor:pointer;">{{ c.name }}</td>
+                  <td onClick="{{ c.openDetail }}" style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};cursor:pointer;">{{ c.location }}</td>
+                  <td onClick="{{ c.openDetail }}" style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};cursor:pointer;">{{ c.employeesCount }}</td>
+                  <td onClick="{{ c.openDetail }}" style="padding:14px 20px;cursor:pointer;"><div style="display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;{{ c.statusBadgeStyle }}">{{ c.status }}</div></td>
+                  <td style="padding:14px 20px;">
+                    <div style="display:flex;gap:8px;">
+                      <div onClick="{{ c.openAssignEmployee }}" style="width:32px;height:32px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textDark }};" title="Add Employee">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"></circle><path d="M2.5 19c1-3.5 4-5.2 6.5-5.2s5.5 1.7 6.5 5.2"></path><path d="M17 8v6M14 11h6"></path></svg>
+                      </div>
+                      <div onClick="{{ c.openEditCompany }}" style="width:32px;height:32px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textDark }};" title="Edit">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                      </div>
+                      <div onClick="{{ c.deleteCompany }}" style="width:32px;height:32px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:#C0392B;" title="Delete">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <sc-if value="{{ c.isExpanded }}" hint-placeholder-val="{{ false }}">
+                  <tr style="background:{{ bg }};">
+                    <td colspan="6" style="padding:12px 20px 16px 52px;">
+                      <div style="font-size:11px;font-weight:700;color:{{ textMuted }};margin-bottom:8px;">EMPLOYEES</div>
+                      <div style="display:flex;flex-direction:column;gap:6px;">
+                        <sc-for list="{{ c.companyEmployees }}" as="e" hint-placeholder-count="2">
+                          <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid {{ border }};border-radius:10px;padding:9px 14px;">
+                            <div>
+                              <div style="font-size:13px;font-weight:600;color:{{ textDark }};">{{ e.name }}</div>
+                              <div style="font-size:11.5px;color:{{ textMuted }};">{{ e.role }}</div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:12px;">
+                              <div style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:7px;background:{{ bg }};color:{{ textMuted }};">{{ e.checklistSummary }}</div>
+                              <div onClick="{{ e.removeFromCompany }}" style="width:28px;height:28px;border-radius:7px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:#C0392B;flex-shrink:0;" title="Delete">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+                              </div>
+                            </div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </td>
+                  </tr>
+                </sc-if>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- COMPANY DETAIL -->
+    <sc-if value="{{ isCompanyDetail }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+          <div onClick="{{ backFromCompanyDetail }}" style="cursor:pointer;color:{{ textDark }};">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M11 18l-6-6 6-6"></path></svg>
+          </div>
+          <div style="font-size:24px;font-weight:800;color:{{ textDark }};">{{ selectedCompanyDetail.name }}</div>
+        </div>
+        <div style="font-size:14px;color:{{ textMuted }};margin-bottom:24px;">{{ selectedCompanyDetail.location }}</div>
+
+        <div style="font-size:16px;font-weight:700;color:{{ textDark }};margin-bottom:12px;">Employees</div>
+        <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;overflow:hidden;margin-bottom:32px;">
+          <table>
+            <thead>
+              <tr style="background:{{ bg }};">
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">NAME</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">ROLE</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ selectedCompanyDetail.employees }}" as="e" hint-placeholder-count="2">
+                <tr style="border-top:1px solid {{ border }};">
+                  <td style="padding:14px 20px;font-size:13.5px;font-weight:600;color:{{ textDark }};">{{ e.name }}</td>
+                  <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ e.role }}</td>
+                  <td style="padding:14px 20px;"><div style="display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;{{ e.statusBadgeStyle }}">{{ e.status }}</div></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:16px;font-weight:700;color:{{ textDark }};">Daily Checklists</div>
+          <div style="display:flex;gap:8px;">
+            <div onClick="{{ openCreateChecklistTemplate }}" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:11px;background:{{ bg }};color:{{ textDark }};font-size:13px;font-weight:700;cursor:pointer;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+              Create Checklist
+            </div>
+            <div onClick="{{ openAddChecklist }}" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:11px;background:{{ orange }};color:#fff;font-size:13px;font-weight:700;cursor:pointer;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+              Assign Checklist
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <sc-for list="{{ selectedCompanyDetail.checklists }}" as="ck" hint-placeholder-count="2">
+            <div onClick="{{ ck.openDetail }}" style="background:#fff;border:1px solid {{ border }};border-radius:14px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <div>
+                <div style="font-size:13.5px;font-weight:700;color:{{ textDark }};margin-bottom:3px;">{{ ck.mainArea }}</div>
+                <div style="font-size:12px;color:{{ textMuted }};">{{ ck.employee }} · {{ ck.site }} · {{ ck.doneCount }}/{{ ck.subtasksCount }} subtasks</div>
+              </div>
+              <div style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;{{ ck.statusBadgeStyle }}">{{ ck.statusLabel }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- EMPLOYEES -->
+    <sc-if value="{{ isEmployees }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+          <div>
+            <div style="font-size:24px;font-weight:800;color:{{ textDark }};margin-bottom:4px;">Employees</div>
+            <div style="font-size:14px;color:{{ textMuted }};">Manage login credentials and company assignment</div>
+          </div>
+          <div onClick="{{ openAddEmployee }}" style="display:flex;align-items:center;gap:8px;padding:11px 18px;border-radius:11px;background:{{ orange }};color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+            Add Employee
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;overflow:hidden;">
+          <table>
+            <thead>
+              <tr style="background:{{ bg }};">
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">NAME</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">USERNAME</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">COMPANY</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">ROLE</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ employees }}" as="e" hint-placeholder-count="4">
+                <tr style="border-top:1px solid {{ border }};">
+                  <td style="padding:14px 20px;font-size:13.5px;font-weight:600;color:{{ textDark }};">{{ e.name }}</td>
+                  <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ e.username }}</td>
+                  <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ e.companiesDisplay }}</td>
+                  <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ e.role }}</td>
+                  <td style="padding:14px 20px;"><div style="display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;{{ e.statusBadgeStyle }}">{{ e.status }}</div></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ATTENDANCE -->
+    <sc-if value="{{ isAttendance }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="font-size:24px;font-weight:800;color:{{ textDark }};margin-bottom:4px;">Attendance</div>
+        <div style="font-size:14px;color:{{ textMuted }};margin-bottom:20px;">Clock in/out records across all companies</div>
+
+        <div style="display:flex;gap:6px;margin-bottom:18px;">
+          <div onClick="{{ setAttendanceTabDaily }}" style="padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;{{ attendanceTabDailyStyle }}">Daily</div>
+          <div onClick="{{ setAttendanceTabWeekly }}" style="padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;{{ attendanceTabWeeklyStyle }}">Weekly</div>
+        </div>
+
+        <sc-if value="{{ isAttendanceTabDaily }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:18px;">
+              <div onClick="{{ prevDay }}" style="width:36px;height:36px;border-radius:10px;background:#fff;border:1px solid {{ border }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textDark }};">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:{{ textDark }};min-width:220px;text-align:center;">{{ selectedDayLabel }}</div>
+              <div onClick="{{ nextDay }}" style="width:36px;height:36px;border-radius:10px;background:#fff;border:1px solid {{ border }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textDark }};">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;overflow:hidden;">
+              <table>
+                <thead>
+                  <tr style="background:{{ bg }};">
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">EMPLOYEE</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">COMPANY</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">CLOCK IN</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">CLOCK OUT</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">HOURS</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ dailyAttendance }}" as="a" hint-placeholder-count="3">
+                    <tr style="border-top:1px solid {{ border }};">
+                      <td style="padding:14px 20px;font-size:13.5px;font-weight:600;color:{{ textDark }};">{{ a.employee }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ a.company }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ a.clockIn }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ a.clockOut }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ a.hours }}</td>
+                      <td style="padding:14px 20px;"><div style="display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;{{ a.statusBadgeStyle }}">{{ a.status }}</div></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isAttendanceTabWeekly }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:18px;">
+              <div onClick="{{ prevWeek }}" style="width:36px;height:36px;border-radius:10px;background:#fff;border:1px solid {{ border }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textDark }};">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:{{ textDark }};min-width:220px;text-align:center;">{{ selectedWeekLabel }}</div>
+              <div onClick="{{ nextWeek }}" style="width:36px;height:36px;border-radius:10px;background:#fff;border:1px solid {{ border }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textDark }};">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;overflow:hidden;">
+              <table>
+                <thead>
+                  <tr style="background:{{ bg }};">
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">EMPLOYEE</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">COMPANY</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">DATE</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">CLOCK IN</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">CLOCK OUT</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">HOURS</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ weeklyAttendance }}" as="a" hint-placeholder-count="4">
+                    <tr style="border-top:1px solid {{ border }};">
+                      <td style="padding:14px 20px;font-size:13.5px;font-weight:600;color:{{ textDark }};">{{ a.employee }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ a.company }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ a.date }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ a.clockIn }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ a.clockOut }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ a.hours }}</td>
+                      <td style="padding:14px 20px;"><div style="display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;{{ a.statusBadgeStyle }}">{{ a.status }}</div></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- AUDITS -->
+    <sc-if value="{{ isAudits }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+          <div>
+            <div style="font-size:24px;font-weight:800;color:{{ textDark }};margin-bottom:4px;">Audits</div>
+            <div style="font-size:14px;color:{{ textMuted }};">Showing audits from the last 2 months</div>
+          </div>
+          <div onClick="{{ openAddAudit }}" style="display:flex;align-items:center;gap:8px;padding:11px 18px;border-radius:11px;background:{{ orange }};color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+            Add Audit
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;overflow:hidden;">
+          <table>
+            <thead>
+              <tr style="background:{{ bg }};">
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">DATE</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">COMPANY</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">EMPLOYEE</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">AUDIT</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">SUB-AUDITS</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">TOTAL MARKS</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">STATUS</th>
+                <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ audits }}" as="a" hint-placeholder-count="4">
+                <tr style="border-top:1px solid {{ border }};">
+                  <td onClick="{{ a.openDetail }}" style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};cursor:pointer;">{{ a.date }}</td>
+                  <td onClick="{{ a.openDetail }}" style="padding:14px 20px;font-size:13.5px;font-weight:600;color:{{ textDark }};cursor:pointer;">{{ a.company }}</td>
+                  <td onClick="{{ a.openDetail }}" style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};cursor:pointer;">{{ a.employee }}</td>
+                  <td onClick="{{ a.openDetail }}" style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};cursor:pointer;">{{ a.titles }}</td>
+                  <td onClick="{{ a.openDetail }}" style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};cursor:pointer;">{{ a.ratedCount }}/{{ a.subAuditsCount }}</td>
+                  <td onClick="{{ a.openDetail }}" style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};cursor:pointer;">{{ a.totalMarksDisplay }}</td>
+                  <td onClick="{{ a.openDetail }}" style="padding:14px 20px;cursor:pointer;"><div style="display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;{{ a.statusBadgeStyle }}">{{ a.statusLabel }}</div></td>
+                  <td style="padding:14px 20px;">
+                    <div style="display:flex;gap:8px;">
+                      <div onClick="{{ a.openDetail }}" style="width:32px;height:32px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textDark }};">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                      </div>
+                      <div onClick="{{ a.deleteAudit }}" style="width:32px;height:32px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:#C0392B;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- CHECKLISTS -->
+    <sc-if value="{{ isChecklists }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="font-size:24px;font-weight:800;color:{{ textDark }};margin-bottom:4px;">Checklists</div>
+        <div style="font-size:14px;color:{{ textMuted }};margin-bottom:20px;">Create checklist templates, assign them to employees, and review daily submissions</div>
+
+        <div style="display:flex;gap:6px;margin-bottom:20px;">
+          <div onClick="{{ setChecklistTabSubmitted }}" style="padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;{{ checklistTabSubmittedStyle }}">Daily Submitted Checklist</div>
+          <div onClick="{{ setChecklistTabCreate }}" style="padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;{{ checklistTabCreateStyle }}">Create Checklist</div>
+          <div onClick="{{ setChecklistTabAssign }}" style="padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;{{ checklistTabAssignStyle }}">Assign Checklist</div>
+        </div>
+
+        <sc-if value="{{ isChecklistTabSubmitted }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;overflow:hidden;">
+            <table>
+              <thead>
+                <tr style="background:{{ bg }};">
+                  <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">DATE</th>
+                  <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">MAIN AREAS</th>
+                  <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">COMPANY</th>
+                  <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">EMPLOYEE</th>
+                  <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">SUBTASKS</th>
+                  <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">NOTES</th>
+                  <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">IMAGES</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ submittedChecklists }}" as="c" hint-placeholder-count="2">
+                  <tr onClick="{{ c.openDetail }}" style="border-top:1px solid {{ border }};cursor:pointer;">
+                    <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ c.assignedDate }}</td>
+                    <td style="padding:14px 20px;font-size:13.5px;font-weight:600;color:{{ textDark }};">{{ c.areaNames }}</td>
+                    <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ c.company }}</td>
+                    <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ c.employee }}</td>
+                    <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ c.doneCount }}/{{ c.subtasksCount }}</td>
+                    <td style="padding:14px 20px;font-size:13px;color:{{ textMuted }};">{{ c.notesPreview }}</td>
+                    <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ c.images }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isChecklistTabCreate }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+              <div onClick="{{ openCreateChecklistTemplate }}" style="display:flex;align-items:center;gap:8px;padding:11px 18px;border-radius:11px;background:{{ orange }};color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                New Checklist Template
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;overflow:hidden;">
+              <table>
+                <thead>
+                  <tr style="background:{{ bg }};">
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">COMPANY</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">SITE</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">SUBTASKS</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ checklistTemplates }}" as="t" hint-placeholder-count="3">
+                    <tr style="border-top:1px solid {{ border }};">
+                      <td onClick="{{ t.openDetail }}" style="padding:14px 20px;font-size:13.5px;font-weight:600;color:{{ textDark }};cursor:pointer;">{{ t.company }}</td>
+                      <td onClick="{{ t.openDetail }}" style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};cursor:pointer;">{{ t.site }}</td>
+                      <td onClick="{{ t.openDetail }}" style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};cursor:pointer;">{{ t.subtasksCount }}</td>
+                      <td style="padding:14px 20px;">
+                        <div style="display:flex;gap:8px;">
+                          <div onClick="{{ t.openEdit }}" style="width:32px;height:32px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textDark }};">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                          </div>
+                          <div onClick="{{ t.deleteTemplate }}" style="width:32px;height:32px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:#C0392B;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isChecklistTabAssign }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+              <div onClick="{{ openAddChecklist }}" style="display:flex;align-items:center;gap:8px;padding:11px 18px;border-radius:11px;background:{{ orange }};color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                Assign Checklist
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid {{ border }};border-radius:16px;overflow:hidden;">
+              <table>
+                <thead>
+                  <tr style="background:{{ bg }};">
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">DATE</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">MAIN AREAS</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">COMPANY</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">EMPLOYEE</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">SITE</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">SUBTASKS</th>
+                    <th style="padding:12px 20px;font-size:12px;color:{{ textMuted }};font-weight:700;">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ assignedChecklists }}" as="c" hint-placeholder-count="3">
+                    <tr onClick="{{ c.openDetail }}" style="border-top:1px solid {{ border }};cursor:pointer;">
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ c.assignedDate }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;font-weight:600;color:{{ textDark }};">{{ c.areaNames }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ c.company }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ c.employee }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ c.site }}</td>
+                      <td style="padding:14px 20px;font-size:13.5px;color:{{ textMuted }};">{{ c.doneCount }}/{{ c.subtasksCount }}</td>
+                      <td style="padding:14px 20px;"><div style="display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;{{ c.statusBadgeStyle }}">{{ c.statusLabel }}</div></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <!-- ROLE MODAL -->
+  <sc-if value="{{ showRoleModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(22,32,46,0.45);display:flex;align-items:center;justify-content:center;z-index:100;">
+      <div style="background:#fff;border-radius:20px;padding:28px;width:640px;max-width:94vw;max-height:88vh;overflow:auto;">
+        <div style="font-size:18px;font-weight:800;color:{{ textDark }};margin-bottom:20px;">{{ roleModalTitle }}</div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">ROLE NAME</div>
+          <input value="{{ newRoleName }}" onChange="{{ onNewRoleName }}" placeholder="e.g. Supervisor" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:{{ textMuted }};margin-bottom:8px;">DASHBOARD — PAGES &amp; FUNCTIONS</div>
+            <div style="display:flex;flex-direction:column;gap:10px;max-height:340px;overflow:auto;padding-right:4px;">
+              <sc-for list="{{ newRoleDashboardAreas }}" as="area" hint-placeholder-count="8">
+                <div style="border:1px solid {{ border }};border-radius:10px;padding:8px 10px;">
+                  <div onClick="{{ area.toggleAll }}" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:4px;">
+                    <div style="width:15px;height:15px;border-radius:4px;border:2px solid {{ border }};flex-shrink:0;display:flex;align-items:center;justify-content:center;{{ area.allCheckStyle }}">
+                      <sc-if value="{{ area.allChecked }}" hint-placeholder-val="{{ false }}">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+                      </sc-if>
+                    </div>
+                    <div style="font-size:12.5px;font-weight:700;color:{{ textDark }};">{{ area.label }}</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:2px;padding-left:22px;">
+                    <sc-for list="{{ area.functions }}" as="fn" hint-placeholder-count="2">
+                      <div onClick="{{ fn.toggle }}" style="display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer;">
+                        <div style="width:14px;height:14px;border-radius:4px;border:2px solid {{ border }};flex-shrink:0;display:flex;align-items:center;justify-content:center;{{ fn.checkStyle }}">
+                          <sc-if value="{{ fn.checked }}" hint-placeholder-val="{{ false }}">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+                          </sc-if>
+                        </div>
+                        <div style="font-size:11.5px;color:{{ textMuted }};">{{ fn.label }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:{{ textMuted }};margin-bottom:8px;">APP — PAGES &amp; FUNCTIONS</div>
+            <div style="display:flex;flex-direction:column;gap:10px;max-height:340px;overflow:auto;padding-right:4px;">
+              <sc-for list="{{ newRoleAppAreas }}" as="area" hint-placeholder-count="6">
+                <div style="border:1px solid {{ border }};border-radius:10px;padding:8px 10px;">
+                  <div onClick="{{ area.toggleAll }}" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:4px;">
+                    <div style="width:15px;height:15px;border-radius:4px;border:2px solid {{ border }};flex-shrink:0;display:flex;align-items:center;justify-content:center;{{ area.allCheckStyle }}">
+                      <sc-if value="{{ area.allChecked }}" hint-placeholder-val="{{ false }}">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+                      </sc-if>
+                    </div>
+                    <div style="font-size:12.5px;font-weight:700;color:{{ textDark }};">{{ area.label }}</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:2px;padding-left:22px;">
+                    <sc-for list="{{ area.functions }}" as="fn" hint-placeholder-count="2">
+                      <div onClick="{{ fn.toggle }}" style="display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer;">
+                        <div style="width:14px;height:14px;border-radius:4px;border:2px solid {{ border }};flex-shrink:0;display:flex;align-items:center;justify-content:center;{{ fn.checkStyle }}">
+                          <sc-if value="{{ fn.checked }}" hint-placeholder-val="{{ false }}">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+                          </sc-if>
+                        </div>
+                        <div style="font-size:11.5px;color:{{ textMuted }};">{{ fn.label }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:22px;">
+          <div onClick="{{ closeRoleModal }}" style="flex:1;text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ bg }};color:{{ textDark }};">Cancel</div>
+          <div onClick="{{ submitRole }}" style="flex:1;text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ orange }};color:#fff;">{{ roleModalSubmitLabel }}</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ADD COMPANY MODAL -->
+  <sc-if value="{{ showAddCompanyModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(22,32,46,0.45);display:flex;align-items:center;justify-content:center;z-index:100;">
+      <div style="background:#fff;border-radius:20px;padding:28px;width:440px;max-width:92vw;">
+        <div style="font-size:18px;font-weight:800;color:{{ textDark }};margin-bottom:20px;">{{ addCompanyModalTitle }}</div>
+        <form onSubmit="{{ submitNewCompany }}" style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">COMPANY NAME</div>
+            <input value="{{ newCompanyName }}" onChange="{{ onNewCompanyName }}" placeholder="e.g. Acme Corp" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">LOCATION</div>
+            <input value="{{ newCompanyLocation }}" onChange="{{ onNewCompanyLocation }}" placeholder="City, State" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">STATUS</div>
+            <div style="display:flex;gap:8px;">
+              <div onClick="{{ setNewCompanyStatusActive }}" style="flex:1;text-align:center;padding:10px 0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;{{ newCompanyStatusActiveStyle }}">Active</div>
+              <div onClick="{{ setNewCompanyStatusInactive }}" style="flex:1;text-align:center;padding:10px 0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;{{ newCompanyStatusInactiveStyle }}">Inactive</div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">VISIT DAYS &amp; TIME</div>
+            <div style="border:1px solid {{ border }};border-radius:12px;padding:12px;">
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+                <sc-for list="{{ companyDayLabels }}" as="cell" hint-placeholder-count="28">
+                  <div onClick="{{ cell.toggle }}" style="aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;{{ cell.cellStyle }}">{{ cell.letter }}</div>
+                </sc-for>
+              </div>
+              <div style="margin-top:12px;">
+                <input type="time" value="{{ newCompanyTime }}" onChange="{{ onNewCompanyTime }}" style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid {{ border }};font-size:13.5px;font-family:Inter,sans-serif;outline:none;" />
+              </div>
+              <sc-if value="{{ isCompanyDateTimeConfirmed }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:10px;font-size:12.5px;color:{{ primary }};font-weight:600;">Confirmed: {{ companyDateTimeConfirmedLabel }}</div>
+              </sc-if>
+              <sc-if value="{{ canConfirmCompanyDateTime }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ confirmCompanyDateTime }}" style="margin-top:10px;text-align:center;padding:10px 0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:{{ bg }};color:{{ primary }};">Confirm Date &amp; Time</div>
+              </sc-if>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <div onClick="{{ closeAddCompany }}" style="flex:1;text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ bg }};color:{{ textDark }};">Cancel</div>
+            <button type="submit" style="flex:1;padding:13px 0;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;background:{{ orange }};color:#fff;">{{ addCompanySubmitLabel }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ASSIGN EMPLOYEE TO COMPANY MODAL -->
+  <sc-if value="{{ showAssignEmployeeModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(22,32,46,0.45);display:flex;align-items:center;justify-content:center;z-index:100;">
+      <div style="background:#fff;border-radius:20px;padding:28px;width:420px;max-width:92vw;max-height:85vh;overflow:auto;">
+        <div style="font-size:18px;font-weight:800;color:{{ textDark }};margin-bottom:4px;">Add Employee to {{ assignEmployeeCompanyName }}</div>
+        <div style="font-size:13px;color:{{ textMuted }};margin-bottom:16px;">Select from existing employees</div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;border:1px solid {{ border }};border-radius:11px;padding:8px;margin-bottom:16px;">
+          <sc-for list="{{ assignEmployeePickerOptions }}" as="opt" hint-placeholder-count="4">
+            <div onClick="{{ opt.toggle }}" style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;">
+              <div style="width:18px;height:18px;border-radius:5px;border:2px solid {{ border }};flex-shrink:0;display:flex;align-items:center;justify-content:center;{{ opt.checkStyle }}">
+                <sc-if value="{{ opt.isChecked }}" hint-placeholder-val="{{ false }}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+                </sc-if>
+              </div>
+              <div style="font-size:13.5px;color:{{ textDark }};">{{ opt.name }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div onClick="{{ closeAssignEmployee }}" style="flex:1;text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ bg }};color:{{ textDark }};">Cancel</div>
+          <div onClick="{{ submitAssignEmployee }}" style="flex:1;text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ orange }};color:#fff;">Add</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ADD EMPLOYEE MODAL -->
+  <sc-if value="{{ showAddEmployeeModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(22,32,46,0.45);display:flex;align-items:center;justify-content:center;z-index:100;">
+      <div style="background:#fff;border-radius:20px;padding:28px;width:460px;max-width:92vw;">
+        <div style="font-size:18px;font-weight:800;color:{{ textDark }};margin-bottom:20px;">Add Employee</div>
+        <form onSubmit="{{ submitNewEmployee }}" style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">FULL NAME</div>
+            <input value="{{ newEmployeeName }}" onChange="{{ onNewEmployeeName }}" placeholder="e.g. Priya Nair" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">ROLE</div>
+            <input value="{{ newEmployeeRole }}" onChange="{{ onNewEmployeeRole }}" placeholder="Field Auditor" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">ACCESS ROLE</div>
+            <select value="{{ newEmployeeAccessRoleId }}" onChange="{{ onNewEmployeeAccessRoleId }}" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;background:#fff;">
+              <sc-for list="{{ roleOptions }}" as="opt" hint-placeholder-count="3">
+                <option value="{{ opt.id }}">{{ opt.name }}</option>
+              </sc-for>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">USERNAME (LOGIN EMAIL)</div>
+            <input value="{{ newEmployeeUsername }}" onChange="{{ onNewEmployeeUsername }}" placeholder="name@company.com" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+          </div>
+          <div style="display:flex;gap:10px;">
+            <div style="flex:1;">
+              <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">PASSWORD</div>
+              <input type="password" value="{{ newEmployeePassword }}" onChange="{{ onNewEmployeePassword }}" placeholder="••••••••" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">CONFIRM PASSWORD</div>
+              <input type="password" value="{{ newEmployeeConfirmPassword }}" onChange="{{ onNewEmployeeConfirmPassword }}" placeholder="••••••••" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+            </div>
+          </div>
+          <sc-if value="{{ newEmployeeError }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12.5px;color:#B3261E;">{{ newEmployeeError }}</div>
+          </sc-if>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <div onClick="{{ closeAddEmployee }}" style="flex:1;text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ bg }};color:{{ textDark }};">Cancel</div>
+            <button type="submit" style="flex:1;padding:13px 0;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;background:{{ orange }};color:#fff;">Create Login</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ASSIGN CHECKLIST MODAL -->
+  <sc-if value="{{ showAddChecklistModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(22,32,46,0.45);display:flex;align-items:center;justify-content:center;z-index:100;">
+      <div style="background:#fff;border-radius:20px;padding:28px;width:440px;max-width:92vw;">
+        <div style="font-size:18px;font-weight:800;color:{{ textDark }};margin-bottom:20px;">Assign Checklist</div>
+        <form onSubmit="{{ submitNewChecklist }}" style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">COMPANY</div>
+            <select value="{{ newChecklistCompany }}" onChange="{{ onNewChecklistCompany }}" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;background:#fff;">
+              <sc-for list="{{ assignCompanyOptions }}" as="opt" hint-placeholder-count="2">
+                <option value="{{ opt.name }}">{{ opt.name }}</option>
+              </sc-for>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">SITE</div>
+            <select value="{{ newChecklistSite }}" onChange="{{ onNewChecklistSite }}" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;background:#fff;">
+              <sc-for list="{{ assignSiteOptions }}" as="opt" hint-placeholder-count="1">
+                <option value="{{ opt.site }}">{{ opt.site }}</option>
+              </sc-for>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">DATE</div>
+            <input type="date" value="{{ newChecklistDate }}" onChange="{{ onNewChecklistDate }}" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:13.5px;font-family:Inter,sans-serif;outline:none;" />
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">ASSIGN TO EMPLOYEE(S)</div>
+            <div style="display:flex;flex-direction:column;gap:6px;max-height:150px;overflow:auto;border:1px solid {{ border }};border-radius:11px;padding:8px;">
+              <sc-for list="{{ assignEmployeeOptions }}" as="opt" hint-placeholder-count="4">
+                <div onClick="{{ opt.toggle }}" style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;">
+                  <div style="width:18px;height:18px;border-radius:5px;border:2px solid {{ border }};flex-shrink:0;display:flex;align-items:center;justify-content:center;{{ opt.checkStyle }}">
+                    <sc-if value="{{ opt.isChecked }}" hint-placeholder-val="{{ false }}">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+                    </sc-if>
+                  </div>
+                  <div style="font-size:13.5px;color:{{ textDark }};">{{ opt.name }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <sc-if value="{{ assignSelectedTemplatePreview.areas.length }}" hint-placeholder-val="{{ false }}">
+            <div style="background:{{ bg }};border-radius:12px;padding:12px 14px;">
+              <div style="font-size:11px;font-weight:700;color:{{ textMuted }};margin-bottom:8px;">CHECKLIST DETAILS</div>
+              <sc-for list="{{ assignSelectedTemplatePreview.areas }}" as="area" hint-placeholder-count="1">
+                <div style="margin-bottom:10px;">
+                  <div style="font-size:13px;font-weight:700;color:{{ textDark }};margin-bottom:4px;">{{ area.mainArea }}</div>
+                  <sc-for list="{{ area.subtasks }}" as="st" hint-placeholder-count="2">
+                    <div style="font-size:12.5px;color:{{ textMuted }};padding-left:8px;">• {{ st.text }}</div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">ADDITIONAL NOTE</div>
+            <textarea value="{{ newChecklistNote }}" onChange="{{ onNewChecklistNote }}" placeholder="Any instructions for the employee" rows="3" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:13.5px;font-family:Inter,sans-serif;outline:none;resize:none;"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <div onClick="{{ closeAddChecklist }}" style="flex:1;text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ bg }};color:{{ textDark }};">Cancel</div>
+            <button type="submit" style="flex:1;padding:13px 0;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;background:{{ orange }};color:#fff;">Assign</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- CREATE CHECKLIST TEMPLATE MODAL -->
+  <sc-if value="{{ showCreateChecklistModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(22,32,46,0.45);display:flex;align-items:center;justify-content:center;z-index:100;">
+      <div style="background:#fff;border-radius:20px;padding:28px;width:480px;max-width:92vw;max-height:88vh;overflow:auto;">
+        <div style="font-size:18px;font-weight:800;color:{{ textDark }};margin-bottom:20px;">{{ createChecklistModalTitle }}</div>
+        <form onSubmit="{{ submitNewChecklistTemplate }}" style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">COMPANY</div>
+            <select value="{{ newTemplateCompany }}" onChange="{{ onNewTemplateCompany }}" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;background:#fff;">
+              <sc-for list="{{ companyOptions }}" as="opt" hint-placeholder-count="3">
+                <option value="{{ opt.name }}">{{ opt.name }}</option>
+              </sc-for>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">SITE</div>
+            <input value="{{ newTemplateSite }}" onChange="{{ onNewTemplateSite }}" placeholder="Site A" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;" />
+          </div>
+
+          <sc-for list="{{ newTemplateAreas }}" as="area" hint-placeholder-count="1">
+            <div style="border:1px solid {{ border }};border-radius:14px;padding:14px;background:{{ bg }};">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+                <input value="{{ area.mainArea }}" onChange="{{ area.onMainAreaChange }}" placeholder="Main area, e.g. Room Clean" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid {{ border }};font-size:13.5px;font-weight:600;font-family:Inter,sans-serif;outline:none;background:#fff;" />
+                <sc-if value="{{ area.canRemoveArea }}" hint-placeholder-val="{{ false }}">
+                  <div onClick="{{ area.removeArea }}" style="width:34px;height:34px;border-radius:9px;background:#fff;border:1px solid {{ border }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textMuted }};flex-shrink:0;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                  </div>
+                </sc-if>
+              </div>
+              <div style="font-size:11px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">SUB TASKS</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <sc-for list="{{ area.subtasks }}" as="st" hint-placeholder-count="2">
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <input value="{{ st.text }}" onChange="{{ st.onChange }}" placeholder="e.g. Vacuum carpets" style="flex:1;padding:9px 11px;border-radius:9px;border:1px solid {{ border }};font-size:13px;font-family:Inter,sans-serif;outline:none;background:#fff;" />
+                    <sc-if value="{{ st.canRemove }}" hint-placeholder-val="{{ false }}">
+                      <div onClick="{{ st.remove }}" style="width:30px;height:30px;border-radius:8px;background:#fff;border:1px solid {{ border }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textMuted }};flex-shrink:0;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <div onClick="{{ area.addSubtask }}" style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:{{ primary }};cursor:pointer;padding:2px 0;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                  Add sub task
+                </div>
+              </div>
+              <div style="font-size:11px;font-weight:600;color:{{ textMuted }};margin:10px 0 6px;">ADDITIONAL NOTE</div>
+              <textarea value="{{ area.note }}" onChange="{{ area.onNoteChange }}" placeholder="Instructions for this main area" rows="2" style="width:100%;padding:9px 11px;border-radius:9px;border:1px solid {{ border }};font-size:13px;font-family:Inter,sans-serif;outline:none;resize:none;background:#fff;margin-bottom:8px;"></textarea>
+              <div style="font-size:11px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">IMAGE</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <div onClick="{{ area.addImage }}" style="display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:8px;border:1.5px dashed {{ border }};cursor:pointer;color:{{ textMuted }};font-size:12px;font-weight:600;background:#fff;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><circle cx="12" cy="13.5" r="3.5"></circle></svg>
+                  Add Image
+                </div>
+                <sc-for list="{{ area.imagePlaceholders }}" as="img" hint-placeholder-count="0">
+                  <div style="width:32px;height:32px;border-radius:7px;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 5px,#EDF0F5 5px,#EDF0F5 10px);"></div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <div onClick="{{ addTemplateArea }}" style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:{{ primary }};cursor:pointer;padding:4px 0;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+            Add another main area
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <div onClick="{{ closeCreateChecklistTemplate }}" style="flex:1;text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ bg }};color:{{ textDark }};">Cancel</div>
+            <button type="submit" style="flex:1;padding:13px 0;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;background:{{ orange }};color:#fff;">{{ createChecklistSubmitLabel }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- TEMPLATE DETAIL MODAL -->
+  <sc-if value="{{ showTemplateDetailModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(22,32,46,0.45);display:flex;align-items:center;justify-content:center;z-index:100;">
+      <div style="background:#fff;border-radius:20px;padding:28px;width:480px;max-width:92vw;max-height:85vh;overflow:auto;">
+        <div style="font-size:18px;font-weight:800;color:{{ textDark }};margin-bottom:4px;">{{ selectedTemplateDetail.company }}</div>
+        <div style="font-size:13px;color:{{ textMuted }};margin-bottom:20px;">{{ selectedTemplateDetail.site }} · {{ selectedTemplateDetail.subtasksCount }} subtasks</div>
+        <sc-for list="{{ selectedTemplateDetail.areas }}" as="area" hint-placeholder-count="1">
+          <div style="margin-bottom:16px;">
+            <div style="font-size:13.5px;font-weight:700;color:{{ textDark }};margin-bottom:8px;">{{ area.mainArea }}</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <sc-for list="{{ area.subtasks }}" as="st" hint-placeholder-count="2">
+                <div style="font-size:13px;color:{{ textDark }};background:{{ bg }};border-radius:9px;padding:9px 12px;">{{ st.text }}</div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div onClick="{{ closeTemplateDetail }}" style="text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ bg }};color:{{ textDark }};margin-top:8px;">Close</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- CHECKLIST DETAIL MODAL -->
+  <sc-if value="{{ showChecklistDetailModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(22,32,46,0.45);display:flex;align-items:center;justify-content:center;z-index:100;">
+      <div style="background:#fff;border-radius:20px;padding:28px;width:480px;max-width:92vw;max-height:85vh;overflow:auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div style="font-size:18px;font-weight:800;color:{{ textDark }};">{{ selectedChecklist.areaNames }}</div>
+          <div style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;{{ selectedChecklist.statusBadgeStyle }}">{{ selectedChecklist.statusLabel }}</div>
+        </div>
+        <div style="font-size:12.5px;color:{{ textMuted }};margin-bottom:2px;">{{ selectedChecklist.assignedDate }} · {{ selectedChecklist.company }}</div>
+        <div style="font-size:13px;color:{{ textMuted }};margin-bottom:20px;">{{ selectedChecklist.employee }} · {{ selectedChecklist.site }}</div>
+
+        <sc-for list="{{ selectedChecklist.areas }}" as="area" hint-placeholder-count="1">
+          <div style="margin-bottom:16px;">
+            <div style="font-size:13.5px;font-weight:700;color:{{ textDark }};margin-bottom:8px;">{{ area.mainArea }}</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <sc-for list="{{ area.subtasks }}" as="t" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:18px;height:18px;border-radius:5px;border:2px solid {{ border }};flex-shrink:0;{{ t.checkStyle }}"></div>
+                  <div style="font-size:13.5px;color:{{ textDark }};">{{ t.text }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+
+        <sc-if value="{{ selectedChecklist.hasAdminNote }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12px;font-weight:700;color:{{ textMuted }};margin-bottom:6px;">ADMIN NOTE</div>
+          <div style="background:{{ bg }};border-radius:12px;padding:12px 14px;font-size:13px;color:{{ textDark }};margin-bottom:16px;">{{ selectedChecklist.adminNote }}</div>
+        </sc-if>
+
+        <div style="font-size:12px;font-weight:700;color:{{ textMuted }};margin-bottom:8px;">SUBMITTED NOTES</div>
+        <sc-if value="{{ selectedChecklist.hasNotes }}" hint-placeholder-val="{{ false }}">
+          <div style="background:{{ bg }};border-radius:12px;padding:14px 16px;font-size:13.5px;color:{{ textDark }};line-height:1.5;margin-bottom:20px;">{{ selectedChecklist.notes }}</div>
+        </sc-if>
+        <sc-if value="{{ selectedChecklist.hasNoNotes }}" hint-placeholder-val="{{ true }}">
+          <div style="background:{{ bg }};border-radius:12px;padding:14px 16px;font-size:13px;color:{{ textMuted }};font-style:italic;margin-bottom:20px;">No notes submitted yet.</div>
+        </sc-if>
+
+        <div style="font-size:12px;font-weight:700;color:{{ textMuted }};margin-bottom:8px;">SUBMITTED IMAGES</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px;">
+          <sc-for list="{{ selectedChecklist.imagePlaceholders }}" as="img" hint-placeholder-count="0">
+            <div style="width:72px;height:72px;border-radius:12px;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 7px,#EDF0F5 7px,#EDF0F5 14px);display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:9px;color:{{ textMuted }};">img</div>
+          </sc-for>
+          <sc-if value="{{ selectedChecklist.hasNoImages }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:13px;color:{{ textMuted }};font-style:italic;">No images submitted yet.</div>
+          </sc-if>
+        </div>
+
+        <div onClick="{{ closeChecklistDetail }}" style="text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ bg }};color:{{ textDark }};">Close</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ADD AUDIT MODAL -->
+  <sc-if value="{{ showAddAuditModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(22,32,46,0.45);display:flex;align-items:center;justify-content:center;z-index:100;">
+      <div style="background:#fff;border-radius:20px;padding:28px;width:460px;max-width:92vw;max-height:88vh;overflow:auto;">
+        <div style="font-size:18px;font-weight:800;color:{{ textDark }};margin-bottom:20px;">Add Audit</div>
+        <form onSubmit="{{ submitNewAudit }}" style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">COMPANY</div>
+            <select value="{{ newAuditCompany }}" onChange="{{ onNewAuditCompany }}" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;background:#fff;">
+              <sc-for list="{{ companyOptions }}" as="opt" hint-placeholder-count="3">
+                <option value="{{ opt.name }}">{{ opt.name }}</option>
+              </sc-for>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">EMPLOYEE</div>
+            <select value="{{ newAuditEmployee }}" onChange="{{ onNewAuditEmployee }}" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;background:#fff;">
+              <sc-for list="{{ auditEmployeeOptions }}" as="opt" hint-placeholder-count="3">
+                <option value="{{ opt.name }}">{{ opt.name }}</option>
+              </sc-for>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">DATE</div>
+            <input type="date" value="{{ newAuditDate }}" onChange="{{ onNewAuditDate }}" style="width:100%;padding:12px 14px;border-radius:11px;border:1px solid {{ border }};font-size:13.5px;font-family:Inter,sans-serif;outline:none;" />
+          </div>
+
+          <sc-for list="{{ newAuditMainAudits }}" as="ma" hint-placeholder-count="1">
+            <div style="border:1px solid {{ border }};border-radius:14px;padding:14px;background:{{ bg }};">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+                <input value="{{ ma.title }}" onChange="{{ ma.onTitleChange }}" placeholder="Main audit, e.g. Fire Safety Audit" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid {{ border }};font-size:13.5px;font-weight:600;font-family:Inter,sans-serif;outline:none;background:#fff;" />
+                <sc-if value="{{ ma.canRemoveMain }}" hint-placeholder-val="{{ false }}">
+                  <div onClick="{{ ma.removeMain }}" style="width:34px;height:34px;border-radius:9px;background:#fff;border:1px solid {{ border }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textMuted }};flex-shrink:0;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                  </div>
+                </sc-if>
+              </div>
+              <div style="font-size:11px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">SUB-AUDITS</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <sc-for list="{{ ma.subAudits }}" as="it" hint-placeholder-count="2">
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <input value="{{ it.text }}" onChange="{{ it.onChange }}" placeholder="e.g. Fire extinguishers accessible" style="flex:1;padding:9px 11px;border-radius:9px;border:1px solid {{ border }};font-size:13px;font-family:Inter,sans-serif;outline:none;background:#fff;" />
+                    <sc-if value="{{ it.canRemove }}" hint-placeholder-val="{{ false }}">
+                      <div onClick="{{ it.remove }}" style="width:30px;height:30px;border-radius:8px;background:#fff;border:1px solid {{ border }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ textMuted }};flex-shrink:0;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <div onClick="{{ ma.addSubAudit }}" style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:{{ primary }};cursor:pointer;padding:2px 0;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                  Add sub-audit
+                </div>
+              </div>
+              <div style="font-size:11px;font-weight:600;color:{{ textMuted }};margin:12px 0 6px;">ADDITIONAL NOTE</div>
+              <textarea value="{{ ma.comment }}" onChange="{{ ma.onCommentChange }}" placeholder="Notes for this main audit" rows="2" style="width:100%;padding:9px 11px;border-radius:9px;border:1px solid {{ border }};font-size:13px;font-family:Inter,sans-serif;outline:none;resize:none;background:#fff;margin-bottom:8px;"></textarea>
+              <div style="font-size:11px;font-weight:600;color:{{ textMuted }};margin-bottom:6px;">IMAGE</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <div onClick="{{ ma.addImage }}" style="display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:8px;border:1.5px dashed {{ border }};cursor:pointer;color:{{ textMuted }};font-size:12px;font-weight:600;background:#fff;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><circle cx="12" cy="13.5" r="3.5"></circle></svg>
+                  Add Image
+                </div>
+                <sc-for list="{{ ma.imagePlaceholders }}" as="img" hint-placeholder-count="0">
+                  <div style="width:32px;height:32px;border-radius:7px;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 5px,#EDF0F5 5px,#EDF0F5 10px);"></div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <div onClick="{{ addAuditMainField }}" style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:{{ primary }};cursor:pointer;padding:4px 0;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+            Add another main audit
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <div onClick="{{ closeAddAudit }}" style="flex:1;text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ bg }};color:{{ textDark }};">Cancel</div>
+            <button type="submit" style="flex:1;padding:13px 0;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;background:{{ orange }};color:#fff;">Save Audit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- AUDIT DETAIL MODAL -->
+  <sc-if value="{{ showAuditDetailModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(22,32,46,0.45);display:flex;align-items:center;justify-content:center;z-index:100;">
+      <div style="background:#fff;border-radius:20px;padding:28px;width:760px;max-width:94vw;max-height:88vh;overflow:auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div style="font-size:18px;font-weight:800;color:{{ textDark }};">{{ selectedAuditDetail.company }}</div>
+          <div style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;{{ selectedAuditDetail.statusBadgeStyle }}">{{ selectedAuditDetail.statusLabel }}</div>
+        </div>
+        <div style="font-size:12.5px;color:{{ textMuted }};margin-bottom:2px;">{{ selectedAuditDetail.date }}</div>
+        <div style="font-size:13px;color:{{ textMuted }};margin-bottom:18px;">{{ selectedAuditDetail.employee }}</div>
+
+        <sc-for list="{{ selectedAuditDetail.mainAudits }}" as="ma" hint-placeholder-count="1">
+          <div style="margin-bottom:22px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+              <div style="font-size:14px;font-weight:800;color:{{ textDark }};flex:1;">{{ ma.title }}</div>
+              <sc-if value="{{ ma.canRemoveMain }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ ma.removeMain }}" style="width:28px;height:28px;border-radius:8px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:#C0392B;flex-shrink:0;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                </div>
+              </sc-if>
+            </div>
+            <div style="border:1px solid {{ border }};border-radius:14px;overflow:hidden;margin-top:10px;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="background:{{ bg }};">
+                <th style="padding:10px 12px;font-size:11px;color:{{ textMuted }};font-weight:700;text-align:left;">Subsection</th>
+                <th style="padding:10px 6px;font-size:11px;color:{{ textMuted }};font-weight:700;text-align:center;">Not Satisfactory</th>
+                <th style="padding:10px 6px;font-size:11px;color:{{ textMuted }};font-weight:700;text-align:center;">Satisfactory</th>
+                <th style="padding:10px 6px;font-size:11px;color:{{ textMuted }};font-weight:700;text-align:center;">Good</th>
+                <th style="padding:10px 8px;font-size:11px;color:{{ textMuted }};font-weight:700;text-align:center;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ ma.subAudits }}" as="t" hint-placeholder-count="3">
+                <tr style="border-top:1px solid {{ border }};">
+                  <td style="padding:10px 12px;">
+                    <input value="{{ t.text }}" onChange="{{ t.onTextChange }}" placeholder="Subsection item" style="width:100%;padding:7px 9px;border-radius:8px;border:1px solid {{ border }};font-size:12.5px;font-family:Inter,sans-serif;outline:none;" />
+                  </td>
+                  <td style="padding:10px 6px;text-align:center;">
+                    <div onClick="{{ t.setNotSatisfactory }}" style="{{ t.cellNotSatisfactory }}">
+                      <sc-if value="{{ t.isNotSatisfactory }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></sc-if>
+                    </div>
+                  </td>
+                  <td style="padding:10px 6px;text-align:center;">
+                    <div onClick="{{ t.setSatisfactory }}" style="{{ t.cellSatisfactory }}">
+                      <sc-if value="{{ t.isSatisfactory }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></sc-if>
+                    </div>
+                  </td>
+                  <td style="padding:10px 6px;text-align:center;">
+                    <div onClick="{{ t.setGood }}" style="{{ t.cellGood }}">
+                      <sc-if value="{{ t.isGood }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></sc-if>
+                    </div>
+                  </td>
+                  <td style="padding:10px 8px;text-align:center;">
+                    <sc-if value="{{ t.canRemoveSub }}" hint-placeholder-val="{{ false }}">
+                      <div onClick="{{ t.removeSubAudit }}" style="width:26px;height:26px;border-radius:7px;background:{{ bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;color:#C0392B;margin:0 auto;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                      </div>
+                    </sc-if>
+                  </td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+            </div>
+            <div onClick="{{ ma.addSubAudit }}" style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:{{ primary }};cursor:pointer;padding:8px 0 0;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+              Add sub-audit
+            </div>
+            <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
+              <div style="font-size:12px;font-weight:600;color:{{ textMuted }};white-space:nowrap;">Main Audit Marks</div>
+              <input type="number" min="0" value="{{ ma.marks }}" onChange="{{ ma.onMarksChange }}" placeholder="—" style="width:64px;padding:7px 6px;border-radius:8px;border:1px solid {{ border }};font-size:13px;font-family:Inter,sans-serif;outline:none;text-align:center;font-weight:700;color:{{ textDark }};" />
+            </div>
+            <div style="margin-top:10px;">
+              <input value="{{ ma.comment }}" onChange="{{ ma.onCommentChange }}" placeholder="Additional notes for this audit" style="width:100%;padding:9px 12px;border-radius:9px;border:1px solid {{ border }};font-size:13px;font-family:Inter,sans-serif;outline:none;margin-bottom:8px;" />
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                <div onClick="{{ ma.addImage }}" style="display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:8px;border:1.5px dashed {{ border }};cursor:pointer;color:{{ textMuted }};font-size:12px;font-weight:600;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><circle cx="12" cy="13.5" r="3.5"></circle></svg>
+                  Add Image
+                </div>
+                <sc-for list="{{ ma.imagePlaceholders }}" as="img" hint-placeholder-count="0">
+                  <div style="width:32px;height:32px;border-radius:7px;background:repeating-linear-gradient(45deg,#E3E7EE,#E3E7EE 5px,#EDF0F5 5px,#EDF0F5 10px);"></div>
+                </sc-for>
+                <sc-if value="{{ ma.hasNoImages }}" hint-placeholder-val="{{ true }}">
+                  <div style="font-size:11.5px;color:{{ textMuted }};font-style:italic;">No images yet.</div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;background:{{ bg }};border-radius:12px;padding:14px 16px;margin-bottom:22px;">
+          <div style="font-size:13.5px;font-weight:700;color:{{ textDark }};">Final Marks</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="number" min="0" value="{{ selectedAuditDetail.finalMarks }}" onChange="{{ selectedAuditDetail.onFinalMarksChange }}" placeholder="—" style="width:64px;padding:8px 6px;border-radius:8px;border:1px solid {{ border }};font-size:14px;font-family:Inter,sans-serif;outline:none;text-align:center;font-weight:800;color:{{ primary }};" />
+            <div style="font-size:14px;font-weight:700;color:{{ textMuted }};">/ {{ selectedAuditDetail.maxMarks }}</div>
+          </div>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;color:{{ textMuted }};margin-bottom:8px;">SEND AUDIT RESULTS</div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:130px;overflow:auto;border:1px solid {{ border }};border-radius:11px;padding:8px;margin-bottom:10px;">
+          <sc-for list="{{ sendAuditRecipientOptions }}" as="opt" hint-placeholder-count="3">
+            <div onClick="{{ opt.toggle }}" style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;">
+              <div style="width:18px;height:18px;border-radius:5px;border:2px solid {{ border }};flex-shrink:0;display:flex;align-items:center;justify-content:center;{{ opt.checkStyle }}">
+                <sc-if value="{{ opt.isChecked }}" hint-placeholder-val="{{ false }}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+                </sc-if>
+              </div>
+              <div style="font-size:13.5px;color:{{ textDark }};">{{ opt.name }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ hasSentTo }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:11.5px;color:{{ textMuted }};margin-bottom:10px;">{{ sentToDisplay }}</div>
+        </sc-if>
+        <div onClick="{{ submitSendAudit }}" style="text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ orange }};color:#fff;margin-bottom:10px;opacity:{{ sendAuditOpacity }};">Send Results</div>
+
+        <div onClick="{{ closeAuditDetail }}" style="text-align:center;padding:13px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;background:{{ bg }};color:{{ textDark }};">Close</div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  colors = { primary: '#0E62D1', darkBlue: '#034581', green: '#B7D400', orange: '#FF7A1A', bg: '#F5F7FA', border: '#E4E8EF', textDark: '#16202E', textMuted: '#6E7887' };
+
+  permissionSchema = {
+    dashboard: [
+      { key: 'dashboard', label: 'Dashboard', functions: [{ key: 'view', label: 'View overview' }] },
+      { key: 'companies', label: 'Companies', functions: [{ key: 'view', label: 'View' }, { key: 'create', label: 'Create' }, { key: 'edit', label: 'Edit' }, { key: 'delete', label: 'Delete' }, { key: 'assignEmployees', label: 'Assign employees' }] },
+      { key: 'employees', label: 'Employees', functions: [{ key: 'view', label: 'View' }, { key: 'create', label: 'Create' }, { key: 'assignAccessRole', label: 'Assign access role' }] },
+      { key: 'attendance', label: 'Attendance', functions: [{ key: 'view', label: 'View daily/weekly' }] },
+      { key: 'audits', label: 'Audits', functions: [{ key: 'view', label: 'View' }, { key: 'createEdit', label: 'Create/edit' }, { key: 'delete', label: 'Delete' }, { key: 'enterMarks', label: 'Enter marks' }, { key: 'sendResults', label: 'Send results' }] },
+      { key: 'checklists', label: 'Checklists', functions: [{ key: 'view', label: 'View' }, { key: 'create', label: 'Create templates' }, { key: 'assign', label: 'Assign' }, { key: 'delete', label: 'Delete' }] },
+      { key: 'communication', label: 'Communication', functions: [{ key: 'view', label: 'View' }, { key: 'respond', label: 'Respond' }] },
+      { key: 'roles', label: 'Roles & Access', functions: [{ key: 'view', label: 'View' }, { key: 'manage', label: 'Create/edit roles' }] },
+    ],
+    app: [
+      { key: 'home', label: 'Home', functions: [{ key: 'view', label: 'View sites' }] },
+      { key: 'attendance', label: 'Attendance', functions: [{ key: 'clockInOut', label: 'Clock in/out' }, { key: 'viewHistory', label: 'View history' }] },
+      { key: 'checklists', label: 'Checklists', functions: [{ key: 'view', label: 'View assigned' }, { key: 'submit', label: 'Submit' }] },
+      { key: 'audits', label: 'Audits', functions: [{ key: 'view', label: 'View assigned' }] },
+      { key: 'communication', label: 'Communication', functions: [{ key: 'view', label: 'View' }, { key: 'send', label: 'Send messages' }] },
+      { key: 'profile', label: 'Profile', functions: [{ key: 'view', label: 'View' }, { key: 'changePassword', label: 'Change password' }] },
+    ],
+  };
+  buildPerms(dashKeys, appKeys) {
+    const build = (areas, enabled) => Object.fromEntries(areas.map(a => [a.key, Object.fromEntries(a.functions.map(f => [f.key, enabled.includes(a.key)]))]));
+    return { dashboard: build(this.permissionSchema.dashboard, dashKeys), app: build(this.permissionSchema.app, appKeys) };
+  }
+  emptyPerms() { return this.buildPerms([], []); }
+
+  state = {
+    view: 'dashboard',
+    attendanceTab: 'daily',
+    attendanceDayOffset: 0,
+    attendanceWeekOffset: 0,
+    dashboardWeekOffset: 0,
+    checklistTab: 'submitted',
+    companies: [
+      { id: 1, name: 'Acme Corp', location: 'Denver, CO', employeesCount: 24, status: 'Active' },
+      { id: 2, name: 'Bright Facilities', location: 'Austin, TX', employeesCount: 12, status: 'Active' },
+      { id: 3, name: 'Northgate Services', location: 'Chicago, IL', employeesCount: 8, status: 'Inactive' },
+    ],
+    employees: [
+      { id: 1, name: 'Jordan Reyes', username: 'jordan.reyes@acme.com', password: 'Macro@2026', companies: ['Acme Corp'], role: 'Field Auditor', accessRoleId: 3, status: 'Active' },
+      { id: 2, name: 'Priya Nair', username: 'priya.nair@acme.com', password: 'Macro@2026', companies: ['Acme Corp'], role: 'Site Supervisor', accessRoleId: 2, status: 'Active' },
+      { id: 3, name: 'Sam Cole', username: 'sam.cole@acme.com', password: 'Macro@2026', companies: ['Acme Corp'], role: 'Field Auditor', accessRoleId: 3, status: 'On Leave' },
+      { id: 4, name: 'Lena Ortiz', username: 'lena.ortiz@brightfac.com', password: 'Macro@2026', companies: ['Bright Facilities'], role: 'Field Auditor', accessRoleId: 3, status: 'Active' },
+      { id: 5, name: 'Marcus Webb', username: 'marcus.webb@brightfac.com', password: 'Macro@2026', companies: ['Bright Facilities'], role: 'Technician', accessRoleId: 3, status: 'Active' },
+      { id: 6, name: 'Dana Brooks', username: 'dana.brooks@northgate.com', password: 'Macro@2026', companies: ['Northgate Services'], role: 'Field Auditor', accessRoleId: 3, status: 'Inactive' },
+    ],
+    editingCompanyId: null,
+    expandedCompanyId: null,
+    roles: [
+      { id: 1, name: 'Admin', permissions: this.buildPerms(['dashboard', 'companies', 'employees', 'attendance', 'audits', 'checklists', 'communication', 'roles'], ['communication']) },
+      { id: 2, name: 'Supervisor', permissions: this.buildPerms(['dashboard', 'attendance', 'audits', 'checklists', 'communication'], ['home', 'attendance', 'checklists', 'audits', 'communication', 'profile']) },
+      { id: 3, name: 'Field Employee', permissions: this.buildPerms([], ['home', 'attendance', 'checklists', 'audits', 'communication', 'profile']) },
+    ],
+    showRoleModal: false,
+    editingRoleId: null,
+    newRole: { name: '', permissions: this.emptyPerms() },
+    showAssignEmployeeModal: false,
+    assignEmployeeCompanyId: null,
+    assignEmployeeSelection: [],
+    audits: [
+      { id: 1, company: 'Acme Corp', employee: 'Jordan Reyes', date: 'Jul 19', status: 'submit', finalMarks: '', sentTo: [],
+        mainAudits: [
+          { id: 1, title: 'Fire Safety Audit', comment: '', images: 0, marks: '',
+            subAudits: [{ id: 1, text: 'Fire extinguishers accessible', result: '' }, { id: 2, text: 'Emergency exits clear', result: '' }, { id: 3, text: 'Smoke detectors working', result: '' }] },
+        ] },
+      { id: 2, company: 'Acme Corp', employee: 'Priya Nair', date: 'Jul 17', status: 'verify', finalMarks: '', sentTo: [],
+        mainAudits: [
+          { id: 1, title: 'Equipment Inspection', comment: 'All guards intact.', images: 1, marks: 90,
+            subAudits: [{ id: 1, text: 'Machinery guards in place', result: 'good' }, { id: 2, text: 'Calibration logs up to date', result: '' }] },
+        ] },
+      { id: 3, company: 'Acme Corp', employee: 'Jordan Reyes', date: 'Jul 10', status: 'complete', finalMarks: '', sentTo: [],
+        mainAudits: [
+          { id: 1, title: 'Monthly Cleaning Audit', comment: '', images: 0, marks: 92,
+            subAudits: [{ id: 1, text: 'Floors clean and dry', result: 'good' }, { id: 2, text: 'Waste bins emptied', result: 'satisfactory' }, { id: 3, text: 'Windows streak-free', result: 'good' }] },
+        ] },
+      { id: 4, company: 'Northgate Services', employee: 'Dana Brooks', date: 'Jul 5', status: 'complete', finalMarks: '', sentTo: [],
+        mainAudits: [
+          { id: 1, title: 'Security Walkthrough', comment: '', images: 0, marks: 78,
+            subAudits: [{ id: 1, text: 'Perimeter fencing secure', result: 'satisfactory' }, { id: 2, text: 'CCTV operational', result: 'satisfactory' }] },
+        ] },
+    ],
+    selectedAuditId: null,
+    sendAuditRecipients: [],
+    showAddAuditModal: false,
+    newAudit2: { company: '', employee: '', date: '', mainAudits: [{ title: '', subAudits: [''] }] },
+    checklistTemplates: [
+      { id: 1, company: 'Acme Corp', site: 'Site A',
+        areas: [
+          { id: 1, mainArea: 'Room Clean', note: '', images: 0, subtasks: [{ id: 1, text: 'Vacuum carpets' }, { id: 2, text: 'Empty trash bins' }, { id: 3, text: 'Sanitize surfaces' }] },
+        ] },
+      { id: 2, company: 'Bright Facilities', site: 'Site B',
+        areas: [
+          { id: 1, mainArea: 'Lighting Upgrade', note: '', images: 0, subtasks: [{ id: 1, text: 'Replace hallway bulbs' }, { id: 2, text: 'Test emergency lighting' }] },
+        ] },
+      { id: 3, company: 'Northgate Services', site: 'Site C',
+        areas: [
+          { id: 1, mainArea: 'Roof Leak Inspection', note: '', images: 0, subtasks: [{ id: 1, text: 'Inspect roof membrane' }, { id: 2, text: 'Check gutters' }] },
+        ] },
+    ],
+    checklists: [
+      { id: 1, templateId: 2, company: 'Bright Facilities', site: 'Site B', employee: 'Priya Nair', assignedDate: 'Jul 8',
+        areas: [
+          { id: 1, mainArea: 'Lighting Upgrade', subtasks: [{ id: 1, text: 'Replace hallway bulbs', done: true }, { id: 2, text: 'Test emergency lighting', done: true }] },
+        ],
+        status: 'submitted', images: 4, notes: 'All fixtures replaced, tested working. No further issues found on final walkthrough.' },
+    ],
+    selectedChecklistId: null,
+    selectedTemplateId: null,
+    selectedCompanyForDetailId: null,
+    showCreateChecklistModal: false,
+    editingTemplateId: null,
+    newChecklistTemplate: { company: '', site: '', areas: [{ mainArea: '', note: '', images: 0, subtasks: [''] }] },
+    showAddChecklistModal: false,
+    newChecklist: { company: '', site: '', date: '', employees: [], note: '' },
+    showAddCompanyModal: false,
+    newCompany: { name: '', location: '', status: 'Active', selectedDays: [], time: '', confirmed: false },
+    companyCalendarWeekOffset: 0,
+    showAddEmployeeModal: false,
+    newEmployee: { name: '', company: 'Acme Corp', role: '', username: '', password: '', confirmPassword: '' },
+    newEmployeeError: '',
+  };
+
+  attendanceData = [
+    { employee: 'Jordan Reyes', company: 'Acme Corp', date: 'Jul 19', clockIn: '8:02 AM', clockOut: '5:05 PM', hours: '9.0h', status: 'Complete' },
+    { employee: 'Priya Nair', company: 'Acme Corp', date: 'Jul 19', clockIn: '7:58 AM', clockOut: '4:40 PM', hours: '8.7h', status: 'Complete' },
+    { employee: 'Lena Ortiz', company: 'Bright Facilities', date: 'Jul 19', clockIn: '9:10 AM', clockOut: '—', hours: '—', status: 'In Progress' },
+    { employee: 'Marcus Webb', company: 'Bright Facilities', date: 'Jul 18', clockIn: '8:15 AM', clockOut: '5:00 PM', hours: '8.75h', status: 'Complete' },
+    { employee: 'Jordan Reyes', company: 'Acme Corp', date: 'Jul 18', clockIn: '8:05 AM', clockOut: '5:00 PM', hours: '8.9h', status: 'Complete' },
+    { employee: 'Priya Nair', company: 'Acme Corp', date: 'Jul 17', clockIn: '8:00 AM', clockOut: '4:45 PM', hours: '8.75h', status: 'Complete' },
+    { employee: 'Dana Brooks', company: 'Northgate Services', date: 'Jul 16', clockIn: '7:55 AM', clockOut: '4:30 PM', hours: '8.6h', status: 'Complete' },
+    { employee: 'Jordan Reyes', company: 'Acme Corp', date: 'Jul 15', clockIn: '8:10 AM', clockOut: '5:05 PM', hours: '8.9h', status: 'Complete' },
+    { employee: 'Sam Cole', company: 'Acme Corp', date: 'Jul 13', clockIn: '8:00 AM', clockOut: '4:00 PM', hours: '8.0h', status: 'Complete' },
+    { employee: 'Marcus Webb', company: 'Bright Facilities', date: 'Jul 12', clockIn: '8:20 AM', clockOut: '5:10 PM', hours: '8.8h', status: 'Complete' },
+  ];
+
+  badge(bg, color) { return `background:${bg};color:${color};`; }
+  statusBadgeStyle(status) {
+    const s = (status || '').toLowerCase();
+    if (s === 'complete' || s === 'completed' || s === 'submitted') return this.badge('rgba(183,212,0,0.18)', '#5C6900');
+    if (s === 'inactive' || s === 'on leave') return this.badge('#EEF0F3', '#6E7887');
+    if (s === 'pending' || s === 'active-tab' || s === 'submit' || s === 'active') return this.badge('rgba(14,98,209,0.12)', '#0E62D1');
+    if (s === 'in progress' || s === 'verify') return this.badge('rgba(255,122,26,0.15)', '#B35A10');
+    return this.badge('#EEF0F3', '#6E7887');
+  }
+
+  renderVals() {
+    const s = this.state;
+    const c = this.colors;
+    const isDashboard = s.view === 'dashboard';
+    const isCompanies = s.view === 'companies';
+    const isRoles = s.view === 'roles';
+    const isEmployees = s.view === 'employees';
+    const isAttendance = s.view === 'attendance';
+    const isAudits = s.view === 'audits';
+    const isChecklists = s.view === 'checklists';
+    const isCompanyDetail = s.view === 'companyDetail';
+
+    const navStyle = (active) => active ? `background:${c.bg};color:${c.primary};` : `color:${c.textMuted};`;
+
+    const companies = s.companies.map(comp => ({ ...comp, employeesCount: s.employees.filter(e => e.companies.includes(comp.name)).length, statusBadgeStyle: this.statusBadgeStyle(comp.status), openDetail: () => this.setState({ selectedCompanyForDetailId: comp.id, view: 'companyDetail' }),
+      openEditCompany: () => this.setState({ showAddCompanyModal: true, editingCompanyId: comp.id, newCompany: { name: comp.name, location: comp.location, status: comp.status, selectedDays: comp.visitDays || [], time: comp.visitTime || '', confirmed: !!(comp.visitDays && comp.visitDays.length) } }),
+      deleteCompany: () => this.setState({ companies: s.companies.filter(x => x.id !== comp.id), employees: s.employees.map(e => ({ ...e, companies: e.companies.filter(n => n !== comp.name) })) }),
+      openAssignEmployee: () => this.setState({ showAssignEmployeeModal: true, assignEmployeeCompanyId: comp.id, assignEmployeeSelection: [] }),
+      isExpanded: s.expandedCompanyId === comp.id,
+      toggleExpand: () => this.setState({ expandedCompanyId: s.expandedCompanyId === comp.id ? null : comp.id }),
+      arrowStyle: s.expandedCompanyId === comp.id ? 'transform:rotate(90deg);' : '',
+      companyEmployees: s.employees.filter(e => e.companies.includes(comp.name)).map(e => {
+        const empChecklists = s.checklists.filter(ck => ck.employee === e.name && ck.company === comp.name);
+        return {
+          ...e,
+          removeFromCompany: () => this.setState({ employees: s.employees.map(emp => emp.id === e.id ? { ...emp, companies: emp.companies.filter(n => n !== comp.name) } : emp) }),
+          checklistSummary: empChecklists.length ? `${empChecklists.filter(ck => ck.status === 'submitted').length}/${empChecklists.length} checklists submitted` : 'No checklists',
+          hasChecklists: empChecklists.length > 0,
+        };
+      }),
+    }));
+    const employees = s.employees.map(e => ({ ...e, statusBadgeStyle: this.statusBadgeStyle(e.status), companiesDisplay: e.companies.length ? e.companies.join(', ') : '—' }));
+    const attendance = this.attendanceData.map(a => ({ ...a, statusBadgeStyle: this.statusBadgeStyle(a.status) }));
+    const monthMap = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+    const parseAttDate = (label) => {
+      const [mon, day] = label.split(' ');
+      return new Date(2026, monthMap[mon], Number(day));
+    };
+    const fmtDate = (d) => d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    const fmtShort = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const baseDate = new Date(2026, 6, 19);
+    const selectedDay = new Date(baseDate); selectedDay.setDate(baseDate.getDate() + s.attendanceDayOffset);
+    const dailyAttendance = this.attendanceData.filter(a => parseAttDate(a.date).toDateString() === selectedDay.toDateString()).map(a => ({ ...a, statusBadgeStyle: this.statusBadgeStyle(a.status) }));
+    const weekAnchor = new Date(baseDate); weekAnchor.setDate(baseDate.getDate() + s.attendanceWeekOffset * 7);
+    const weekStart = new Date(weekAnchor); weekStart.setDate(weekAnchor.getDate() - weekAnchor.getDay());
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+    const weeklyAttendance = this.attendanceData.filter(a => { const d = parseAttDate(a.date); return d >= weekStart && d <= weekEnd; }).map(a => ({ ...a, statusBadgeStyle: this.statusBadgeStyle(a.status) }));
+    const resultMark = (result) => result === 'good' ? 4 : result === 'satisfactory' ? 3 : result === 'not_satisfactory' ? 1 : null;
+    const auditCutoff = new Date(baseDate); auditCutoff.setMonth(auditCutoff.getMonth() - 2);
+    const parseAuditDate = (label) => { if (label === 'Today') return new Date(baseDate); const [mon, day] = label.split(' '); return monthMap[mon] !== undefined ? new Date(2026, monthMap[mon], Number(day)) : new Date(baseDate); };
+    const audits = s.audits.filter(a => parseAuditDate(a.date) >= auditCutoff).map(a => {
+      const allSub = a.mainAudits.reduce((acc, ma) => acc.concat(ma.subAudits), []);
+      return {
+        ...a,
+        titles: a.mainAudits.map(ma => ma.title).join(', '),
+        subAuditsCount: allSub.length,
+        ratedCount: allSub.filter(t => t.result).length,
+        statusLabel: a.status.replace(/\b\w/g, ch => ch.toUpperCase()),
+        statusBadgeStyle: this.statusBadgeStyle(a.status === 'submit' ? 'pending' : a.status),
+        totalMarksDisplay: (a.finalMarks !== '' && a.finalMarks !== null && a.finalMarks !== undefined) ? `${a.finalMarks} / 100` : `— / 100`,
+        openDetail: () => this.setState({ selectedAuditId: a.id }),
+        deleteAudit: () => this.setState({ audits: s.audits.filter(x => x.id !== a.id) }),
+      };
+    });
+    const selectedAuditRaw = s.audits.find(x => x.id === s.selectedAuditId) || null;
+    const showAuditDetailModal = !!selectedAuditRaw;
+    const selectedAuditDetail = selectedAuditRaw ? (() => {
+      return {
+        ...selectedAuditRaw,
+        statusLabel: selectedAuditRaw.status.replace(/\b\w/g, ch => ch.toUpperCase()),
+        statusBadgeStyle: this.statusBadgeStyle(selectedAuditRaw.status === 'submit' ? 'pending' : selectedAuditRaw.status),
+        maxMarks: 100,
+        finalMarks: selectedAuditRaw.finalMarks,
+        onFinalMarksChange: (e) => {
+          let v = e.target.value;
+          v = v === '' ? '' : Math.max(0, Number(v));
+          this.setState({ audits: s.audits.map(x => x.id === selectedAuditRaw.id ? { ...x, finalMarks: v } : x) });
+        },
+        totalMarksDisplay: (selectedAuditRaw.finalMarks !== '' && selectedAuditRaw.finalMarks !== null && selectedAuditRaw.finalMarks !== undefined) ? `${selectedAuditRaw.finalMarks} / 100` : `— / 100`,
+        mainAudits: selectedAuditRaw.mainAudits.map(ma => ({
+          ...ma,
+          hasNoImages: ma.images === 0,
+          imagePlaceholders: Array.from({ length: ma.images }),
+          canRemoveMain: selectedAuditRaw.mainAudits.length > 1,
+          removeMain: () => this.setState({ audits: s.audits.map(x => x.id === selectedAuditRaw.id ? { ...x, mainAudits: x.mainAudits.filter(m => m.id !== ma.id) } : x) }),
+          onCommentChange: (e) => {
+            const val = e.target.value;
+            this.setState({ audits: s.audits.map(x => x.id === selectedAuditRaw.id ? { ...x, mainAudits: x.mainAudits.map(m => m.id === ma.id ? { ...m, comment: val } : m) } : x) });
+          },
+          onMarksChange: (e) => {
+            let v = e.target.value;
+            v = v === '' ? '' : Math.max(0, Number(v));
+            this.setState({ audits: s.audits.map(x => x.id === selectedAuditRaw.id ? { ...x, mainAudits: x.mainAudits.map(m => m.id === ma.id ? { ...m, marks: v } : m) } : x) });
+          },
+          addImage: () => this.setState({ audits: s.audits.map(x => x.id === selectedAuditRaw.id ? { ...x, mainAudits: x.mainAudits.map(m => m.id === ma.id ? { ...m, images: m.images + 1 } : m) } : x) }),
+          addSubAudit: () => this.setState({
+            audits: s.audits.map(x => x.id === selectedAuditRaw.id ? { ...x, mainAudits: x.mainAudits.map(m => m.id === ma.id ? { ...m, subAudits: [...m.subAudits, { id: (m.subAudits[m.subAudits.length - 1]?.id || 0) + 1, text: '', result: '' }] } : m) } : x),
+          }),
+          subAudits: ma.subAudits.map(t => {
+            const cellStyle = (active) => `width:30px;height:30px;border:2px solid ${active ? c.primary : c.border};border-radius:7px;background:${active ? c.primary : '#fff'};display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 auto;`;
+            const setResult = (val) => this.setState({ audits: s.audits.map(x => x.id === selectedAuditRaw.id ? { ...x, mainAudits: x.mainAudits.map(m => m.id === ma.id ? { ...m, subAudits: m.subAudits.map(st => st.id === t.id ? { ...st, result: val } : st) } : m) } : x) });
+            return {
+              ...t,
+              cellNotSatisfactory: cellStyle(t.result === 'not_satisfactory'),
+              cellSatisfactory: cellStyle(t.result === 'satisfactory'),
+              cellGood: cellStyle(t.result === 'good'),
+              isNotSatisfactory: t.result === 'not_satisfactory',
+              isSatisfactory: t.result === 'satisfactory',
+              isGood: t.result === 'good',
+              setNotSatisfactory: () => setResult('not_satisfactory'),
+              setSatisfactory: () => setResult('satisfactory'),
+              setGood: () => setResult('good'),
+              onTextChange: (e) => {
+                const val = e.target.value;
+                this.setState({ audits: s.audits.map(x => x.id === selectedAuditRaw.id ? { ...x, mainAudits: x.mainAudits.map(m => m.id === ma.id ? { ...m, subAudits: m.subAudits.map(st => st.id === t.id ? { ...st, text: val } : st) } : m) } : x) });
+              },
+              removeSubAudit: () => this.setState({ audits: s.audits.map(x => x.id === selectedAuditRaw.id ? { ...x, mainAudits: x.mainAudits.map(m => m.id === ma.id ? { ...m, subAudits: m.subAudits.filter(st => st.id !== t.id) } : m) } : x) }),
+              canRemoveSub: ma.subAudits.length > 1,
+            };
+          }),
+        })),
+      };
+    })() : { company: '', employee: '', date: '', totalMarksDisplay: '', maxMarks: 0, statusLabel: '', statusBadgeStyle: '', mainAudits: [] };
+    const checklistTemplates = s.checklistTemplates.map(t => ({
+      ...t,
+      areasCount: t.areas.length,
+      subtasksCount: t.areas.reduce((sum, ar) => sum + ar.subtasks.length, 0),
+      areaNames: t.areas.map(ar => ar.mainArea).join(', '),
+      label: `${t.areas.map(ar => ar.mainArea).join(', ')} — ${t.company} · ${t.site}`,
+      openDetail: () => this.setState({ selectedTemplateId: t.id }),
+      openEdit: () => {
+        this.setState({
+          showCreateChecklistModal: true,
+          editingTemplateId: t.id,
+          newChecklistTemplate: {
+            company: t.company, site: t.site,
+            areas: t.areas.map(ar => ({ mainArea: ar.mainArea, note: ar.note || '', images: ar.images || 0, subtasks: ar.subtasks.map(st => st.text) })),
+          },
+        });
+      },
+      deleteTemplate: () => this.setState({ checklistTemplates: s.checklistTemplates.filter(x => x.id !== t.id) }),
+    }));
+    const selectedTemplateRaw = s.checklistTemplates.find(x => x.id === s.selectedTemplateId) || null;
+    const showTemplateDetailModal = !!selectedTemplateRaw;
+    const selectedTemplateDetail = selectedTemplateRaw ? {
+      ...selectedTemplateRaw,
+      subtasksCount: selectedTemplateRaw.areas.reduce((sum, ar) => sum + ar.subtasks.length, 0),
+    } : { company: '', site: '', areas: [], subtasksCount: 0 };
+    const checklists = s.checklists.map(ck => ({
+      ...ck,
+      areaNames: ck.areas.map(ar => ar.mainArea).join(', '),
+      subtasksCount: ck.areas.reduce((sum, ar) => sum + ar.subtasks.length, 0),
+      doneCount: ck.areas.reduce((sum, ar) => sum + ar.subtasks.filter(t => t.done).length, 0),
+      statusLabel: ck.status === 'submitted' ? 'Submitted' : 'Pending Review',
+      statusBadgeStyle: this.statusBadgeStyle(ck.status === 'pending' ? 'pending' : 'submitted'),
+      openDetail: () => this.setState({ selectedChecklistId: ck.id }),
+    }));
+    const employeeOptions = s.employees.filter(e => !s.newChecklist.company || e.companies.includes(s.newChecklist.company)).map(e => ({ name: e.name }));
+
+    const selectedCompanyDetailRaw = s.companies.find(x => x.id === s.selectedCompanyForDetailId) || null;
+    const selectedCompanyDetail = selectedCompanyDetailRaw ? {
+      ...selectedCompanyDetailRaw,
+      employees: s.employees.filter(e => e.companies.includes(selectedCompanyDetailRaw.name)).map(e => ({ ...e, statusBadgeStyle: this.statusBadgeStyle(e.status) })),
+      checklists: s.checklists.filter(ck => ck.company === selectedCompanyDetailRaw.name).map(ck => ({
+        ...ck,
+        areaNames: ck.areas.map(ar => ar.mainArea).join(', '),
+        subtasksCount: ck.areas.reduce((sum, ar) => sum + ar.subtasks.length, 0),
+        doneCount: ck.areas.reduce((sum, ar) => sum + ar.subtasks.filter(t => t.done).length, 0),
+        statusLabel: ck.status === 'submitted' ? 'Submitted' : 'Pending Review',
+        statusBadgeStyle: this.statusBadgeStyle(ck.status === 'pending' ? 'pending' : 'submitted'),
+        openDetail: () => this.setState({ selectedChecklistId: ck.id }),
+      })),
+    } : { name: '', location: '', employeesCount: 0, employees: [], checklists: [] };
+    const selectedChecklistRaw = s.checklists.find(x => x.id === s.selectedChecklistId) || null;
+    const showChecklistDetailModal = !!selectedChecklistRaw;
+    const selectedChecklist = selectedChecklistRaw ? {
+      ...selectedChecklistRaw,
+      areaNames: selectedChecklistRaw.areas.map(ar => ar.mainArea).join(', '),
+      statusLabel: selectedChecklistRaw.status === 'submitted' ? 'Submitted' : 'Pending Review',
+      statusBadgeStyle: this.statusBadgeStyle(selectedChecklistRaw.status === 'pending' ? 'pending' : 'submitted'),
+      areas: selectedChecklistRaw.areas.map(ar => ({
+        ...ar,
+        subtasks: ar.subtasks.map(t => ({ ...t, checkStyle: t.done ? `background:${c.primary};border-color:${c.primary};` : `background:#fff;border-color:${c.border};` })),
+      })),
+      hasAdminNote: !!selectedChecklistRaw.adminNote,
+      hasNotes: !!selectedChecklistRaw.notes,
+      hasNoNotes: !selectedChecklistRaw.notes,
+      imagePlaceholders: Array.from({ length: selectedChecklistRaw.images }),
+      hasNoImages: selectedChecklistRaw.images === 0,
+    } : { areaNames: '', employee: '', company: '', site: '', assignedDate: '', statusLabel: '', statusBadgeStyle: '', areas: [], hasNotes: false, hasNoNotes: true, imagePlaceholders: [], hasNoImages: true };
+
+    const activeBtn = (bgc) => `background:${bgc};color:#fff;`;
+    const inactiveBtn = `background:${c.bg};color:${c.textMuted};`;
+
+    return {
+      primary: c.primary, orange: c.orange, bg: c.bg, border: c.border, textDark: c.textDark, textMuted: c.textMuted,
+      isDashboard, isCompanies, isEmployees, isAttendance, isAudits, isChecklists, isRoles,
+      navDashboardStyle: navStyle(isDashboard), navCompaniesStyle: navStyle(isCompanies), navEmployeesStyle: navStyle(isEmployees),
+      navAttendanceStyle: navStyle(isAttendance), navAuditsStyle: navStyle(isAudits), navChecklistsStyle: navStyle(isChecklists),
+      navRolesStyle: navStyle(isRoles),
+      goDashboard: () => this.setState({ view: 'dashboard' }),
+      goCompanies: () => this.setState({ view: 'companies' }),
+      goEmployees: () => this.setState({ view: 'employees' }),
+      goAttendance: () => this.setState({ view: 'attendance' }),
+      goAudits: () => this.setState({ view: 'audits' }),
+      goChecklists: () => this.setState({ view: 'checklists' }),
+      goRoles: () => this.setState({ view: 'roles' }),
+
+      roles: s.roles.map(r => {
+        const summarize = (permsObj, areas) => areas.map(a => {
+          const onCount = a.functions.filter(f => permsObj[a.key][f.key]).length;
+          return onCount ? `${a.label} (${onCount}/${a.functions.length})` : null;
+        }).filter(Boolean).join(', ');
+        return {
+          ...r,
+          dashboardPagesDisplay: summarize(r.permissions.dashboard, this.permissionSchema.dashboard) || 'No dashboard access',
+          appPagesDisplay: summarize(r.permissions.app, this.permissionSchema.app) || 'No app access',
+          employeeCount: s.employees.filter(e => e.accessRoleId === r.id).length,
+          openEdit: () => this.setState({ showRoleModal: true, editingRoleId: r.id, newRole: { name: r.name, permissions: JSON.parse(JSON.stringify(r.permissions)) } }),
+          deleteRole: () => this.setState({ roles: s.roles.filter(x => x.id !== r.id) }),
+        };
+      }),
+      roleModalTitle: s.editingRoleId ? 'Edit Role' : 'New Role',
+      roleModalSubmitLabel: s.editingRoleId ? 'Save Changes' : 'Create Role',
+      showRoleModal: s.showRoleModal,
+      openAddRole: () => this.setState({ showRoleModal: true, editingRoleId: null, newRole: { name: '', permissions: this.emptyPerms() } }),
+      closeRoleModal: () => this.setState({ showRoleModal: false }),
+      newRoleName: s.newRole.name,
+      onNewRoleName: (e) => this.setState({ newRole: { ...s.newRole, name: e.target.value } }),
+      newRoleDashboardAreas: this.permissionSchema.dashboard.map(area => {
+        const areaPerm = s.newRole.permissions.dashboard[area.key];
+        const allOn = area.functions.every(f => areaPerm[f.key]);
+        return {
+          label: area.label,
+          allChecked: allOn,
+          allCheckStyle: allOn ? `background:${c.primary};border-color:${c.primary};` : `background:${c.bg};border-color:${c.border};`,
+          toggleAll: () => {
+            const val = !allOn;
+            this.setState({ newRole: { ...s.newRole, permissions: { ...s.newRole.permissions, dashboard: { ...s.newRole.permissions.dashboard, [area.key]: Object.fromEntries(area.functions.map(f => [f.key, val])) } } } });
+          },
+          functions: area.functions.map(f => ({
+            label: f.label,
+            checked: areaPerm[f.key],
+            checkStyle: areaPerm[f.key] ? `background:${c.primary};border-color:${c.primary};` : `background:${c.bg};border-color:${c.border};`,
+            toggle: () => {
+              this.setState({ newRole: { ...s.newRole, permissions: { ...s.newRole.permissions, dashboard: { ...s.newRole.permissions.dashboard, [area.key]: { ...s.newRole.permissions.dashboard[area.key], [f.key]: !areaPerm[f.key] } } } } });
+            },
+          })),
+        };
+      }),
+      newRoleAppAreas: this.permissionSchema.app.map(area => {
+        const areaPerm = s.newRole.permissions.app[area.key];
+        const allOn = area.functions.every(f => areaPerm[f.key]);
+        return {
+          label: area.label,
+          allChecked: allOn,
+          allCheckStyle: allOn ? `background:${c.primary};border-color:${c.primary};` : `background:${c.bg};border-color:${c.border};`,
+          toggleAll: () => {
+            const val = !allOn;
+            this.setState({ newRole: { ...s.newRole, permissions: { ...s.newRole.permissions, app: { ...s.newRole.permissions.app, [area.key]: Object.fromEntries(area.functions.map(f => [f.key, val])) } } } });
+          },
+          functions: area.functions.map(f => ({
+            label: f.label,
+            checked: areaPerm[f.key],
+            checkStyle: areaPerm[f.key] ? `background:${c.primary};border-color:${c.primary};` : `background:${c.bg};border-color:${c.border};`,
+            toggle: () => {
+              this.setState({ newRole: { ...s.newRole, permissions: { ...s.newRole.permissions, app: { ...s.newRole.permissions.app, [area.key]: { ...s.newRole.permissions.app[area.key], [f.key]: !areaPerm[f.key] } } } } });
+            },
+          })),
+        };
+      }),
+      submitRole: () => {
+        if (!s.newRole.name.trim()) return;
+        if (s.editingRoleId) {
+          this.setState({ roles: s.roles.map(r => r.id === s.editingRoleId ? { ...r, name: s.newRole.name, permissions: s.newRole.permissions } : r), showRoleModal: false });
+        } else {
+          this.setState({ roles: [...s.roles, { id: (s.roles[s.roles.length - 1]?.id || 0) + 1, name: s.newRole.name, permissions: s.newRole.permissions }], showRoleModal: false });
+        }
+      },
+      isChecklistTabCreate: s.checklistTab === 'create',
+      isChecklistTabAssign: s.checklistTab === 'assign',
+      isChecklistTabSubmitted: s.checklistTab === 'submitted',
+      checklistTabCreateStyle: navStyle(s.checklistTab === 'create'),
+      checklistTabAssignStyle: navStyle(s.checklistTab === 'assign'),
+      checklistTabSubmittedStyle: navStyle(s.checklistTab === 'submitted'),
+      setChecklistTabCreate: () => this.setState({ checklistTab: 'create' }),
+      setChecklistTabAssign: () => this.setState({ checklistTab: 'assign' }),
+      setChecklistTabSubmitted: () => this.setState({ checklistTab: 'submitted' }),
+      submittedChecklists: s.checklists.filter(ck => ck.status === 'submitted').map(ck => ({
+        ...ck,
+        areaNames: ck.areas.map(ar => ar.mainArea).join(', '),
+        subtasksCount: ck.areas.reduce((sum, ar) => sum + ar.subtasks.length, 0),
+        doneCount: ck.areas.reduce((sum, ar) => sum + ar.subtasks.filter(t => t.done).length, 0),
+        notesPreview: ck.notes ? (ck.notes.length > 60 ? ck.notes.slice(0, 60) + '…' : ck.notes) : '—',
+        openDetail: () => this.setState({ selectedChecklistId: ck.id }),
+      })),
+      assignedChecklists: s.checklists.map(ck => ({
+        ...ck,
+        areaNames: ck.areas.map(ar => ar.mainArea).join(', '),
+        subtasksCount: ck.areas.reduce((sum, ar) => sum + ar.subtasks.length, 0),
+        doneCount: ck.areas.reduce((sum, ar) => sum + ar.subtasks.filter(t => t.done).length, 0),
+        statusLabel: ck.status === 'submitted' ? 'Submitted' : 'Pending Review',
+        statusBadgeStyle: this.statusBadgeStyle(ck.status === 'pending' ? 'pending' : 'submitted'),
+        openDetail: () => this.setState({ selectedChecklistId: ck.id }),
+      })),
+
+      companiesCount: s.companies.length,
+      employeesCount: s.employees.length,
+      pendingAuditsCount: s.audits.filter(a => a.status !== 'complete').length,
+      completedAuditsCount: s.audits.filter(a => a.status === 'complete').length,
+
+      companies, employees, attendance, audits, checklists, checklistTemplates,
+      attendanceChartBars: (() => {
+        const anchor = new Date(baseDate); anchor.setDate(baseDate.getDate() + s.dashboardWeekOffset * 7);
+        const start = new Date(anchor); start.setDate(anchor.getDate() - anchor.getDay());
+        const days = []; for (let i = 0; i < 7; i++) { const d = new Date(start); d.setDate(start.getDate() + i); days.push(d); }
+        const counts = days.map(d => this.attendanceData.filter(a => parseAttDate(a.date).toDateString() === d.toDateString()).length);
+        const max = Math.max(...counts, 1);
+        return days.map((d, i) => ({ label: d.toLocaleDateString('en-US', { weekday: 'short' }), count: counts[i], heightPx: `${Math.max(6, (counts[i] / max) * 130)}px` }));
+      })(),
+      dashboardWeekLabel: s.dashboardWeekOffset === 0 ? 'This Week' : s.dashboardWeekOffset === -1 ? 'Last Week' : s.dashboardWeekOffset === 1 ? 'Next Week' : (() => {
+        const anchor = new Date(baseDate); anchor.setDate(baseDate.getDate() + s.dashboardWeekOffset * 7);
+        const start = new Date(anchor); start.setDate(anchor.getDate() - anchor.getDay());
+        const end = new Date(start); end.setDate(start.getDate() + 6);
+        return `${fmtShort(start)} – ${fmtShort(end)}`;
+      })(),
+      prevDashboardWeek: () => this.setState({ dashboardWeekOffset: s.dashboardWeekOffset - 1 }),
+      nextDashboardWeek: () => this.setState({ dashboardWeekOffset: s.dashboardWeekOffset + 1 }),
+      auditStatusCounts: {
+        active: s.audits.filter(a => a.status === 'submit').length,
+        inProgress: s.audits.filter(a => a.status === 'verify').length,
+        completed: s.audits.filter(a => a.status === 'complete').length,
+      },
+      auditBarHeights: (() => {
+        const counts = [s.audits.filter(a => a.status === 'submit').length, s.audits.filter(a => a.status === 'verify').length, s.audits.filter(a => a.status === 'complete').length];
+        const max = Math.max(...counts, 1);
+        return {
+          activeHeightPx: `${Math.max(6, (counts[0] / max) * 130)}px`,
+          progressHeightPx: `${Math.max(6, (counts[1] / max) * 130)}px`,
+          completedHeightPx: `${Math.max(6, (counts[2] / max) * 130)}px`,
+        };
+      })(),
+      employeeChecklistRows: s.employees.map(e => {
+        const empChecklists = s.checklists.filter(ck => ck.employee === e.name);
+        const submitted = empChecklists.filter(ck => ck.status === 'submitted').length;
+        return {
+          name: e.name,
+          company: e.companies.join(', ') || '—',
+          summary: empChecklists.length ? `${submitted}/${empChecklists.length} submitted` : 'No checklists',
+        };
+      }),
+      checklistTableRows: s.checklists.map(ck => {
+        const att = this.attendanceData.find(a => a.employee === ck.employee);
+        return {
+          employee: ck.employee, company: ck.company, site: ck.site,
+          clockIn: att ? att.clockIn : '—', clockOut: att ? att.clockOut : '—',
+          statusLabel: ck.status === 'submitted' ? 'Submitted' : 'Pending',
+          statusBadgeStyle: this.statusBadgeStyle(ck.status === 'submitted' ? 'submitted' : 'pending'),
+        };
+      }).slice(0, 6),
+      employeesPerCompanyBars: (() => {
+        const counts = s.companies.map(comp => ({ name: comp.name, count: s.employees.filter(e => e.companies.includes(comp.name)).length }));
+        const max = Math.max(...counts.map(x => x.count), 1);
+        return counts.map(x => ({ ...x, widthPct: `${Math.max(4, (x.count / max) * 100)}%` }));
+      })(),
+      isAttendanceTabDaily: s.attendanceTab === 'daily',
+      isAttendanceTabWeekly: s.attendanceTab === 'weekly',
+      attendanceTabDailyStyle: navStyle(s.attendanceTab === 'daily'),
+      attendanceTabWeeklyStyle: navStyle(s.attendanceTab === 'weekly'),
+      setAttendanceTabDaily: () => this.setState({ attendanceTab: 'daily' }),
+      setAttendanceTabWeekly: () => this.setState({ attendanceTab: 'weekly' }),
+      dailyAttendance,
+      weeklyAttendance,
+      selectedDayLabel: fmtDate(selectedDay),
+      selectedWeekLabel: `${fmtShort(weekStart)} – ${fmtShort(weekEnd)}, ${weekEnd.getFullYear()}`,
+      prevDay: () => this.setState({ attendanceDayOffset: s.attendanceDayOffset - 1 }),
+      nextDay: () => this.setState({ attendanceDayOffset: s.attendanceDayOffset + 1 }),
+      prevWeek: () => this.setState({ attendanceWeekOffset: s.attendanceWeekOffset - 1 }),
+      nextWeek: () => this.setState({ attendanceWeekOffset: s.attendanceWeekOffset + 1 }),
+      companyOptions: s.companies.map(comp => ({ name: comp.name })),
+      employeeOptions,
+
+      showAuditDetailModal, selectedAuditDetail,
+      closeAuditDetail: () => this.setState({ selectedAuditId: null, sendAuditRecipients: [] }),
+      sendAuditRecipientOptions: (selectedAuditRaw ? s.employees.filter(e => e.companies.includes(selectedAuditRaw.company)) : []).map(e => ({
+        name: e.name,
+        isChecked: s.sendAuditRecipients.includes(e.name),
+        checkStyle: s.sendAuditRecipients.includes(e.name) ? `background:${c.primary};border-color:${c.primary};` : `background:${c.bg};border-color:${c.border};`,
+        toggle: () => {
+          const list = s.sendAuditRecipients.includes(e.name) ? s.sendAuditRecipients.filter(n => n !== e.name) : [...s.sendAuditRecipients, e.name];
+          this.setState({ sendAuditRecipients: list });
+        },
+      })),
+      sendAuditDisabled: !s.sendAuditRecipients.length,
+      sendAuditOpacity: s.sendAuditRecipients.length ? '1' : '0.5',
+      sentToDisplay: selectedAuditRaw && selectedAuditRaw.sentTo && selectedAuditRaw.sentTo.length ? `Last sent to: ${selectedAuditRaw.sentTo.join(', ')}` : '',
+      hasSentTo: !!(selectedAuditRaw && selectedAuditRaw.sentTo && selectedAuditRaw.sentTo.length),
+      submitSendAudit: () => {
+        if (!s.sendAuditRecipients.length || !s.selectedAuditId) return;
+        this.setState({
+          audits: s.audits.map(x => x.id === s.selectedAuditId ? { ...x, sentTo: [...s.sendAuditRecipients] } : x),
+          sendAuditRecipients: [],
+        });
+      },
+
+      showAddAuditModal: s.showAddAuditModal,
+      openAddAudit: () => {
+        const comp = s.companies[0] ? s.companies[0].name : '';
+        const firstEmp = s.employees.find(e => e.companies.includes(comp));
+        this.setState({ showAddAuditModal: true, newAudit2: { company: comp, employee: firstEmp ? firstEmp.name : '', date: '', mainAudits: [{ title: '', subAudits: [''], comment: '', images: 0 }] } });
+      },
+      closeAddAudit: () => this.setState({ showAddAuditModal: false }),
+      newAuditCompany: s.newAudit2.company,
+      newAuditEmployee: s.newAudit2.employee,
+      newAuditDate: s.newAudit2.date,
+      auditEmployeeOptions: s.employees.filter(e => !s.newAudit2.company || e.companies.includes(s.newAudit2.company)).map(e => ({ name: e.name })),
+      onNewAuditCompany: (e) => {
+        const comp = e.target.value;
+        const firstEmp = s.employees.find(emp => emp.companies.includes(comp));
+        this.setState({ newAudit2: { ...s.newAudit2, company: comp, employee: firstEmp ? firstEmp.name : '' } });
+      },
+      onNewAuditEmployee: (e) => this.setState({ newAudit2: { ...s.newAudit2, employee: e.target.value } }),
+      onNewAuditDate: (e) => this.setState({ newAudit2: { ...s.newAudit2, date: e.target.value } }),
+      newAuditMainAudits: s.newAudit2.mainAudits.map((ma, mi) => ({
+        title: ma.title,
+        comment: ma.comment || '',
+        imagePlaceholders: Array.from({ length: ma.images || 0 }),
+        hasNoImages: !(ma.images > 0),
+        onTitleChange: (e) => {
+          const arr = [...s.newAudit2.mainAudits];
+          arr[mi] = { ...arr[mi], title: e.target.value };
+          this.setState({ newAudit2: { ...s.newAudit2, mainAudits: arr } });
+        },
+        onCommentChange: (e) => {
+          const arr = [...s.newAudit2.mainAudits];
+          arr[mi] = { ...arr[mi], comment: e.target.value };
+          this.setState({ newAudit2: { ...s.newAudit2, mainAudits: arr } });
+        },
+        addImage: () => {
+          const arr = [...s.newAudit2.mainAudits];
+          arr[mi] = { ...arr[mi], images: (arr[mi].images || 0) + 1 };
+          this.setState({ newAudit2: { ...s.newAudit2, mainAudits: arr } });
+        },
+        canRemoveMain: s.newAudit2.mainAudits.length > 1,
+        removeMain: () => {
+          const arr = s.newAudit2.mainAudits.filter((_, idx) => idx !== mi);
+          this.setState({ newAudit2: { ...s.newAudit2, mainAudits: arr.length ? arr : [{ title: '', subAudits: [''], comment: '', images: 0 }] } });
+        },
+        subAudits: ma.subAudits.map((text, si) => ({
+          text,
+          onChange: (e) => {
+            const arr = [...s.newAudit2.mainAudits];
+            const subs = [...arr[mi].subAudits];
+            subs[si] = e.target.value;
+            arr[mi] = { ...arr[mi], subAudits: subs };
+            this.setState({ newAudit2: { ...s.newAudit2, mainAudits: arr } });
+          },
+          remove: () => {
+            const arr = [...s.newAudit2.mainAudits];
+            const subs = arr[mi].subAudits.filter((_, idx) => idx !== si);
+            arr[mi] = { ...arr[mi], subAudits: subs.length ? subs : [''] };
+            this.setState({ newAudit2: { ...s.newAudit2, mainAudits: arr } });
+          },
+          canRemove: ma.subAudits.length > 1,
+        })),
+        addSubAudit: () => {
+          const arr = [...s.newAudit2.mainAudits];
+          arr[mi] = { ...arr[mi], subAudits: [...arr[mi].subAudits, ''] };
+          this.setState({ newAudit2: { ...s.newAudit2, mainAudits: arr } });
+        },
+      })),
+      addAuditMainField: () => this.setState({ newAudit2: { ...s.newAudit2, mainAudits: [...s.newAudit2.mainAudits, { title: '', subAudits: [''], comment: '', images: 0 }] } }),
+      submitNewAudit: (e) => {
+        e.preventDefault();
+        const mainAudits = s.newAudit2.mainAudits
+          .filter(ma => ma.title.trim())
+          .map((ma, mi) => ({
+            comment: ma.comment || '', images: ma.images || 0,
+            id: mi + 1, title: ma.title,
+            subAudits: ma.subAudits.filter(t => t.trim()).map((text, i) => ({ id: i + 1, text, result: '' })),
+          }));
+        if (!mainAudits.length) return;
+        const rec = {
+          id: s.audits.length + 1, company: s.newAudit2.company, employee: s.newAudit2.employee,
+          date: s.newAudit2.date || 'Today', mainAudits, status: 'submit',
+        };
+        this.setState({ audits: [rec, ...s.audits], showAddAuditModal: false });
+      },
+      showChecklistDetailModal,
+      selectedChecklist,
+      closeChecklistDetail: () => this.setState({ selectedChecklistId: null }),
+      showTemplateDetailModal,
+      selectedTemplateDetail,
+      closeTemplateDetail: () => this.setState({ selectedTemplateId: null }),
+
+      isCompanyDetail, selectedCompanyDetail,
+      openCompanyDetail: (id) => () => this.setState({ selectedCompanyForDetailId: id, view: 'companyDetail' }),
+      backFromCompanyDetail: () => this.setState({ view: 'companies' }),
+
+      showCreateChecklistModal: s.showCreateChecklistModal,
+      isEditingTemplate: !!s.editingTemplateId,
+      createChecklistModalTitle: s.editingTemplateId ? 'Edit Checklist' : 'Create Checklist',
+      createChecklistSubmitLabel: s.editingTemplateId ? 'Save Changes' : 'Create',
+      openCreateChecklistTemplate: () => {
+        const comp = s.selectedCompanyForDetailId ? (s.companies.find(x => x.id === s.selectedCompanyForDetailId) || {}).name : (s.companies[0] ? s.companies[0].name : '');
+        this.setState({ showCreateChecklistModal: true, editingTemplateId: null, newChecklistTemplate: { company: comp, site: '', areas: [{ mainArea: '', note: '', images: 0, subtasks: [''] }] } });
+      },
+      closeCreateChecklistTemplate: () => this.setState({ showCreateChecklistModal: false, editingTemplateId: null }),
+      newTemplateCompany: s.newChecklistTemplate.company,
+      newTemplateSite: s.newChecklistTemplate.site,
+      onNewTemplateCompany: (e) => this.setState({ newChecklistTemplate: { ...s.newChecklistTemplate, company: e.target.value } }),
+      onNewTemplateSite: (e) => this.setState({ newChecklistTemplate: { ...s.newChecklistTemplate, site: e.target.value } }),
+      newTemplateAreas: s.newChecklistTemplate.areas.map((area, ai) => ({
+        mainArea: area.mainArea,
+        note: area.note || '',
+        imagePlaceholders: Array.from({ length: area.images || 0 }),
+        onMainAreaChange: (e) => {
+          const areas = [...s.newChecklistTemplate.areas];
+          areas[ai] = { ...areas[ai], mainArea: e.target.value };
+          this.setState({ newChecklistTemplate: { ...s.newChecklistTemplate, areas } });
+        },
+        onNoteChange: (e) => {
+          const areas = [...s.newChecklistTemplate.areas];
+          areas[ai] = { ...areas[ai], note: e.target.value };
+          this.setState({ newChecklistTemplate: { ...s.newChecklistTemplate, areas } });
+        },
+        addImage: () => {
+          const areas = [...s.newChecklistTemplate.areas];
+          areas[ai] = { ...areas[ai], images: (areas[ai].images || 0) + 1 };
+          this.setState({ newChecklistTemplate: { ...s.newChecklistTemplate, areas } });
+        },
+        canRemoveArea: s.newChecklistTemplate.areas.length > 1,
+        removeArea: () => {
+          const areas = s.newChecklistTemplate.areas.filter((_, idx) => idx !== ai);
+          this.setState({ newChecklistTemplate: { ...s.newChecklistTemplate, areas: areas.length ? areas : [{ mainArea: '', note: '', images: 0, subtasks: [''] }] } });
+        },
+        subtasks: area.subtasks.map((text, si) => ({
+          text,
+          onChange: (e) => {
+            const areas = [...s.newChecklistTemplate.areas];
+            const subtasks = [...areas[ai].subtasks];
+            subtasks[si] = e.target.value;
+            areas[ai] = { ...areas[ai], subtasks };
+            this.setState({ newChecklistTemplate: { ...s.newChecklistTemplate, areas } });
+          },
+          remove: () => {
+            const areas = [...s.newChecklistTemplate.areas];
+            const subtasks = areas[ai].subtasks.filter((_, idx) => idx !== si);
+            areas[ai] = { ...areas[ai], subtasks: subtasks.length ? subtasks : [''] };
+            this.setState({ newChecklistTemplate: { ...s.newChecklistTemplate, areas } });
+          },
+          canRemove: area.subtasks.length > 1,
+        })),
+        addSubtask: () => {
+          const areas = [...s.newChecklistTemplate.areas];
+          areas[ai] = { ...areas[ai], subtasks: [...areas[ai].subtasks, ''] };
+          this.setState({ newChecklistTemplate: { ...s.newChecklistTemplate, areas } });
+        },
+      })),
+      addTemplateArea: () => this.setState({ newChecklistTemplate: { ...s.newChecklistTemplate, areas: [...s.newChecklistTemplate.areas, { mainArea: '', note: '', images: 0, subtasks: [''] }] } }),
+      submitNewChecklistTemplate: (e) => {
+        e.preventDefault();
+        const areas = s.newChecklistTemplate.areas
+          .filter(ar => ar.mainArea.trim())
+          .map((ar, ai) => ({ id: ai + 1, mainArea: ar.mainArea, note: ar.note || '', images: ar.images || 0, subtasks: ar.subtasks.filter(t => t.trim()).map((text, i) => ({ id: i + 1, text })) }));
+        if (!areas.length) return;
+        if (s.editingTemplateId) {
+          this.setState({
+            checklistTemplates: s.checklistTemplates.map(t => t.id === s.editingTemplateId ? { ...t, company: s.newChecklistTemplate.company, site: s.newChecklistTemplate.site || 'Unspecified', areas } : t),
+            showCreateChecklistModal: false, editingTemplateId: null,
+          });
+        } else {
+          const rec = { id: s.checklistTemplates.length + 1, company: s.newChecklistTemplate.company, site: s.newChecklistTemplate.site || 'Unspecified', areas };
+          this.setState({ checklistTemplates: [rec, ...s.checklistTemplates], showCreateChecklistModal: false });
+        }
+      },
+
+      showAddChecklistModal: s.showAddChecklistModal,
+      openAddChecklist: () => {
+        const firstTemplate = s.checklistTemplates[0];
+        const comp = firstTemplate ? firstTemplate.company : (s.companies[0] ? s.companies[0].name : '');
+        const site = firstTemplate ? firstTemplate.site : '';
+        this.setState({ showAddChecklistModal: true, newChecklist: { company: comp, site, date: '', employees: [], note: '' } });
+      },
+      closeAddChecklist: () => this.setState({ showAddChecklistModal: false }),
+      newChecklistCompany: s.newChecklist.company,
+      newChecklistSite: s.newChecklist.site,
+      newChecklistDate: s.newChecklist.date,
+      newChecklistNote: s.newChecklist.note,
+      onNewChecklistNote: (e) => this.setState({ newChecklist: { ...s.newChecklist, note: e.target.value } }),
+      assignCompanyOptions: [...new Set(s.checklistTemplates.map(t => t.company))].map(name => ({ name })),
+      assignSiteOptions: s.checklistTemplates.filter(t => t.company === s.newChecklist.company).map(t => ({ site: t.site })),
+      onNewChecklistCompany: (e) => {
+        const comp = e.target.value;
+        const firstTemplate = s.checklistTemplates.find(t => t.company === comp);
+        this.setState({ newChecklist: { ...s.newChecklist, company: comp, site: firstTemplate ? firstTemplate.site : '', employees: [] } });
+      },
+      onNewChecklistSite: (e) => this.setState({ newChecklist: { ...s.newChecklist, site: e.target.value } }),
+      onNewChecklistDate: (e) => this.setState({ newChecklist: { ...s.newChecklist, date: e.target.value } }),
+      assignEmployeeOptions: s.employees.filter(e => !s.newChecklist.company || e.companies.includes(s.newChecklist.company)).map(e => ({
+        name: e.name,
+        isChecked: s.newChecklist.employees.includes(e.name),
+        checkStyle: s.newChecklist.employees.includes(e.name) ? `background:${c.primary};border-color:${c.primary};` : `background:${c.bg};border-color:${c.border};`,
+        toggle: () => {
+          const list = s.newChecklist.employees.includes(e.name)
+            ? s.newChecklist.employees.filter(n => n !== e.name)
+            : [...s.newChecklist.employees, e.name];
+          this.setState({ newChecklist: { ...s.newChecklist, employees: list } });
+        },
+      })),
+      assignSelectedTemplatePreview: (() => {
+        const template = s.checklistTemplates.find(t => t.company === s.newChecklist.company && t.site === s.newChecklist.site);
+        return template ? { areas: template.areas } : { areas: [] };
+      })(),
+      submitNewChecklist: (e) => {
+        e.preventDefault();
+        const template = s.checklistTemplates.find(t => t.company === s.newChecklist.company && t.site === s.newChecklist.site);
+        if (!template || !s.newChecklist.employees.length) return;
+        const areas = template.areas.map(ar => ({ id: ar.id, mainArea: ar.mainArea, subtasks: ar.subtasks.map(t => ({ id: t.id, text: t.text, done: false })) }));
+        const newRecs = s.newChecklist.employees.map((emp, i) => ({
+          id: s.checklists.length + 1 + i, templateId: template.id, company: template.company, site: template.site,
+          employee: emp, assignedDate: s.newChecklist.date || 'Today', areas: JSON.parse(JSON.stringify(areas)), status: 'pending', images: 0, notes: '',
+          adminNote: s.newChecklist.note,
+        }));
+        this.setState({ checklists: [...newRecs, ...s.checklists], showAddChecklistModal: false });
+      },
+
+      showAddCompanyModal: s.showAddCompanyModal,
+      isEditingCompany: !!s.editingCompanyId,
+      addCompanyModalTitle: s.editingCompanyId ? 'Edit Company' : 'Register Company',
+      addCompanySubmitLabel: s.editingCompanyId ? 'Save Changes' : 'Register',
+      openAddCompany: () => this.setState({ showAddCompanyModal: true, editingCompanyId: null, newCompany: { name: '', location: '', status: 'Active', selectedDays: [], time: '', confirmed: false }, companyCalendarWeekOffset: 0 }),
+      closeAddCompany: () => this.setState({ showAddCompanyModal: false, editingCompanyId: null }),
+      newCompanyName: s.newCompany.name,
+      newCompanyLocation: s.newCompany.location,
+      onNewCompanyName: (e) => this.setState({ newCompany: { ...s.newCompany, name: e.target.value } }),
+      onNewCompanyLocation: (e) => this.setState({ newCompany: { ...s.newCompany, location: e.target.value } }),
+      newCompanyStatusActiveStyle: s.newCompany.status === 'Active' ? activeBtn(c.primary) : inactiveBtn,
+      newCompanyStatusInactiveStyle: s.newCompany.status === 'Inactive' ? activeBtn(c.textMuted) : inactiveBtn,
+      setNewCompanyStatusActive: () => this.setState({ newCompany: { ...s.newCompany, status: 'Active' } }),
+      setNewCompanyStatusInactive: () => this.setState({ newCompany: { ...s.newCompany, status: 'Inactive' } }),
+      companyDayLabels: (() => {
+        const letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+        const selected = s.newCompany.selectedDays || [];
+        const cells = [];
+        for (let i = 0; i < 28; i++) {
+          const isSelected = selected.includes(i);
+          cells.push({
+            key: i, letter: letters[i % 7], isSelected,
+            cellStyle: isSelected ? `background:${c.primary};color:#fff;` : `background:${c.bg};color:${c.textDark};`,
+            toggle: () => {
+              const list = selected.includes(i) ? selected.filter(x => x !== i) : [...selected, i];
+              this.setState({ newCompany: { ...s.newCompany, selectedDays: list, confirmed: false } });
+            },
+          });
+        }
+        return cells;
+      })(),
+      newCompanyTime: s.newCompany.time,
+      onNewCompanyTime: (e) => this.setState({ newCompany: { ...s.newCompany, time: e.target.value, confirmed: false } }),
+      canConfirmCompanyDateTime: !!((s.newCompany.selectedDays || []).length && s.newCompany.time),
+      isCompanyDateTimeConfirmed: s.newCompany.confirmed,
+      confirmCompanyDateTime: () => this.setState({ newCompany: { ...s.newCompany, confirmed: true } }),
+      companyDateTimeConfirmedLabel: ((s.newCompany.selectedDays || []).length && s.newCompany.time) ? `${(s.newCompany.selectedDays || []).length} day(s) selected at ${s.newCompany.time}` : '',
+      submitNewCompany: (e) => {
+        e.preventDefault();
+        if (!s.newCompany.name.trim()) return;
+        if (s.editingCompanyId) {
+          this.setState({
+            companies: s.companies.map(comp => comp.id === s.editingCompanyId ? { ...comp, name: s.newCompany.name, location: s.newCompany.location || 'Unspecified', status: s.newCompany.status, visitDays: s.newCompany.selectedDays, visitTime: s.newCompany.time } : comp),
+            showAddCompanyModal: false, editingCompanyId: null,
+          });
+        } else {
+          const rec = { id: s.companies.length + 1, name: s.newCompany.name, location: s.newCompany.location || 'Unspecified', status: s.newCompany.status, visitDays: s.newCompany.selectedDays, visitTime: s.newCompany.time };
+          this.setState({ companies: [rec, ...s.companies], showAddCompanyModal: false });
+        }
+      },
+
+      showAddEmployeeModal: s.showAddEmployeeModal,
+      openAddEmployee: () => this.setState({ showAddEmployeeModal: true, newEmployee: { name: '', role: '', accessRoleId: s.roles[s.roles.length - 1] ? s.roles[s.roles.length - 1].id : '', username: '', password: '', confirmPassword: '' }, newEmployeeError: '' }),
+      roleOptions: s.roles.map(r => ({ id: r.id, name: r.name })),
+      newEmployeeAccessRoleId: s.newEmployee.accessRoleId,
+      onNewEmployeeAccessRoleId: (e) => this.setState({ newEmployee: { ...s.newEmployee, accessRoleId: Number(e.target.value) } }),
+      closeAddEmployee: () => this.setState({ showAddEmployeeModal: false }),
+      newEmployeeName: s.newEmployee.name,
+      newEmployeeRole: s.newEmployee.role,
+      newEmployeeUsername: s.newEmployee.username,
+      newEmployeePassword: s.newEmployee.password,
+      newEmployeeConfirmPassword: s.newEmployee.confirmPassword,
+      newEmployeeError: s.newEmployeeError,
+      onNewEmployeeName: (e) => this.setState({ newEmployee: { ...s.newEmployee, name: e.target.value } }),
+      onNewEmployeeRole: (e) => this.setState({ newEmployee: { ...s.newEmployee, role: e.target.value } }),
+      onNewEmployeeUsername: (e) => this.setState({ newEmployee: { ...s.newEmployee, username: e.target.value } }),
+      onNewEmployeePassword: (e) => this.setState({ newEmployee: { ...s.newEmployee, password: e.target.value } }),
+      onNewEmployeeConfirmPassword: (e) => this.setState({ newEmployee: { ...s.newEmployee, confirmPassword: e.target.value } }),
+      submitNewEmployee: (e) => {
+        e.preventDefault();
+        const ne = s.newEmployee;
+        if (!ne.name.trim() || !ne.username.trim() || !ne.password) { this.setState({ newEmployeeError: 'Name, username and password are required.' }); return; }
+        if (ne.password !== ne.confirmPassword) { this.setState({ newEmployeeError: 'Passwords do not match.' }); return; }
+        const rec = { id: s.employees.length + 1, name: ne.name, username: ne.username, password: ne.password, companies: [], role: ne.role || 'Field Auditor', accessRoleId: ne.accessRoleId || (s.roles[s.roles.length - 1] && s.roles[s.roles.length - 1].id), status: 'Active' };
+        this.setState({ employees: [rec, ...s.employees], showAddEmployeeModal: false, newEmployeeError: '' });
+      },
+
+      showAssignEmployeeModal: s.showAssignEmployeeModal,
+      closeAssignEmployee: () => this.setState({ showAssignEmployeeModal: false }),
+      assignEmployeeCompanyName: (s.companies.find(c2 => c2.id === s.assignEmployeeCompanyId) || {}).name || '',
+      assignEmployeePickerOptions: s.employees.map(e => ({
+        name: e.name,
+        isChecked: s.assignEmployeeSelection.includes(e.name),
+        checkStyle: s.assignEmployeeSelection.includes(e.name) ? `background:${c.primary};border-color:${c.primary};` : `background:${c.bg};border-color:${c.border};`,
+        toggle: () => {
+          const list = s.assignEmployeeSelection.includes(e.name) ? s.assignEmployeeSelection.filter(n => n !== e.name) : [...s.assignEmployeeSelection, e.name];
+          this.setState({ assignEmployeeSelection: list });
+        },
+      })),
+      submitAssignEmployee: () => {
+        const compName = (s.companies.find(c2 => c2.id === s.assignEmployeeCompanyId) || {}).name;
+        if (!compName || !s.assignEmployeeSelection.length) return;
+        this.setState({
+          employees: s.employees.map(e => s.assignEmployeeSelection.includes(e.name) && !e.companies.includes(compName) ? { ...e, companies: [...e.companies, compName] } : e),
+          showAssignEmployeeModal: false,
+        });
+      },
+    };
+  }
+}
+
+</script>
+</body>
+</html>

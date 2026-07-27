@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+<style id="__om-edit-overrides"></style>
+</helmet>
+<style>doc-page:not(:defined){visibility:hidden}</style>
+<script src="./doc-page.js"></script>
+<doc-page margin="0.85in">
+
+<h1 style="font-family:Inter,sans-serif;font-size:30px;font-weight:800;color:#16202E;margin-bottom:2px;">Macro — System Architecture</h1>
+<div style="font-family:Inter,sans-serif;font-size:13px;color:#6E7887;margin-bottom:28px;">Employee Audit &amp; Attendance Platform — Mobile App + Admin Dashboard</div>
+
+<h2 style="font-family:Inter,sans-serif;font-size:18px;font-weight:800;color:#16202E;border-bottom:2px solid #E4E8EF;padding-bottom:8px;margin-top:28px;">Full System View</h2>
+<p style="font-family:Inter,sans-serif;font-size:13px;color:#2A3444;line-height:1.7;">Every piece, end to end: two clients, one primary backend, one chat backend, a configurable roles layer, and the geofence rule gating employee login.</p>
+<div style="border:1px solid #E4E8EF;border-radius:14px;padding:20px;margin:14px 0;break-inside:avoid;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+    <div style="border:1.5px solid #0E62D1;border-radius:12px;padding:12px;">
+      <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:800;color:#0E62D1;text-align:center;margin-bottom:6px;">Employee App (Next.js 16 PWA)</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;">
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Login + geofence</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Home/Sites</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Attendance</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Checklists</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Audits (view)</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Communication</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Profile</span>
+      </div>
+    </div>
+    <div style="border:1.5px solid #0E62D1;border-radius:12px;padding:12px;">
+      <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:800;color:#0E62D1;text-align:center;margin-bottom:6px;">Admin Dashboard (Next.js 16 Web)</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;">
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Dashboard charts</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Companies</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Employees</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Attendance</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Audits (marks)</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Checklists</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Communication</span>
+        <span style="font-family:Inter,sans-serif;font-size:9.5px;background:#F5F7FA;border-radius:6px;padding:3px 7px;">Roles &amp; Access</span>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center;font-family:Inter,sans-serif;font-size:10.5px;color:#6E7887;padding:6px 0;">↓ gated by Next.js middleware, using each user's role from Roles &amp; Access ↓</div>
+  <div style="border:1.5px solid #034581;border-radius:12px;padding:12px;margin-bottom:8px;">
+    <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:800;color:#034581;text-align:center;margin-bottom:6px;">Supabase — primary backend</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+      <span style="font-family:Inter,sans-serif;font-size:10px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Auth (JWT + role claim)</span>
+      <span style="font-family:Inter,sans-serif;font-size:10px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Postgres (companies, employees, sites, attendance, audits, checklists, roles)</span>
+      <span style="font-family:Inter,sans-serif;font-size:10px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Row-Level Security</span>
+      <span style="font-family:Inter,sans-serif;font-size:10px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Storage (audit/checklist images)</span>
+      <span style="font-family:Inter,sans-serif;font-size:10px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Edge Functions (geofence check, Firebase token mint)</span>
+      <span style="font-family:Inter,sans-serif;font-size:10px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Realtime subscriptions</span>
+    </div>
+  </div>
+  <div style="text-align:center;font-family:Inter,sans-serif;font-size:10.5px;color:#6E7887;padding:4px 0;">↓ Edge Function mints a Firebase custom token from the Supabase session ↓</div>
+  <div style="border:1.5px solid #FF7A1A;border-radius:12px;padding:12px;">
+    <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:800;color:#FF7A1A;text-align:center;margin-bottom:6px;">Firebase — chat only</div>
+    <div style="display:flex;gap:6px;justify-content:center;">
+      <span style="font-family:Inter,sans-serif;font-size:10px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Firestore (conversations/messages)</span>
+      <span style="font-family:Inter,sans-serif;font-size:10px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Cloud Messaging (push)</span>
+    </div>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0;break-inside:avoid;">
+  <div style="background:#F5F7FA;border-radius:10px;padding:10px 12px;font-family:Inter,sans-serif;font-size:11px;"><strong>Gate 1 — Location</strong><br/>Employee login requires GPS within 20m of the assigned site (Haversine check, re-verified server-side).</div>
+  <div style="background:#F5F7FA;border-radius:10px;padding:10px 12px;font-family:Inter,sans-serif;font-size:11px;"><strong>Gate 2 — Role</strong><br/>Roles &amp; Access defines, per role, which Dashboard/App pages and functions are enabled; middleware enforces it on every route.</div>
+  <div style="background:#F5F7FA;border-radius:10px;padding:10px 12px;font-family:Inter,sans-serif;font-size:11px;"><strong>Gate 3 — Row security</strong><br/>Supabase RLS scopes every query to the caller's own company/site, independent of what the client asks for.</div>
+</div>
+
+<div style="break-before:page;"></div>
+<h2 style="font-family:Inter,sans-serif;font-size:18px;font-weight:800;color:#16202E;border-bottom:2px solid #E4E8EF;padding-bottom:8px;margin-top:10px;">1. Overview</h2>
+<p style="font-family:Inter,sans-serif;font-size:13px;color:#2A3444;line-height:1.7;">Two client applications share one backend: the <strong>Employee App</strong> (mobile-first PWA — attendance, audits, checklists, communication) and the <strong>Admin Dashboard</strong> (desktop web — company/employee management, audit review, checklist assignment, reporting). Both are built on <strong>Next.js 16</strong> (App Router), read/write data through <strong>Supabase</strong> (Postgres + Auth + Storage + Row-Level Security), and use <strong>Firebase</strong> exclusively for real-time chat/communication.</p>
+
+<div style="display:flex;flex-direction:column;gap:10px;margin:18px 0;border:1px solid #E4E8EF;border-radius:14px;padding:18px;break-inside:avoid;">
+  <div style="font-family:Inter,sans-serif;font-size:11px;font-weight:700;color:#6E7887;letter-spacing:0.04em;">STACK AT A GLANCE</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div style="background:#F5F7FA;border-radius:10px;padding:12px 14px;">
+      <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:700;color:#0E62D1;">Frontend</div>
+      <div style="font-family:Inter,sans-serif;font-size:12px;color:#2A3444;">Next.js 16 (App Router, Server Components + Server Actions), TypeScript, Tailwind</div>
+    </div>
+    <div style="background:#F5F7FA;border-radius:10px;padding:12px 14px;">
+      <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:700;color:#0E62D1;">Primary Backend</div>
+      <div style="font-family:Inter,sans-serif;font-size:12px;color:#2A3444;">Supabase — Postgres, Auth, Storage, Row-Level Security, Edge Functions</div>
+    </div>
+    <div style="background:#F5F7FA;border-radius:10px;padding:12px 14px;">
+      <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:700;color:#FF7A1A;">Chat Backend</div>
+      <div style="font-family:Inter,sans-serif;font-size:12px;color:#2A3444;">Firebase — Firestore (messages) + Cloud Messaging (push notifications)</div>
+    </div>
+    <div style="background:#F5F7FA;border-radius:10px;padding:12px 14px;">
+      <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:700;color:#FF7A1A;">Location</div>
+      <div style="font-family:Inter,sans-serif;font-size:12px;color:#2A3444;">Browser Geolocation API + Haversine geofence check against site coordinates</div>
+    </div>
+  </div>
+</div>
+
+<h2 style="font-family:Inter,sans-serif;font-size:18px;font-weight:800;color:#16202E;border-bottom:2px solid #E4E8EF;padding-bottom:8px;margin-top:28px;">2. High-Level Architecture</h2>
+<div style="border:1px solid #E4E8EF;border-radius:14px;padding:20px;margin:14px 0;break-inside:avoid;">
+  <div style="display:flex;gap:10px;">
+    <div style="flex:1;border:1.5px solid #0E62D1;border-radius:12px;padding:12px;text-align:center;">
+      <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:800;color:#0E62D1;">Employee App</div>
+      <div style="font-family:Inter,sans-serif;font-size:10.5px;color:#6E7887;">Next.js 16 · PWA</div>
+    </div>
+    <div style="flex:1;border:1.5px solid #0E62D1;border-radius:12px;padding:12px;text-align:center;">
+      <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:800;color:#0E62D1;">Admin Dashboard</div>
+      <div style="font-family:Inter,sans-serif;font-size:10.5px;color:#6E7887;">Next.js 16 · Web</div>
+    </div>
+  </div>
+  <div style="text-align:center;font-family:Inter,sans-serif;font-size:11px;color:#6E7887;padding:8px 0;">↓ Supabase JS client (typed) · Firebase SDK (chat only) ↓</div>
+  <div style="display:flex;gap:10px;">
+    <div style="flex:2;border:1.5px solid #034581;border-radius:12px;padding:12px;">
+      <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:800;color:#034581;text-align:center;margin-bottom:6px;">Supabase</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+        <span style="font-family:Inter,sans-serif;font-size:10.5px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Postgres + RLS</span>
+        <span style="font-family:Inter,sans-serif;font-size:10.5px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Auth (JWT)</span>
+        <span style="font-family:Inter,sans-serif;font-size:10.5px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Storage (images)</span>
+        <span style="font-family:Inter,sans-serif;font-size:10.5px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Edge Functions</span>
+      </div>
+    </div>
+    <div style="flex:1;border:1.5px solid #FF7A1A;border-radius:12px;padding:12px;">
+      <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:800;color:#FF7A1A;text-align:center;margin-bottom:6px;">Firebase</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+        <span style="font-family:Inter,sans-serif;font-size:10.5px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">Firestore</span>
+        <span style="font-family:Inter,sans-serif;font-size:10.5px;background:#F5F7FA;border-radius:6px;padding:4px 8px;">FCM push</span>
+      </div>
+    </div>
+  </div>
+</div>
+<p style="font-family:Inter,sans-serif;font-size:12px;color:#6E7887;line-height:1.6;">Supabase Auth issues the session JWT used by both apps. That same JWT authenticates the Firebase connection via a Supabase Edge Function that mints a matching Firebase custom token — one identity, two backends.</p>
+
+<h2 style="font-family:Inter,sans-serif;font-size:18px;font-weight:800;color:#16202E;border-bottom:2px solid #E4E8EF;padding-bottom:8px;margin-top:28px;">3. Geofenced Login</h2>
+<p style="font-family:Inter,sans-serif;font-size:13px;color:#2A3444;line-height:1.7;">Employees can only complete login from within <strong>20 meters</strong> of an assigned site. Admin login is exempt (desk-based role).</p>
+<div style="border:1px solid #E4E8EF;border-radius:14px;padding:18px;margin:14px 0;break-inside:avoid;">
+  <ol style="font-family:Inter,sans-serif;font-size:12.5px;color:#2A3444;line-height:2;padding-left:18px;margin:0;">
+    <li>User submits email/password → Supabase Auth validates credentials, returns session JWT.</li>
+    <li>Client requests <code>navigator.geolocation.getCurrentPosition()</code> (high-accuracy GPS).</li>
+    <li>Client fetches the employee's assigned site coordinates (lat/lng, stored per site in Postgres).</li>
+    <li>Client (or a Supabase Edge Function, for a trusted server-side check) computes distance via the <strong>Haversine formula</strong>.</li>
+    <li><strong>Distance ≤ 20m</strong> → session is confirmed, attendance clock-in becomes available.<br/><strong>Distance &gt; 20m or GPS denied</strong> → login is rejected with "You must be on-site to log in," session is not finalized.</li>
+  </ol>
+</div>
+<div style="background:#F5F7FA;border-radius:10px;padding:14px 16px;font-family:'SF Mono',Consolas,monospace;font-size:11px;color:#2A3444;line-height:1.6;margin-bottom:10px;break-inside:avoid;">
+function withinGeofence(userLat, userLng, siteLat, siteLng, radiusM = 20) {<br/>
+&nbsp;&nbsp;const R = 6371000;<br/>
+&nbsp;&nbsp;const dLat = (siteLat-userLat) * Math.PI/180;<br/>
+&nbsp;&nbsp;const dLng = (siteLng-userLng) * Math.PI/180;<br/>
+&nbsp;&nbsp;const a = Math.sin(dLat/2)**2 + Math.cos(userLat*Math.PI/180)*Math.cos(siteLat*Math.PI/180)*Math.sin(dLng/2)**2;<br/>
+&nbsp;&nbsp;const d = R * 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));<br/>
+&nbsp;&nbsp;return d <= radiusM;<br/>
+}
+</div>
+<p style="font-family:Inter,sans-serif;font-size:11.5px;color:#6E7887;line-height:1.6;">Enforce the check again server-side (Edge Function) before writing the attendance record — never trust a client-only distance calculation for the authoritative clock-in.</p>
+
+<h2 style="font-family:Inter,sans-serif;font-size:18px;font-weight:800;color:#16202E;border-bottom:2px solid #E4E8EF;padding-bottom:8px;margin-top:28px;">4. Role-Based Access Control</h2>
+<p style="font-family:Inter,sans-serif;font-size:13px;color:#2A3444;line-height:1.7;">A <code>role</code> column (<code>admin</code> | <code>employee</code>) on the Supabase <code>users</code> table drives access on both the client and the database:</p>
+<div style="display:flex;flex-direction:column;gap:8px;margin:14px 0;break-inside:avoid;">
+  <div style="border:1px solid #E4E8EF;border-radius:10px;padding:12px 16px;">
+    <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:700;color:#0E62D1;margin-bottom:4px;">Next.js Middleware</div>
+    <div style="font-family:Inter,sans-serif;font-size:12px;color:#2A3444;">Reads the role claim from the session JWT; redirects employees away from <code>/admin/*</code> routes and admins away from the employee app shell.</div>
+  </div>
+  <div style="border:1px solid #E4E8EF;border-radius:10px;padding:12px 16px;">
+    <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:700;color:#0E62D1;margin-bottom:4px;">Supabase Row-Level Security</div>
+    <div style="font-family:Inter,sans-serif;font-size:12px;color:#2A3444;">Every table (companies, employees, sites, audits, checklists, attendance) has RLS policies scoped by role and company assignment — an employee only ever sees rows for their own company/site, regardless of what the client requests.</div>
+  </div>
+  <div style="border:1px solid #E4E8EF;border-radius:10px;padding:12px 16px;">
+    <div style="font-family:Inter,sans-serif;font-size:12.5px;font-weight:700;color:#0E62D1;margin-bottom:4px;">UI Gating</div>
+    <div style="font-family:Inter,sans-serif;font-size:12px;color:#2A3444;">Navigation, action buttons, and page components render conditionally per role — belt-and-suspenders on top of middleware + RLS.</div>
+  </div>
+</div>
+<table style="width:100%;border-collapse:collapse;margin:14px 0;font-family:Inter,sans-serif;font-size:12px;break-inside:avoid;border:1px solid #E4E8EF;border-radius:10px;overflow:hidden;">
+  <thead><tr style="background:#F5F7FA;"><th style="text-align:left;padding:9px 12px;color:#6E7887;font-size:11px;border-bottom:1.5px solid #E4E8EF;border-right:1px solid #E4E8EF;">PAGE / AREA</th><th style="text-align:center;padding:9px 12px;color:#6E7887;font-size:11px;border-bottom:1.5px solid #E4E8EF;border-right:1px solid #E4E8EF;">EMPLOYEE</th><th style="text-align:center;padding:9px 12px;color:#6E7887;font-size:11px;border-bottom:1.5px solid #E4E8EF;">ADMIN</th></tr></thead>
+  <tbody>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Home / Assigned Sites</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">✓</td><td style="padding:9px 12px;text-align:center;">—</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Attendance (self)</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">✓</td><td style="padding:9px 12px;text-align:center;">—</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Checklists (assigned to me)</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">✓</td><td style="padding:9px 12px;text-align:center;">—</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Audits (assigned to me)</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">✓</td><td style="padding:9px 12px;text-align:center;">—</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Communication / Chat</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">✓</td><td style="padding:9px 12px;text-align:center;">✓</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Companies (create/edit/delete)</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">—</td><td style="padding:9px 12px;text-align:center;">✓</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Employees (create/assign)</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">—</td><td style="padding:9px 12px;text-align:center;">✓</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Attendance (all, daily/weekly)</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">—</td><td style="padding:9px 12px;text-align:center;">✓</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Audit review + marks + send results</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">—</td><td style="padding:9px 12px;text-align:center;">✓</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Checklist creation + assignment</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">—</td><td style="padding:9px 12px;text-align:center;">✓</td></tr>
+  </tbody>
+</table>
+
+<div style="break-before:page;"></div>
+<h2 style="font-family:Inter,sans-serif;font-size:18px;font-weight:800;color:#16202E;border-bottom:2px solid #E4E8EF;padding-bottom:8px;margin-top:10px;">5. Data Model (Supabase / Postgres)</h2>
+<p style="font-family:Inter,sans-serif;font-size:13px;color:#2A3444;line-height:1.7;">Core tables, each with RLS policies keyed on <code>company_id</code> / <code>employee_id</code>:</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0;break-inside:avoid;">
+  <div style="background:#F5F7FA;border-radius:10px;padding:10px 14px;font-family:Inter,sans-serif;font-size:12px;"><strong>companies</strong> — name, location, visit days/time, status</div>
+  <div style="background:#F5F7FA;border-radius:10px;padding:10px 14px;font-family:Inter,sans-serif;font-size:12px;"><strong>employees</strong> — profile, credentials, role, company_ids[]</div>
+  <div style="background:#F5F7FA;border-radius:10px;padding:10px 14px;font-family:Inter,sans-serif;font-size:12px;"><strong>sites</strong> — company_id, name, address, lat/lng</div>
+  <div style="background:#F5F7FA;border-radius:10px;padding:10px 14px;font-family:Inter,sans-serif;font-size:12px;"><strong>attendance</strong> — employee_id, site_id, clock_in/out, geo-verified flag</div>
+  <div style="background:#F5F7FA;border-radius:10px;padding:10px 14px;font-family:Inter,sans-serif;font-size:12px;"><strong>audits</strong> — company_id, employee_id, main_audits[], sub_audits[], marks, status</div>
+  <div style="background:#F5F7FA;border-radius:10px;padding:10px 14px;font-family:Inter,sans-serif;font-size:12px;"><strong>checklist_templates</strong> — company_id, site_id, main areas + subtasks</div>
+  <div style="background:#F5F7FA;border-radius:10px;padding:10px 14px;font-family:Inter,sans-serif;font-size:12px;"><strong>checklists</strong> — template_id, employee_id, assigned_date, submission (notes/images)</div>
+  <div style="background:#F5F7FA;border-radius:10px;padding:10px 14px;font-family:Inter,sans-serif;font-size:12px;"><strong>storage: audit-images, checklist-images</strong> — Supabase Storage buckets, signed URLs</div>
+</div>
+
+<h2 style="font-family:Inter,sans-serif;font-size:18px;font-weight:800;color:#16202E;border-bottom:2px solid #E4E8EF;padding-bottom:8px;margin-top:28px;">6. Chat (Firebase)</h2>
+<p style="font-family:Inter,sans-serif;font-size:13px;color:#2A3444;line-height:1.7;">Chat is the one subsystem on Firebase, chosen for its low-latency real-time listeners:</p>
+<ul style="font-family:Inter,sans-serif;font-size:12.5px;color:#2A3444;line-height:1.9;padding-left:18px;">
+  <li><strong>Firestore</strong> — <code>conversations/{'{'}id{'}'}/messages</code> collections; client subscribes with <code>onSnapshot</code> for live updates.</li>
+  <li><strong>Firebase Auth bridge</strong> — a Supabase Edge Function mints a Firebase custom token from the verified Supabase session, so users sign into Firebase transparently (no second login).</li>
+  <li><strong>Cloud Messaging (FCM)</strong> — push notifications for new messages, audit assignments, and checklist reminders when the app is backgrounded.</li>
+  <li><strong>Security rules</strong> — Firestore rules check the custom token's <code>company_id</code>/<code>role</code> claims, mirroring the Postgres RLS model.</li>
+</ul>
+
+<h2 style="font-family:Inter,sans-serif;font-size:18px;font-weight:800;color:#16202E;border-bottom:2px solid #E4E8EF;padding-bottom:8px;margin-top:28px;">7. Frontend (Next.js 16)</h2>
+<ul style="font-family:Inter,sans-serif;font-size:12.5px;color:#2A3444;line-height:1.9;padding-left:18px;">
+  <li><strong>App Router</strong> route groups: <code>(app)</code> for the employee PWA shell, <code>(admin)</code> for the dashboard — separate layouts, shared design system.</li>
+  <li><strong>Server Components</strong> fetch initial data (companies, assigned sites, audits) directly via the Supabase server client; <strong>Server Actions</strong> handle mutations (clock in/out, submit checklist, assign audit).</li>
+  <li><strong>Client Components</strong> own the geolocation check, live chat subscriptions, and interactive forms.</li>
+  <li><strong>Middleware</strong> enforces auth + role redirects on every request before rendering.</li>
+  <li>PWA manifest + service worker on the employee app for install-to-home-screen and offline shell caching.</li>
+</ul>
+
+<h2 style="font-family:Inter,sans-serif;font-size:18px;font-weight:800;color:#16202E;border-bottom:2px solid #E4E8EF;padding-bottom:8px;margin-top:28px;">8. Request Flow — Employee Clock-In</h2>
+<div style="border:1px solid #E4E8EF;border-radius:14px;padding:18px;margin:14px 0;break-inside:avoid;">
+  <ol style="font-family:Inter,sans-serif;font-size:12.5px;color:#2A3444;line-height:2.1;padding-left:18px;margin:0;">
+    <li>Employee opens app → Next.js middleware verifies Supabase session, role = employee.</li>
+    <li>Server Component loads assigned site + coordinates.</li>
+    <li>Client requests GPS position; Haversine check runs against site coordinates.</li>
+    <li>If within 20m: Server Action writes an <code>attendance</code> row with <code>geo_verified: true</code>.</li>
+    <li>If outside 20m: Server Action rejects the write; UI shows "move closer to the site."</li>
+  </ol>
+</div>
+
+<h2 style="font-family:Inter,sans-serif;font-size:18px;font-weight:800;color:#16202E;border-bottom:2px solid #E4E8EF;padding-bottom:8px;margin-top:28px;">9. Security Notes</h2>
+<ul style="font-family:Inter,sans-serif;font-size:12.5px;color:#2A3444;line-height:1.9;padding-left:18px;">
+  <li>All authoritative checks (geofence distance, role, company scoping) are re-validated server-side — the client-side result is UX-only, never trusted for the write.</li>
+  <li>RLS policies are the single source of truth for data access, independent of what the UI requests.</li>
+  <li>Firebase custom tokens are short-lived and re-minted per session; Firestore rules enforce the same company/role scoping as Postgres.</li>
+  <li>Images (audit/checklist attachments) are stored in private Supabase Storage buckets and served via short-lived signed URLs.</li>
+</ul>
+
+<div style="break-before:page;"></div>
+<h1 style="font-family:Inter,sans-serif;font-size:24px;font-weight:800;color:#16202E;margin-top:10px;">Appendix A — Architecture Diagram</h1>
+<div style="font-family:Inter,sans-serif;font-size:13px;color:#6E7887;margin-bottom:20px;">How the two clients connect to each other and to the backends.</div>
+
+<div style="border:1px solid #E4E8EF;border-radius:14px;padding:22px;margin:14px 0;break-inside:avoid;">
+  <div style="display:flex;gap:14px;">
+    <div style="flex:1;border:1.5px solid #0E62D1;border-radius:12px;padding:14px;text-align:center;">
+      <div style="font-family:Inter,sans-serif;font-size:13px;font-weight:800;color:#0E62D1;">Employee App</div>
+      <div style="font-family:Inter,sans-serif;font-size:10.5px;color:#6E7887;margin-top:2px;">Next.js 16 PWA · mobile-first</div>
+    </div>
+    <div style="flex:1;border:1.5px solid #0E62D1;border-radius:12px;padding:14px;text-align:center;">
+      <div style="font-family:Inter,sans-serif;font-size:13px;font-weight:800;color:#0E62D1;">Admin Dashboard</div>
+      <div style="font-family:Inter,sans-serif;font-size:10.5px;color:#6E7887;margin-top:2px;">Next.js 16 · desktop web</div>
+    </div>
+  </div>
+  <div style="text-align:center;font-family:Inter,sans-serif;font-size:11px;color:#6E7887;padding:10px 0;">both clients call the same Supabase project — no direct app-to-dashboard connection, all data flows through the shared backend</div>
+  <div style="border:1.5px solid #034581;border-radius:12px;padding:14px;margin-bottom:10px;">
+    <div style="font-family:Inter,sans-serif;font-size:13px;font-weight:800;color:#034581;text-align:center;margin-bottom:8px;">Supabase (shared backend)</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+      <span style="font-family:Inter,sans-serif;font-size:11px;background:#F5F7FA;border-radius:7px;padding:6px 10px;">Auth (JWT + role claim)</span>
+      <span style="font-family:Inter,sans-serif;font-size:11px;background:#F5F7FA;border-radius:7px;padding:6px 10px;">Postgres + RLS</span>
+      <span style="font-family:Inter,sans-serif;font-size:11px;background:#F5F7FA;border-radius:7px;padding:6px 10px;">Storage (images)</span>
+      <span style="font-family:Inter,sans-serif;font-size:11px;background:#F5F7FA;border-radius:7px;padding:6px 10px;">Edge Functions (geofence check, Firebase token mint)</span>
+    </div>
+  </div>
+  <div style="text-align:center;font-family:Inter,sans-serif;font-size:11px;color:#6E7887;padding:6px 0;">↓ custom token bridge (Edge Function) ↓</div>
+  <div style="border:1.5px solid #FF7A1A;border-radius:12px;padding:14px;">
+    <div style="font-family:Inter,sans-serif;font-size:13px;font-weight:800;color:#FF7A1A;text-align:center;margin-bottom:8px;">Firebase (chat only)</div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <span style="font-family:Inter,sans-serif;font-size:11px;background:#F5F7FA;border-radius:7px;padding:6px 10px;">Firestore (messages)</span>
+      <span style="font-family:Inter,sans-serif;font-size:11px;background:#F5F7FA;border-radius:7px;padding:6px 10px;">Cloud Messaging (push)</span>
+    </div>
+  </div>
+</div>
+<p style="font-family:Inter,sans-serif;font-size:11.5px;color:#6E7887;line-height:1.6;">The two apps never talk to each other directly. The Admin Dashboard writes rows (companies, employees, assignments, checklists, audits) into Supabase; the Employee App reads its own scoped slice of the same tables in real time via Supabase's realtime subscriptions — so an assignment made in the dashboard appears on the employee's phone without any app-to-app call.</p>
+
+<div style="break-before:page;"></div>
+<h1 style="font-family:Inter,sans-serif;font-size:24px;font-weight:800;color:#16202E;margin-top:10px;">Appendix B — Code Structure</h1>
+<div style="font-family:Inter,sans-serif;font-size:13px;color:#6E7887;margin-bottom:16px;">Single Next.js 16 monorepo, two route groups, shared packages.</div>
+<div style="background:#F5F7FA;border-radius:10px;padding:16px 18px;font-family:'SF Mono',Consolas,monospace;font-size:11px;color:#2A3444;line-height:1.75;margin-bottom:16px;break-inside:avoid;white-space:pre;">macro/
+├─ app/
+│  ├─ (app)/                 employee PWA route group
+│  │  ├─ login/
+│  │  ├─ home/
+│  │  ├─ sites/[siteId]/
+│  │  ├─ attendance/
+│  │  ├─ checklists/
+│  │  ├─ audits/
+│  │  ├─ communication/
+│  │  └─ profile/
+│  ├─ (admin)/                admin dashboard route group
+│  │  ├─ login/
+│  │  ├─ dashboard/
+│  │  ├─ companies/[companyId]/
+│  │  ├─ employees/
+│  │  ├─ attendance/
+│  │  ├─ audits/[auditId]/
+│  │  ├─ checklists/
+│  │  └─ communication/
+│  └─ layout.tsx              root layout, font + providers
+├─ middleware.ts               auth + role-based route guard
+├─ components/                 shared UI (cards, tables, modals, badges)
+├─ lib/
+│  ├─ supabase/                client.ts, server.ts, middleware.ts
+│  ├─ firebase/                client.ts, chat.ts
+│  └─ geo/                     haversine.ts, geofence.ts
+├─ actions/                    Server Actions (clockIn, submitChecklist, assignAudit …)
+├─ types/                      generated Supabase types + shared types
+└─ supabase/
+   ├─ migrations/              SQL schema + RLS policies
+   └─ functions/                Edge Functions (geofence-verify, mint-firebase-token)</div>
+<p style="font-family:Inter,sans-serif;font-size:11.5px;color:#6E7887;line-height:1.6;">The two route groups share the same <code>components/</code>, <code>lib/</code>, and <code>types/</code> — one design system, one data layer, two experiences. <code>middleware.ts</code> is what actually separates them at runtime (see Appendix C).</p>
+
+<div style="break-before:page;"></div>
+<h1 style="font-family:Inter,sans-serif;font-size:24px;font-weight:800;color:#16202E;margin-top:10px;">Appendix C — Connecting App ↔ Dashboard &amp; Granting Access</h1>
+<div style="font-family:Inter,sans-serif;font-size:13px;color:#6E7887;margin-bottom:16px;">There is no direct app-to-dashboard link — everything routes through Supabase, and access is granted by the Admin, not self-service.</div>
+
+<div style="border:1px solid #E4E8EF;border-radius:14px;padding:18px;margin-bottom:16px;break-inside:avoid;">
+  <div style="font-family:Inter,sans-serif;font-size:13px;font-weight:800;color:#16202E;margin-bottom:8px;">How they connect</div>
+  <ol style="font-family:Inter,sans-serif;font-size:12.5px;color:#2A3444;line-height:2;padding-left:18px;margin:0;">
+    <li>Admin (in the Dashboard) registers a company, then registers an employee and sets their login email + password, then assigns that employee to one or more companies.</li>
+    <li>That write lands in the shared Supabase <code>employees</code> table — nothing is pushed to the app directly.</li>
+    <li>When the employee opens the app and logs in, Supabase Auth checks the same credentials the Admin created.</li>
+    <li>The app reads the employee's row (via RLS) to know which companies/sites they can see — this is the entire "connection": a shared source of truth, read differently by each client.</li>
+    <li>Anything the Admin does afterward (assign a checklist, send audit results, add a company visit day) is just another row written to the same tables, which the employee's app picks up via a live Supabase subscription.</li>
+  </ol>
+</div>
+
+<div style="border:1px solid #E4E8EF;border-radius:14px;padding:18px;margin-bottom:10px;break-inside:avoid;">
+  <div style="font-family:Inter,sans-serif;font-size:13px;font-weight:800;color:#16202E;margin-bottom:8px;">Who grants access to what</div>
+  <table style="width:100%;border-collapse:collapse;font-family:Inter,sans-serif;font-size:12px;border:1px solid #E4E8EF;">
+    <thead><tr style="background:#F5F7FA;"><th style="text-align:left;padding:9px 12px;color:#6E7887;font-size:11px;border-bottom:1.5px solid #E4E8EF;border-right:1px solid #E4E8EF;">WHO</th><th style="text-align:left;padding:9px 12px;color:#6E7887;font-size:11px;border-bottom:1.5px solid #E4E8EF;border-right:1px solid #E4E8EF;">GRANTS</th><th style="text-align:left;padding:9px 12px;color:#6E7887;font-size:11px;border-bottom:1.5px solid #E4E8EF;">HOW</th></tr></thead>
+    <tbody>
+      <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Admin</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Dashboard access</td><td style="padding:9px 12px;">Only super-admin provisions Admin accounts directly in Supabase Auth (no self-signup)</td></tr>
+      <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Admin</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Employee App access</td><td style="padding:9px 12px;">Registers the employee + sets login credentials in Employees page</td></tr>
+      <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Admin</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Which companies/sites an employee sees</td><td style="padding:9px 12px;">"Add Employee" action on a Company card, or multi-company assignment on the employee record</td></tr>
+      <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Admin</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">What work an employee gets</td><td style="padding:9px 12px;">Assigns checklists and audits to specific employees</td></tr>
+      <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">System (RLS)</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Enforces every grant above</td><td style="padding:9px 12px;">Postgres Row-Level Security policies reject any read/write outside what the Admin assigned, even if the client requests it</td></tr>
+      <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Employee</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Nothing — read-only recipient</td><td style="padding:9px 12px;">Cannot self-assign a company, site, checklist, or audit; can only act on what's already assigned</td></tr>
+    </tbody>
+  </table>
+</div>
+<p style="font-family:Inter,sans-serif;font-size:11.5px;color:#6E7887;line-height:1.6;">In short: <strong>the Admin Dashboard is the only place access is granted</strong>. The Employee App has no admin functions and cannot elevate its own permissions — it only ever reflects what Supabase RLS allows for that employee's row.</p>
+
+<div style="border:1px solid #E4E8EF;border-radius:14px;padding:18px;margin-top:16px;break-inside:avoid;">
+  <div style="font-family:Inter,sans-serif;font-size:13px;font-weight:800;color:#16202E;margin-bottom:8px;">Configurable roles (Roles &amp; Access page)</div>
+  <p style="font-family:Inter,sans-serif;font-size:12px;color:#2A3444;line-height:1.7;margin:0 0 10px;">Access is not hardcoded to just "Admin" and "Employee." The Dashboard has a dedicated <strong>Roles &amp; Access</strong> page where an Admin defines named roles (e.g. Admin, Supervisor, Field Employee) and, per role, toggles exactly which Dashboard pages and which App pages that role can open — some roles legitimately need both surfaces (a Supervisor, for example, can review audits and attendance in the Dashboard while also clocking in and completing checklists in the App).</p>
+  <ul style="font-family:Inter,sans-serif;font-size:12px;color:#2A3444;line-height:1.8;padding-left:18px;margin:0;">
+    <li>Each employee record carries an <code>access_role_id</code> referencing one role.</li>
+    <li>Next.js middleware reads the role's toggle set (mirrored server-side) and redirects away from any Dashboard or App route not enabled for that role.</li>
+    <li>Supabase RLS still enforces company/site data scoping underneath the role's page-level access — role controls <em>which pages</em>, RLS controls <em>which rows</em>.</li>
+    <li>Sidebar/bottom-nav items render only for pages the current role has enabled.</li>
+  </ul>
+</div>
+
+<div style="break-before:page;"></div>
+<h1 style="font-family:Inter,sans-serif;font-size:24px;font-weight:800;color:#16202E;margin-top:10px;">Appendix D — Permission Matrix</h1>
+<div style="font-family:Inter,sans-serif;font-size:13px;color:#6E7887;margin-bottom:20px;">Every page and function across both surfaces, by role.</div>
+
+<h2 style="font-family:Inter,sans-serif;font-size:16px;font-weight:800;color:#0E62D1;margin-top:10px;margin-bottom:8px;">Employee App</h2>
+<table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-family:Inter,sans-serif;font-size:11.5px;break-inside:avoid;border:1px solid #E4E8EF;">
+  <thead><tr style="background:#F5F7FA;"><th style="text-align:left;padding:9px 12px;color:#6E7887;font-size:10.5px;border-bottom:1.5px solid #E4E8EF;border-right:1px solid #E4E8EF;">AREA</th><th style="text-align:left;padding:9px 12px;color:#6E7887;font-size:10.5px;border-bottom:1.5px solid #E4E8EF;border-right:1px solid #E4E8EF;">FUNCTIONS</th><th style="text-align:center;padding:9px 12px;color:#6E7887;font-size:10.5px;border-bottom:1.5px solid #E4E8EF;">ACCESS</th></tr></thead>
+  <tbody>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Login</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Email/password sign-in, geofence check (20m)</td><td style="padding:9px 12px;text-align:center;">Self only</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Home</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">View assigned company + sites, search sites</td><td style="padding:9px 12px;text-align:center;">Own assignments</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Site Details</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">View site info, tasks, documents</td><td style="padding:9px 12px;text-align:center;">Own sites only</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Attendance</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Clock in/out, break start/end, view own history</td><td style="padding:9px 12px;text-align:center;">Self only, geo-verified</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Checklists</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">View assigned checklist, tick subtasks, add notes/images, submit</td><td style="padding:9px 12px;text-align:center;">Own assignments; read-only after submit</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Audits</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">View assigned audits (Active/In Progress/Completed); no marks entry</td><td style="padding:9px 12px;text-align:center;">Own audits, read-only marks</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Communication</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Send/receive messages, view open/closed threads</td><td style="padding:9px 12px;text-align:center;">Own company thread</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Profile</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">View profile, change password (forced on first login)</td><td style="padding:9px 12px;text-align:center;">Self only</td></tr>
+  </tbody>
+</table>
+
+<h2 style="font-family:Inter,sans-serif;font-size:16px;font-weight:800;color:#0E62D1;margin-top:16px;margin-bottom:8px;">Admin Dashboard</h2>
+<table style="width:100%;border-collapse:collapse;margin-bottom:10px;font-family:Inter,sans-serif;font-size:11.5px;break-inside:avoid;border:1px solid #E4E8EF;">
+  <thead><tr style="background:#F5F7FA;"><th style="text-align:left;padding:9px 12px;color:#6E7887;font-size:10.5px;border-bottom:1.5px solid #E4E8EF;border-right:1px solid #E4E8EF;">AREA</th><th style="text-align:left;padding:9px 12px;color:#6E7887;font-size:10.5px;border-bottom:1.5px solid #E4E8EF;border-right:1px solid #E4E8EF;">FUNCTIONS</th><th style="text-align:center;padding:9px 12px;color:#6E7887;font-size:10.5px;border-bottom:1.5px solid #E4E8EF;">ACCESS</th></tr></thead>
+  <tbody>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Dashboard</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Summary charts, attendance + checklist tables, audit status graph</td><td style="padding:9px 12px;text-align:center;">All companies</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Companies</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Register, edit, delete company; set visit days/time; view/add/remove assigned employees</td><td style="padding:9px 12px;text-align:center;">Full CRUD</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Employees</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Register employee + login credentials; assign to one or more companies</td><td style="padding:9px 12px;text-align:center;">Full CRUD</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Attendance</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Daily/weekly views across all employees, date navigation</td><td style="padding:9px 12px;text-align:center;">Read (all companies)</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Audits</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Create/edit/delete audit, add main/sub-audits, rate (Not Satisfactory/Satisfactory/Good), enter marks per section + final marks, send results to selected employees</td><td style="padding:9px 12px;text-align:center;">Full CRUD</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Checklists</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">Create checklist templates (main areas + subtasks + notes/images), edit/delete templates, assign to employee(s) with date, review submitted checklists</td><td style="padding:9px 12px;text-align:center;">Full CRUD</td></tr>
+    <tr style="border-top:1px solid #E4E8EF;"><td style="padding:9px 12px;font-weight:600;border-right:1px solid #E4E8EF;">Communication</td><td style="padding:9px 12px;border-right:1px solid #E4E8EF;">View/respond to all company threads</td><td style="padding:9px 12px;text-align:center;">All companies</td></tr>
+  </tbody>
+</table>
+<p style="font-family:Inter,sans-serif;font-size:11px;color:#6E7887;line-height:1.6;">Access above is enforced in three layers: Next.js middleware (route redirect), Supabase RLS (row-level data scoping), and UI conditional rendering — see Section 4. Table shown reflects the default "Admin" and "Field Employee" roles; the actual set of pages available to any employee is whatever their assigned role (see Appendix C) enables, and some roles may combine access to both surfaces.</p>
+
+</doc-page>
+
+</x-dc>
+</body>
+</html>

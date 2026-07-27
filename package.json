@@ -1,0 +1,16 @@
+{
+  "name": "macro",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:app": "npm run dev -w apps/employee-app",
+    "dev:admin": "npm run dev -w apps/admin-dashboard",
+    "build:app": "npm run build -w apps/employee-app",
+    "build:admin": "npm run build -w apps/admin-dashboard",
+    "lint:app": "npm run lint -w apps/employee-app",
+    "lint:admin": "npm run lint -w apps/admin-dashboard"
+  }
+}

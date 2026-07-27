@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p mockups)",
+      "Bash(git mv *)",
+      "Bash(mv \"Architecture Document.dc.html\" \"Macro Admin Dashboard.dc.html\" \"Macro App.dc.html\" doc-page.js ios-frame.jsx support.js mockups/)",
+      "Bash(rm -rf app)",
+      "Bash(node -e \"console.log\\(require\\('./apps/employee-app/node_modules/next/package.json'\\).version\\)\")",
+      "Bash(curl -s http://localhost:3000/login)",
+      "Bash(lsof -i :3001 -sTCP:LISTEN -Fp)",
+      "Bash(pkill -f \"next dev --port 3000\")",
+      "Bash(pkill -f \"next dev --port 3011\")",
+      "Bash(node -e \"console.log\\('eslint', require\\('./node_modules/eslint/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\('eslint-config-next', require\\('./node_modules/eslint-config-next/package.json'\\).version\\)\")",
+      "mcp__claude_ai_Supabase__get_advisors",
+      "Bash(lsof -i :3001 -sTCP:LISTEN)",
+      "Bash(lsof -i :3011 -sTCP:LISTEN)",
+      "Bash(grep -rn 'rounded-lg px-2 py-\\\\[7px\\\\]\\\\|rounded-xl bg-bg py-3\\\\|Close$\\\\|>Close<' app/\\\\\\(admin\\\\\\)/audits/AuditDetailModal.tsx app/\\\\\\(admin\\\\\\)/checklists/ChecklistDetailModal.tsx app/\\\\\\(admin\\\\\\)/checklists/TemplateDetailModal.tsx)",
+      "Bash(ps -p 42716 -o pid,lstart,command)",
+      "Bash(ps -p 41932 -o pid,lstart,command)",
+      "Bash(lsof -ti:3021)",
+      "Bash(xargs kill -9)",
+      "Bash(disown)",
+      "Bash(lsof -ti:3020)",
+      "Bash(lsof -nP -iTCP:3000 -sTCP:LISTEN)",
+      "Bash(ps -p 44050 -o pid,ppid,etime,command)",
+      "Bash(kill -9 44050)",
+      "Bash(kill -9 46311)",
+      "Bash(lsof -nP -iTCP:3020 -sTCP:LISTEN)",
+      "Bash(curl -s -A \"MacroApp-Test/1.0\" \"https://nominatim.openstreetmap.org/search?format=json&limit=1&q=Colombo%2C%20Sri%20Lanka\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -A \"MacroApp-Test/1.0\" \"https://nominatim.openstreetmap.org/search?format=json&limit=1&q=Colombo%2C%20Sri%20Lanka\")",
+      "Bash(curl -s -I -A \"Mozilla/5.0\" -H \"Origin: http://localhost:3020\" \"https://nominatim.openstreetmap.org/search?format=json&limit=1&q=Colombo\")",
+      "Bash(rm -rf .next)",
+      "Bash(kill -9 47847)",
+      "mcp__claude_ai_Supabase__deploy_edge_function",
+      "Bash(mkdir -p \"/Users/shalini/Downloads/Mobile-first employee audit app \\(1\\)/apps/employee-app/app/\\(app\\)/communication/[id]\")",
+      "mcp__claude_ai_Supabase__get_project",
+      "mcp__claude_ai_Supabase__get_logs"
+    ],
+    "additionalDirectories": [
+      "/Users/shalini/Downloads/Mobile-first employee audit app (1)/apps/employee-app/app/(app)/communication"
+    ]
+  }
+}
