@@ -70,28 +70,35 @@ const ICONS = {
   ),
 };
 
-function ActionButton({
+const CARD_COLORS = {
+  clockIn: { iconBg: "bg-primary/10", iconText: "text-primary" },
+  clockOut: { iconBg: "bg-error/10", iconText: "text-error" },
+  breakStart: { iconBg: "bg-orange/15", iconText: "text-orange" },
+  breakEnd: { iconBg: "bg-olive/25", iconText: "text-olive-text" },
+} as const;
+
+function ActionCard({
   children,
   icon,
   disabled,
-  variant = "default",
+  color,
 }: {
   children: React.ReactNode;
   icon: React.ReactNode;
   disabled?: boolean;
-  variant?: "default" | "primary";
+  color: { iconBg: string; iconText: string };
 }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
       disabled={disabled || pending}
-      className={`flex flex-col items-center gap-1.5 rounded-2xl py-3.5 text-[13px] font-semibold transition-colors disabled:opacity-30 ${
-        variant === "primary" ? "bg-white text-primary" : "bg-white/15 text-white"
-      }`}
+      className="flex w-full flex-col items-center gap-2 rounded-2xl border border-border bg-white p-4 text-center shadow-sm transition-all enabled:hover:-translate-y-0.5 enabled:hover:shadow-md disabled:opacity-40"
     >
-      {pending ? "…" : icon}
-      <span>{pending ? "" : children}</span>
+      <span className={`flex h-11 w-11 items-center justify-center rounded-full ${color.iconBg} ${color.iconText}`}>
+        {pending ? "…" : icon}
+      </span>
+      <span className="text-[13px] font-bold text-text-dark">{pending ? "Please wait…" : children}</span>
     </button>
   );
 }
@@ -162,61 +169,59 @@ export function AttendanceClock({
   const error = clockInState.error || clockOutState.error || breakStartState.error || breakEndState.error || geoError;
 
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-6 text-white shadow-lg shadow-primary/20">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-xs font-medium text-white/70">
-            {new Date(now).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+    <div className="flex flex-col gap-3.5">
+      <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-6 text-white shadow-lg shadow-primary/20">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="text-xs font-medium text-white/70">
+              {new Date(now).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+            </div>
+            <div className="mt-1 text-[38px] font-extrabold leading-none tabular-nums">{formatDuration(workingMs)}</div>
+            <div className="mt-1.5 text-xs text-white/80">Working hours</div>
           </div>
-          <div className="mt-1 text-[38px] font-extrabold leading-none tabular-nums">{formatDuration(workingMs)}</div>
-          <div className="mt-1.5 text-xs text-white/80">Working hours</div>
+          <div className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">{statusLabel}</div>
         </div>
-        <div className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">{statusLabel}</div>
+
+        {site ? (
+          <div className="mt-4 flex items-center gap-2 rounded-xl bg-white/10 px-3.5 py-3">
+            <span className="text-white/80">{ICONS.pin}</span>
+            <div className="min-w-0">
+              <div className="truncate text-[13.5px] font-semibold">{site.name}</div>
+              {site.companyName && <div className="truncate text-[11.5px] text-white/70">{site.companyName}</div>}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 rounded-xl border border-white/20 bg-white/10 p-3.5">
+            <div className="text-xs">No assigned site yet — ask your admin to assign you to a company.</div>
+          </div>
+        )}
+
+        {error && <div className="mt-3 rounded-lg bg-white/15 px-3 py-2 text-xs">{error}</div>}
       </div>
 
-      {site ? (
-        <div className="mt-4 flex items-center gap-2 rounded-xl bg-white/10 px-3.5 py-3">
-          <span className="text-white/80">{ICONS.pin}</span>
-          <div className="min-w-0">
-            <div className="truncate text-[13.5px] font-semibold">{site.name}</div>
-            {site.companyName && <div className="truncate text-[11.5px] text-white/70">{site.companyName}</div>}
-          </div>
-        </div>
-      ) : (
-        <div className="mt-4 rounded-xl border border-white/20 bg-white/10 p-3.5">
-          <div className="text-xs">No assigned site yet — ask your admin to assign you to a company.</div>
-        </div>
-      )}
-
-      {error && <div className="mt-3 rounded-lg bg-white/15 px-3 py-2 text-xs">{error}</div>}
-
-      <div className="mt-4 grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-3">
         <form action={handleClockIn}>
-          <ActionButton
-            icon={ICONS.clockIn}
-            variant="primary"
-            disabled={Boolean(activeRecord) || !site || locating}
-          >
+          <ActionCard icon={ICONS.clockIn} color={CARD_COLORS.clockIn} disabled={Boolean(activeRecord) || !site || locating}>
             {locating ? "Getting GPS fix…" : "Clock In"}
-          </ActionButton>
+          </ActionCard>
         </form>
         <form action={clockOutFormAction}>
           <input type="hidden" name="attendanceId" value={activeRecord?.id ?? ""} />
-          <ActionButton icon={ICONS.clockOut} disabled={!isClockedIn}>
+          <ActionCard icon={ICONS.clockOut} color={CARD_COLORS.clockOut} disabled={!isClockedIn}>
             Clock Out
-          </ActionButton>
+          </ActionCard>
         </form>
         <form action={breakStartFormAction}>
           <input type="hidden" name="attendanceId" value={activeRecord?.id ?? ""} />
-          <ActionButton icon={ICONS.breakStart} disabled={!isClockedIn}>
+          <ActionCard icon={ICONS.breakStart} color={CARD_COLORS.breakStart} disabled={!isClockedIn}>
             Break Start
-          </ActionButton>
+          </ActionCard>
         </form>
         <form action={breakEndFormAction}>
           <input type="hidden" name="attendanceId" value={activeRecord?.id ?? ""} />
-          <ActionButton icon={ICONS.breakEnd} disabled={!isOnBreak}>
+          <ActionCard icon={ICONS.breakEnd} color={CARD_COLORS.breakEnd} disabled={!isOnBreak}>
             Break End
-          </ActionButton>
+          </ActionCard>
         </form>
       </div>
     </div>
