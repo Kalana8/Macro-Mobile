@@ -8,7 +8,7 @@ export default async function AuditsPage() {
   const cutoff = new Date();
   cutoff.setMonth(cutoff.getMonth() - 2);
 
-  const [{ data: audits, error }, { data: companies }, { data: employees }, { data: memberships }] =
+  const [{ data: audits, error }, { data: companies }, { data: sites }, { data: employees }, { data: memberships }] =
     await Promise.all([
       supabase
         .from("audits")
@@ -16,6 +16,7 @@ export default async function AuditsPage() {
         .gte("date", cutoff.toISOString().slice(0, 10))
         .order("date", { ascending: false }),
       supabase.from("companies").select("id, name").order("name"),
+      supabase.from("sites").select("id, name, company_id").order("name"),
       supabase.from("employees").select("id, full_name").order("full_name"),
       supabase.from("employee_companies").select("employee_id, company_id"),
     ]);
@@ -47,7 +48,7 @@ export default async function AuditsPage() {
       )}
 
       {!error && (
-        <AuditsTable audits={rows} companies={companies ?? []} employees={employeeOptions} />
+        <AuditsTable audits={rows} companies={companies ?? []} sites={sites ?? []} employees={employeeOptions} />
       )}
     </div>
   );

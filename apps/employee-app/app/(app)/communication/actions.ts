@@ -2,11 +2,25 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@macro/shared/supabase/server";
+import { uploadImageToImageKit } from "@macro/shared/imagekit";
 
 export interface CommunicationFormState {
   error?: string;
   success?: boolean;
   id?: string;
+}
+
+/** Uploads one chat image to ImageKit and returns its public URL — keeps the private key server-only. */
+export async function uploadCommunicationImageAction(formData: FormData): Promise<{ url?: string; error?: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { error: "No file provided." };
+
+  try {
+    const url = await uploadImageToImageKit(file, "communication");
+    return { url };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Upload failed." };
+  }
 }
 
 /**

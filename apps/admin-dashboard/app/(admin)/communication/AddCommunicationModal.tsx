@@ -2,14 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@macro/shared/supabase/client";
 import { ensureFirebaseSession, createConversation, sendMessage } from "@macro/shared/firebase/chat";
-import { uploadImage } from "@macro/shared/storage";
 import { Modal } from "@/components/Modal";
 import { CheckboxSquare, FieldLabel, PrimaryButton, Select, TextArea, TextInput } from "@/components/ui";
-import { createCommunicationAction } from "./actions";
+import { createCommunicationAction, uploadCommunicationImageAction } from "./actions";
 
-const BUCKET = "communication-images";
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.set("file", file);
+  const result = await uploadCommunicationImageAction(formData);
+  if (result.error || !result.url) throw new Error(result.error ?? "Upload failed.");
+  return result.url;
+}
 
 interface Site {
   id: string;
@@ -82,9 +86,8 @@ export function AddCommunicationModal({
       if (ready) {
         await createConversation(result.id, { employeeIds, companyId, siteId: siteId || null });
         if (message.trim() || files.length > 0) {
-          const supabase = createClient();
-          const imagePaths = await Promise.all(files.map((f) => uploadImage(supabase, BUCKET, adminId, f)));
-          await sendMessage(result.id, adminId, adminName, message.trim(), imagePaths);
+          const imageUrls = await Promise.all(files.map(uploadFile));
+          await sendMessage(result.id, adminId, adminName, message.trim(), imageUrls);
         }
       }
 

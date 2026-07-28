@@ -35,10 +35,17 @@
       "mcp__claude_ai_Supabase__deploy_edge_function",
       "Bash(mkdir -p \"/Users/shalini/Downloads/Mobile-first employee audit app \\(1\\)/apps/employee-app/app/\\(app\\)/communication/[id]\")",
       "mcp__claude_ai_Supabase__get_project",
-      "mcp__claude_ai_Supabase__get_logs"
+      "mcp__claude_ai_Supabase__get_logs",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(npm uninstall *)",
+      "Bash(npm view *)",
+      "Bash(lsof -nP -iTCP -sTCP:LISTEN)",
+      "Bash(rm \"/Users/shalini/Downloads/Mobile-first employee audit app \\(1\\)/test-imagekit.mjs\" /tmp/test-imagekit.mjs /tmp/test.png; find \"/Users/shalini/Downloads/Mobile-first employee audit app \\(1\\)/apps\" -maxdepth 2 -iname \"next.config*\")"
     ],
     "additionalDirectories": [
-      "/Users/shalini/Downloads/Mobile-first employee audit app (1)/apps/employee-app/app/(app)/communication"
+      "/Users/shalini/Downloads/Mobile-first employee audit app (1)/apps/employee-app/app/(app)/communication",
+      "/private/tmp"
     ]
   }
 }

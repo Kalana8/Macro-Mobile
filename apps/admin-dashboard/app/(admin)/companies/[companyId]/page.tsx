@@ -58,6 +58,7 @@ export default async function CompanyDetailPage({
         companyName={company.name}
         checklists={joinedChecklists}
         templates={(templates ?? []) as unknown as ChecklistTemplate[]}
+        sites={((sites ?? []) as Site[]).map((s) => ({ id: s.id, name: s.name, company_id: s.company_id }))}
         employees={employeeOptions}
       />
     </div>

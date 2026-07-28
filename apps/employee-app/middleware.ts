@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@macro/shared/supabase/middleware";
+import { ACTIVE_SITE_COOKIE, LOGIN_AT_COOKIE, SESSION_MAX_AGE_MS } from "@/lib/constants";
 
 const PUBLIC_PATHS = ["/login"];
 const CHANGE_PASSWORD_PATH = "/profile/change-password";
@@ -32,6 +33,31 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/home";
     return NextResponse.redirect(url);
+  }
+
+  if (user && !isPublic) {
+    // Supabase's own session otherwise stays alive indefinitely via silent
+    // refresh — force a sign-out ~2 hours after login regardless of
+    // activity. LOGIN_AT_COOKIE is stamped in app/login/actions.ts; a
+    // session predating this feature (no cookie yet) just gets stamped
+    // "now" rather than being kicked out immediately.
+    const loginAtRaw = request.cookies.get(LOGIN_AT_COOKIE)?.value;
+    const loginAt = loginAtRaw ? Number(loginAtRaw) : null;
+
+    if (loginAt && Date.now() - loginAt > SESSION_MAX_AGE_MS) {
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("reason", "session-expired");
+      const redirectResponse = NextResponse.redirect(url);
+      redirectResponse.cookies.delete(ACTIVE_SITE_COOKIE);
+      redirectResponse.cookies.delete(LOGIN_AT_COOKIE);
+      return redirectResponse;
+    }
+
+    if (!loginAt) {
+      response.cookies.set(LOGIN_AT_COOKIE, String(Date.now()), { httpOnly: true, sameSite: "lax", path: "/" });
+    }
   }
 
   if (user && !isPublic && !pathname.startsWith(CHANGE_PASSWORD_PATH)) {

@@ -20,14 +20,21 @@ interface EmployeeOption {
   full_name: string;
   companyIds: string[];
 }
+interface Site {
+  id: string;
+  name: string;
+  company_id: string;
+}
 
 export function AuditsTable({
   audits,
   companies,
+  sites,
   employees,
 }: {
   audits: AuditRow[];
   companies: { id: string; name: string }[];
+  sites: Site[];
   employees: EmployeeOption[];
 }) {
   const [showAdd, setShowAdd] = useState(false);
@@ -79,7 +86,7 @@ export function AuditsTable({
       )}
 
       {showAdd && (
-        <AddAuditModal companies={companies} employeeCompanyMap={employees} onClose={() => setShowAdd(false)} />
+        <AddAuditModal companies={companies} sites={sites} employeeCompanyMap={employees} onClose={() => setShowAdd(false)} />
       )}
 
       {selected && (

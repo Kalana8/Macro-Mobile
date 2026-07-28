@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@macro/shared/supabase/server";
+import { uploadImageToImageKit } from "@macro/shared/imagekit";
 import type { AuditMainItem, AuditRating } from "@macro/shared/types";
 
 export interface AuditFormState {
@@ -14,6 +15,20 @@ interface DraftMainAudit {
   title: string;
   comment: string;
   subAudits: string[];
+  images: string[];
+}
+
+/** Uploads one audit photo to ImageKit and returns its public URL — keeps the private key server-only. */
+export async function uploadAuditImageAction(formData: FormData): Promise<{ url?: string; error?: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { error: "No file provided." };
+
+  try {
+    const url = await uploadImageToImageKit(file, "audits");
+    return { url };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Upload failed." };
+  }
 }
 
 /** Admin-authored audit — mirrors the "Add Audit" modal (repeatable main audits + sub-audits). */
@@ -24,6 +39,7 @@ export async function createAuditAction(
   const companyId = String(formData.get("companyId") ?? "");
   const employeeId = String(formData.get("employeeId") ?? "");
   const date = String(formData.get("date") ?? "");
+  const location = String(formData.get("location") ?? "").trim();
   const mainAuditsRaw = String(formData.get("mainAuditsJson") ?? "[]");
 
   if (!companyId || !employeeId || !date) {
@@ -44,7 +60,7 @@ export async function createAuditAction(
       title: m.title.trim(),
       comment: m.comment.trim(),
       marks: null,
-      images: [],
+      images: m.images ?? [],
       sub_audits: m.subAudits
         .filter((s) => s.trim())
         .map((text) => ({ id: randomUUID(), text: text.trim(), result: "" as AuditRating })),
@@ -59,6 +75,7 @@ export async function createAuditAction(
     company_id: companyId,
     employee_id: employeeId,
     date,
+    location,
     title: mainAudits[0].title,
     status: "submit",
     main_audits: mainAudits,

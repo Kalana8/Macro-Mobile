@@ -1,16 +1,31 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
+import { ImagePicker } from "@/components/ImagePicker";
 import { FieldLabel, PrimaryButton, Select, TextInput } from "@/components/ui";
 import type { ChecklistTemplate } from "@macro/shared/types";
-import { createTemplateAction, type ChecklistFormState } from "./actions";
+import { createTemplateAction, uploadChecklistImageAction, type ChecklistFormState } from "./actions";
 
 interface DraftArea {
   mainArea: string;
   note: string;
   subtasks: string[];
+  images: string[];
+}
+interface Site {
+  id: string;
+  name: string;
+  company_id: string;
+}
+
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.set("file", file);
+  const result = await uploadChecklistImageAction(formData);
+  if (result.error || !result.url) throw new Error(result.error ?? "Upload failed.");
+  return result.url;
 }
 
 function SubmitButton({ label }: { label: string }) {
@@ -20,10 +35,12 @@ function SubmitButton({ label }: { label: string }) {
 
 export function CreateTemplateModal({
   companies,
+  sites,
   template,
   onClose,
 }: {
   companies: { id: string; name: string }[];
+  sites: Site[];
   template?: ChecklistTemplate;
   onClose: () => void;
 }) {
@@ -31,9 +48,28 @@ export function CreateTemplateModal({
   const [state, formAction] = useActionState<ChecklistFormState, FormData>(createTemplateAction, {});
   const [areas, setAreas] = useState<DraftArea[]>(
     template
-      ? template.areas.map((a) => ({ mainArea: a.main_area, note: a.note, subtasks: a.subtasks.map((s) => s.text) }))
-      : [{ mainArea: "", note: "", subtasks: [""] }]
+      ? template.areas.map((a) => ({
+          mainArea: a.main_area,
+          note: a.note,
+          subtasks: a.subtasks.map((s) => s.text),
+          images: a.images ?? [],
+        }))
+      : [{ mainArea: "", note: "", subtasks: [""], images: [] }]
   );
+  // Two rows can share a company name (a known data quirk) — collapse to
+  // one entry per name so the picker doesn't show apparent duplicates.
+  const uniqueCompanies = useMemo(() => {
+    const seen = new Set<string>();
+    return companies.filter((c) => {
+      const key = c.name.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [companies]);
+  const [companyId, setCompanyId] = useState(template?.company_id ?? uniqueCompanies[0]?.id ?? "");
+  const siteOptions = useMemo(() => sites.filter((s) => s.company_id === companyId), [sites, companyId]);
+  const [siteName, setSiteName] = useState(template?.site ?? "");
 
   useEffect(() => {
     if (state.success) onClose();
@@ -54,15 +90,26 @@ export function CreateTemplateModal({
       <form action={formAction} className="flex flex-col gap-3.5">
         {isEdit && <input type="hidden" name="templateId" value={template!.id} />}
         <input type="hidden" name="areasJson" value={JSON.stringify(areas)} />
+        <input type="hidden" name="site" value={siteName} />
         <div>
           <FieldLabel>Company</FieldLabel>
-          <Select name="companyId" defaultValue={template?.company_id ?? companies[0]?.id ?? ""}>
-            {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          <Select
+            name="companyId"
+            value={companyId}
+            onChange={(e) => {
+              setCompanyId(e.target.value);
+              setSiteName("");
+            }}
+          >
+            {uniqueCompanies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>
         </div>
         <div>
           <FieldLabel>Site</FieldLabel>
-          <TextInput name="site" required defaultValue={template?.site} placeholder="Site A" />
+          <Select value={siteName} onChange={(e) => setSiteName(e.target.value)}>
+            <option value="">{siteOptions.length === 0 ? "No sites for this company" : "Select a site"}</option>
+            {siteOptions.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
+          </Select>
         </div>
 
         {areas.map((area, ai) => (
@@ -122,11 +169,18 @@ export function CreateTemplateModal({
                 className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </div>
+            <div className="mt-2.5">
+              <ImagePicker
+                images={area.images}
+                onChange={(images) => updateArea(ai, { images })}
+                uploadFile={uploadFile}
+              />
+            </div>
           </div>
         ))}
         <button
           type="button"
-          onClick={() => setAreas((prev) => [...prev, { mainArea: "", note: "", subtasks: [""] }])}
+          onClick={() => setAreas((prev) => [...prev, { mainArea: "", note: "", subtasks: [""], images: [] }])}
           className="w-fit text-sm font-bold text-primary"
         >
           + Add another main area

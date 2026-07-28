@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/server";
 import { withinGeofence } from "@macro/shared/geo";
 import type { RolePermissions } from "@macro/shared/types";
-import { ACTIVE_SITE_COOKIE } from "@/lib/constants";
+import { ACTIVE_SITE_COOKIE, LOGIN_AT_COOKIE } from "@/lib/constants";
 
 export interface SiteOption {
   id: string;
@@ -20,6 +20,14 @@ export interface LoginState {
   /** The coordinates already captured in step 1, carried into step 2 so we don't ask twice. */
   lat?: number;
   lng?: number;
+}
+
+// Marks the moment a login finishes — middleware.ts uses this to force a
+// sign-out ~2 hours later regardless of activity, since Supabase's own
+// session otherwise stays alive indefinitely via silent refresh.
+async function markLoggedIn() {
+  const cookieStore = await cookies();
+  cookieStore.set(LOGIN_AT_COOKIE, String(Date.now()), { httpOnly: true, sameSite: "lax", path: "/" });
 }
 
 async function loadEmployeeAndPermissions(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
@@ -84,6 +92,7 @@ export async function verifyCredentialsAction(_prevState: LoginState, formData: 
 
   const requiresGeofence = Boolean(permissions.app.attendance?.clockInOut);
   if (!requiresGeofence) {
+    await markLoggedIn();
     redirect("/home");
   }
 
@@ -108,6 +117,7 @@ export async function verifyCredentialsAction(_prevState: LoginState, formData: 
     }
     const cookieStore = await cookies();
     cookieStore.set(ACTIVE_SITE_COOKIE, site.id, { httpOnly: true, sameSite: "lax", path: "/" });
+    await markLoggedIn();
     redirect("/home");
   }
 
@@ -149,5 +159,6 @@ export async function confirmSiteLoginAction(_prevState: LoginState, formData: F
 
   const cookieStore = await cookies();
   cookieStore.set(ACTIVE_SITE_COOKIE, site.id, { httpOnly: true, sameSite: "lax", path: "/" });
+  await markLoggedIn();
   redirect("/home");
 }

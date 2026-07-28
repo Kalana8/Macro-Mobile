@@ -41,6 +41,14 @@ export function ChecklistDetailModal({
               </div>
             ))}
           </div>
+          {area.images.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {area.images.map((url) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={url} src={url} alt="Reference" className="h-14 w-14 rounded-lg object-cover" />
+              ))}
+            </div>
+          )}
         </div>
       ))}
 
@@ -63,7 +71,10 @@ export function ChecklistDetailModal({
         {checklist.images.length === 0 ? (
           <div className="text-sm italic text-text-muted">No images submitted yet.</div>
         ) : (
-          checklist.images.map((img, i) => <div key={i} className="h-[72px] w-[72px] rounded-xl bg-bg" />)
+          checklist.images.map((url) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={url} src={url} alt="Submitted" className="h-[72px] w-[72px] rounded-xl object-cover" />
+          ))
         )}
       </div>
 

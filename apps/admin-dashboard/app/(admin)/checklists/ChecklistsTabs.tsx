@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Badge, EmptyState, IconChip, PlusIcon, PrimaryButton, Table } from "@/components/ui";
 import { DeleteButton } from "@/components/DeleteButton";
 import type { Checklist, ChecklistTemplate } from "@macro/shared/types";
-import { deleteTemplateAction } from "./actions";
+import { deleteAssignmentAction, deleteTemplateAction } from "./actions";
 import { CreateTemplateModal } from "./CreateTemplateModal";
 import { TemplateDetailModal } from "./TemplateDetailModal";
 import { AssignChecklistModal } from "./AssignChecklistModal";
@@ -25,17 +25,35 @@ const TAB_LABEL: Record<(typeof TABS)[number], string> = {
   assign: "Assign Checklist",
 };
 
+interface Site {
+  id: string;
+  name: string;
+  company_id: string;
+}
+interface AssignmentRow {
+  id: string;
+  templateId: string;
+  adminNote: string | null;
+  companyName: string;
+  employeeName: string;
+  site: string;
+}
+
 export function ChecklistsTabs({
   submitted,
   templates,
   assigned,
+  assignments,
   companies,
+  sites,
   employees,
 }: {
   submitted: JoinedChecklist[];
   templates: JoinedTemplate[];
   assigned: JoinedChecklist[];
+  assignments: AssignmentRow[];
   companies: { id: string; name: string }[];
+  sites: Site[];
   employees: { id: string; full_name: string; companyIds: string[] }[];
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("submitted");
@@ -137,8 +155,37 @@ export function ChecklistsTabs({
               Assign Checklist
             </PrimaryButton>
           </div>
+
+          <div className="mb-2 text-xs font-bold text-text-muted">
+            RECURRING ASSIGNMENTS — sent automatically on each company&apos;s visit days/time
+          </div>
+          {assignments.length === 0 ? (
+            <div className="mb-6 rounded-[16px] border border-dashed border-border p-6 text-center text-sm text-text-muted">
+              No standing assignments yet.
+            </div>
+          ) : (
+            <Table head={["Company", "Site", "Employee", "Note", "Actions"]}>
+              {assignments.map((row) => (
+                <tr key={row.id} className="border-b border-border last:border-0">
+                  <td className="px-5 py-3.5 font-semibold text-text-dark">{row.companyName}</td>
+                  <td className="px-5 py-3.5 text-text-muted">{row.site}</td>
+                  <td className="px-5 py-3.5 text-text-muted">{row.employeeName}</td>
+                  <td className="px-5 py-3.5 text-[13px] text-text-muted">{row.adminNote ?? "—"}</td>
+                  <td className="px-5 py-3.5">
+                    <DeleteButton
+                      action={deleteAssignmentAction}
+                      confirmText={`Stop auto-sending this checklist to ${row.employeeName}?`}
+                      hiddenFields={{ id: row.id }}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </Table>
+          )}
+
+          <div className="mb-2 mt-6 text-xs font-bold text-text-muted">GENERATED CHECKLISTS</div>
           {assigned.length === 0 ? (
-            <EmptyState title="No checklists assigned yet" />
+            <EmptyState title="No checklists generated yet" hint="These appear automatically once a company's visit day/time arrives." />
           ) : (
             <Table head={["Date", "Main Areas", "Company", "Employee", "Site", "Subtasks", "Status"]}>
               {assigned.map((row) => {
@@ -166,6 +213,7 @@ export function ChecklistsTabs({
       {templateModal && (
         <CreateTemplateModal
           companies={companies}
+          sites={sites}
           template={templateModal === "new" ? undefined : templateModal}
           onClose={() => setTemplateModal(null)}
         />

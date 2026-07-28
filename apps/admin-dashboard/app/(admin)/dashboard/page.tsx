@@ -46,10 +46,6 @@ export default async function DashboardPage({
           : `${weekDates[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${weekDates[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
 
   const [
-    { count: companies },
-    { count: employees },
-    { count: activeEmployees },
-    { count: todayAttendance },
     { count: submitAudits },
     { count: verifyAudits },
     { count: completedAudits },
@@ -62,10 +58,6 @@ export default async function DashboardPage({
     { data: recentCommunications },
     { data: recentCommRecipients },
   ] = await Promise.all([
-    supabase.from("companies").select("*", { count: "exact", head: true }),
-    supabase.from("employees").select("*", { count: "exact", head: true }),
-    supabase.from("employees").select("*", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("attendance").select("*", { count: "exact", head: true }).eq("date", today),
     supabase.from("audits").select("*", { count: "exact", head: true }).eq("status", "submit"),
     supabase.from("audits").select("*", { count: "exact", head: true }).eq("status", "verify"),
     supabase.from("audits").select("*", { count: "exact", head: true }).eq("status", "complete"),
@@ -161,28 +153,11 @@ export default async function DashboardPage({
   }));
   const PRIORITY_TONE = { low: "neutral", medium: "warning", high: "error" } as const;
 
-  const stats = [
-    { label: "Companies", value: companies ?? 0, color: "text-text-dark" },
-    { label: "Employees", value: employees ?? 0, color: "text-text-dark" },
-    { label: "Active Employees", value: activeEmployees ?? 0, color: "text-text-dark" },
-    { label: "Today's Attendance", value: todayAttendance ?? 0, color: "text-primary" },
-    { label: "Pending Audits", value: (submitAudits ?? 0) + (verifyAudits ?? 0), color: "text-orange" },
-    { label: "Completed Audits", value: completedAudits ?? 0, color: "text-olive-text" },
-  ];
-
   return (
     <div>
       <PageHeader title="Dashboard" subtitle="Overview across all companies" />
-      <div className="grid grid-cols-3 gap-4">
-        {stats.map((stat) => (
-          <Card key={stat.label}>
-            <div className={`text-2xl font-extrabold ${stat.color}`}>{stat.value}</div>
-            <div className="mt-1 text-sm text-text-muted">{stat.label}</div>
-          </Card>
-        ))}
-      </div>
 
-      <div className="mt-6 grid grid-cols-[1.3fr_1fr] gap-5">
+      <div className="grid grid-cols-[1.3fr_1fr] gap-5">
         <Card>
           <div className="mb-4 flex items-center justify-between">
             <div className="text-sm font-bold text-text-dark">Attendance</div>

@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { startTransition, useActionState, useState } from "react";
+import { Suspense, startTransition, useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { useSearchParams } from "next/navigation";
 import { getCurrentPosition } from "@macro/shared/geo";
 import { PrimaryButton, TextInput, FieldLabel } from "@/components/ui";
 import { verifyCredentialsAction, confirmSiteLoginAction, type LoginState } from "./actions";
@@ -17,11 +18,21 @@ function SubmitButton({ locating, label }: { locating: boolean; label: string })
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
+  );
+}
+
+function LoginPageInner() {
   const [credState, credAction] = useActionState<LoginState, FormData>(verifyCredentialsAction, {});
   const [siteState, siteAction] = useActionState<LoginState, FormData>(confirmSiteLoginAction, {});
   const [locating, setLocating] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const sessionExpired = searchParams.get("reason") === "session-expired";
 
   async function handleCredentialsSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -121,6 +132,12 @@ export default function LoginPage() {
         </div>
         <h1 className="mb-1.5 text-center text-[24px] font-bold text-text-dark sm:text-[26px]">Welcome back</h1>
         <p className="mb-8 text-center text-[14px] text-text-muted sm:text-[15px]">Sign in to continue to your workspace</p>
+
+        {sessionExpired && (
+          <div className="mb-4 rounded-lg bg-orange/10 px-3 py-2 text-center text-[12.5px] text-[#B35A10]">
+            Your session expired. Log in again to continue.
+          </div>
+        )}
 
         <form onSubmit={handleCredentialsSubmit} className="flex flex-col gap-3.5">
           <div>

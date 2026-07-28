@@ -15,6 +15,17 @@ function parseVisitDays(formData: FormData): number[] {
     .filter((n) => !Number.isNaN(n));
 }
 
+/** Case-insensitive exact-name check, surfaced by the "Check Name" button before Add Company is submitted. */
+export async function checkCompanyNameAction(name: string): Promise<{ exists: boolean }> {
+  const trimmed = name.trim();
+  if (!trimmed) return { exists: false };
+
+  const supabase = await createClient();
+  const { data } = await supabase.from("companies").select("id").ilike("name", trimmed).limit(1);
+
+  return { exists: (data?.length ?? 0) > 0 };
+}
+
 export async function createCompanyAction(
   _prev: CompanyFormState,
   formData: FormData

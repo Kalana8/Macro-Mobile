@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/server";
 import { Badge, Card, ScreenHeader } from "@/components/ui";
 import type { ChecklistArea } from "@macro/shared/types";
+import { ChecklistSubmitForm } from "./ChecklistSubmitForm";
 
 export default async function ChecklistDetailPage({
   params,
@@ -36,27 +37,6 @@ export default async function ChecklistDetailPage({
           </Badge>
         </div>
 
-        {areas.map((area, i) => (
-          <Card key={i}>
-            <div className="mb-2 text-sm font-semibold text-text-dark">{area.main_area}</div>
-            <div className="flex flex-col gap-2">
-              {area.subtasks.map((task) => (
-                <div key={task.id} className="flex items-center gap-2 text-sm text-text-dark">
-                  <span
-                    className={`flex h-5 w-5 items-center justify-center rounded ${
-                      task.done ? "bg-primary text-white" : "border border-border"
-                    }`}
-                  >
-                    {task.done && "✓"}
-                  </span>
-                  {task.text}
-                </div>
-              ))}
-            </div>
-            {area.note && <div className="mt-2 text-xs text-text-muted">{area.note}</div>}
-          </Card>
-        ))}
-
         {checklist.admin_note && (
           <Card>
             <div className="text-xs font-semibold uppercase tracking-wide text-text-muted">Admin Note</div>
@@ -64,21 +44,51 @@ export default async function ChecklistDetailPage({
           </Card>
         )}
 
-        <Card>
-          <div className="text-xs font-semibold uppercase tracking-wide text-text-muted">Notes</div>
-          <div className="mt-1 text-sm text-text-dark">
-            {checklist.notes || <span className="italic text-text-muted">No notes submitted yet.</span>}
-          </div>
-        </Card>
+        {submitted ? (
+          <>
+            {areas.map((area, i) => (
+              <Card key={i}>
+                <div className="mb-2 text-sm font-semibold text-text-dark">{area.main_area}</div>
+                <div className="flex flex-col gap-2">
+                  {area.subtasks.map((task) => (
+                    <div key={task.id} className="flex items-center justify-between gap-2 text-sm text-text-dark">
+                      <span>{task.text}</span>
+                      <span
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded ${
+                          task.done ? "bg-primary text-white" : "border border-border"
+                        }`}
+                      >
+                        {task.done && "✓"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {area.note && <div className="mt-2 text-xs text-text-muted">{area.note}</div>}
+              </Card>
+            ))}
 
-        <button
-          type="button"
-          disabled
-          title="Ticking subtasks and submitting isn't wired up yet — coming in a follow-up pass."
-          className="rounded-lg bg-orange px-4 py-3.5 text-sm font-bold text-white opacity-40"
-        >
-          Send to Admin
-        </button>
+            <Card>
+              <div className="text-xs font-semibold uppercase tracking-wide text-text-muted">Notes</div>
+              <div className="mt-1 text-sm text-text-dark">
+                {checklist.notes || <span className="italic text-text-muted">No notes submitted.</span>}
+              </div>
+            </Card>
+
+            {checklist.images.length > 0 && (
+              <Card>
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Images</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(checklist.images as string[]).map((url) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={url} src={url} alt="Attachment" className="h-20 w-20 rounded-lg object-cover" />
+                  ))}
+                </div>
+              </Card>
+            )}
+          </>
+        ) : (
+          <ChecklistSubmitForm checklistId={checklist.id} initialAreas={areas} initialNotes={checklist.notes ?? ""} />
+        )}
       </div>
     </div>
   );

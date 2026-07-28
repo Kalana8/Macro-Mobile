@@ -1,20 +1,57 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { FieldLabel, PrimaryButton, TextArea, TextInput } from "@/components/ui";
 import { SuccessOverlay } from "@/components/SuccessOverlay";
-import { createAuditAction, type CreateAuditState } from "./actions";
+import { ImagePicker } from "@/components/ImagePicker";
+import { createAuditAction, uploadAuditImageAction, type CreateAuditState } from "./actions";
+
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.set("file", file);
+  const result = await uploadAuditImageAction(formData);
+  if (result.error || !result.url) throw new Error(result.error ?? "Upload failed.");
+  return result.url;
+}
+
+interface Site {
+  id: string;
+  name: string;
+  company_id: string;
+}
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return <PrimaryButton type="submit" disabled={pending}>{pending ? "Submitting…" : "Submit Audit"}</PrimaryButton>;
 }
 
-export function CreateAuditForm({ companies }: { companies: { id: string; name: string }[] }) {
+export function CreateAuditForm({
+  companies,
+  sites,
+}: {
+  companies: { id: string; name: string }[];
+  sites: Site[];
+}) {
   const [state, formAction] = useActionState<CreateAuditState, FormData>(createAuditAction, {});
   const router = useRouter();
+
+  // Two rows can share a company name (a known data quirk) — collapse to
+  // one entry per name so the picker doesn't show apparent duplicates.
+  const uniqueCompanies = useMemo(() => {
+    const seen = new Set<string>();
+    return companies.filter((c) => {
+      const key = c.name.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [companies]);
+  const [companyId, setCompanyId] = useState(uniqueCompanies[0]?.id ?? "");
+  const [siteName, setSiteName] = useState("");
+  const siteOptions = useMemo(() => sites.filter((s) => s.company_id === companyId), [sites, companyId]);
+  const [images, setImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (state.success) {
@@ -33,9 +70,18 @@ export function CreateAuditForm({ companies }: { companies: { id: string; name: 
       </div>
       <div>
         <FieldLabel>Company</FieldLabel>
-        <select name="companyId" required className="w-full rounded-lg border border-border bg-bg px-4 py-3 text-[15px] text-text-dark outline-none focus:border-primary">
+        <select
+          name="companyId"
+          required
+          value={companyId}
+          onChange={(e) => {
+            setCompanyId(e.target.value);
+            setSiteName("");
+          }}
+          className="w-full rounded-lg border border-border bg-bg px-4 py-3 text-[15px] text-text-dark outline-none focus:border-primary"
+        >
           <option value="">Select company</option>
-          {companies.map((c) => (
+          {uniqueCompanies.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
@@ -59,15 +105,30 @@ export function CreateAuditForm({ companies }: { companies: { id: string; name: 
         </div>
       </div>
       <div>
-        <FieldLabel>Location</FieldLabel>
-        <TextInput name="location" placeholder="Site or area" />
-      </div>
-      <div className="rounded-lg border border-dashed border-border bg-bg px-4 py-3 text-xs text-text-muted">
-        Image upload (Camera / Gallery) isn&apos;t wired up yet — coming in a follow-up pass.
+        <FieldLabel>Site</FieldLabel>
+        <select
+          name="location"
+          value={siteName}
+          onChange={(e) => setSiteName(e.target.value)}
+          className="w-full rounded-lg border border-border bg-bg px-4 py-3 text-[15px] text-text-dark outline-none focus:border-primary"
+        >
+          <option value="">{siteOptions.length === 0 ? "No sites for this company" : "Select a site"}</option>
+          {siteOptions.map((s) => (
+            <option key={s.id} value={s.name}>{s.name}</option>
+          ))}
+        </select>
       </div>
       <div>
         <FieldLabel>Notes</FieldLabel>
         <TextArea name="notes" rows={3} placeholder="Anything else the admin should know" />
+      </div>
+
+      <div>
+        <FieldLabel>Images</FieldLabel>
+        <ImagePicker images={images} onChange={setImages} uploadFile={uploadFile} />
+        {images.map((url) => (
+          <input key={url} type="hidden" name="images" value={url} />
+        ))}
       </div>
 
       {state.error && (

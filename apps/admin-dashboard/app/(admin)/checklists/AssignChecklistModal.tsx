@@ -3,9 +3,9 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
-import { CheckboxSquare, FieldLabel, PrimaryButton, Select, TextArea, TextInput } from "@/components/ui";
+import { CheckboxSquare, FieldLabel, PrimaryButton, Select, TextArea } from "@/components/ui";
 import type { ChecklistTemplate } from "@macro/shared/types";
-import { assignChecklistAction, type ChecklistFormState } from "./actions";
+import { createAssignmentAction, type ChecklistFormState } from "./actions";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -23,8 +23,19 @@ export function AssignChecklistModal({
   employees: { id: string; full_name: string; companyIds: string[] }[];
   onClose: () => void;
 }) {
-  const [state, formAction] = useActionState<ChecklistFormState, FormData>(assignChecklistAction, {});
-  const [companyId, setCompanyId] = useState(companies[0]?.id ?? "");
+  const [state, formAction] = useActionState<ChecklistFormState, FormData>(createAssignmentAction, {});
+  // Two rows can share a company name (a known data quirk) — collapse to
+  // one entry per name so the picker doesn't show apparent duplicates.
+  const uniqueCompanies = useMemo(() => {
+    const seen = new Set<string>();
+    return companies.filter((c) => {
+      const key = c.name.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [companies]);
+  const [companyId, setCompanyId] = useState(uniqueCompanies[0]?.id ?? "");
   const [templateId, setTemplateId] = useState("");
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
 
@@ -45,25 +56,25 @@ export function AssignChecklistModal({
     <Modal title="Assign Checklist" onClose={onClose}>
       <form action={formAction} className="flex flex-col gap-3.5">
         <input type="hidden" name="templateId" value={selectedTemplate?.id ?? ""} />
-        <input type="hidden" name="areasJson" value={JSON.stringify(selectedTemplate?.areas ?? [])} />
         {selectedEmployees.map((id) => <input key={id} type="hidden" name="employeeIds" value={id} />)}
+
+        <p className="-mt-1 text-[12.5px] text-text-muted">
+          No date to pick — the checklist is sent automatically to each employee on the company&apos;s visit days,
+          at its visit time (set on the company itself).
+        </p>
 
         <div>
           <FieldLabel>Company</FieldLabel>
           <Select name="companyId" value={companyId} onChange={(e) => { setCompanyId(e.target.value); setTemplateId(""); }}>
-            {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {uniqueCompanies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>
         </div>
         <div>
           <FieldLabel>Site (from template)</FieldLabel>
-          <Select name="site" value={selectedTemplate?.site ?? ""} onChange={(e) => setTemplateId(companyTemplates.find((t) => t.site === e.target.value)?.id ?? "")}>
+          <Select value={selectedTemplate?.site ?? ""} onChange={(e) => setTemplateId(companyTemplates.find((t) => t.site === e.target.value)?.id ?? "")}>
             {companyTemplates.length === 0 && <option value="">No templates for this company</option>}
             {companyTemplates.map((t) => <option key={t.id} value={t.site}>{t.site}</option>)}
           </Select>
-        </div>
-        <div>
-          <FieldLabel>Date</FieldLabel>
-          <TextInput type="date" name="date" required defaultValue={new Date().toISOString().slice(0, 10)} />
         </div>
         <div>
           <FieldLabel>Assign to Employee(s)</FieldLabel>

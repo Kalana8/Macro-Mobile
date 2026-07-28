@@ -4,11 +4,16 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/client";
 import { ensureFirebaseSession, createConversation, sendMessage } from "@macro/shared/firebase/chat";
-import { uploadImage } from "@macro/shared/storage";
 import { FieldLabel, PrimaryButton, TextArea, TextInput } from "@/components/ui";
-import { createCommunicationAction } from "../actions";
+import { createCommunicationAction, uploadCommunicationImageAction } from "../actions";
 
-const BUCKET = "communication-images";
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.set("file", file);
+  const result = await uploadCommunicationImageAction(formData);
+  if (result.error || !result.url) throw new Error(result.error ?? "Upload failed.");
+  return result.url;
+}
 
 interface Site {
   id: string;
@@ -67,8 +72,8 @@ export function NewReportForm({
       const ready = await ensureFirebaseSession();
       if (ready) {
         await createConversation(result.id, { employeeIds: [user.id], companyId, siteId: siteId || null });
-        const imagePaths = await Promise.all(files.map((f) => uploadImage(supabase, BUCKET, user.id, f)));
-        await sendMessage(result.id, user.id, user.email ?? "You", message.trim(), imagePaths);
+        const imageUrls = await Promise.all(files.map(uploadFile));
+        await sendMessage(result.id, user.id, user.email ?? "You", message.trim(), imageUrls);
       }
 
       router.push(`/communication/${result.id}`);

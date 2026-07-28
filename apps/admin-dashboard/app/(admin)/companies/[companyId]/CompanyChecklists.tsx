@@ -16,12 +16,14 @@ export function CompanyChecklists({
   companyName,
   checklists,
   templates,
+  sites,
   employees,
 }: {
   companyId: string;
   companyName: string;
   checklists: JoinedChecklist[];
   templates: ChecklistTemplate[];
+  sites: { id: string; name: string; company_id: string }[];
   employees: { id: string; full_name: string; companyIds: string[] }[];
 }) {
   const [showCreate, setShowCreate] = useState(false);
@@ -75,7 +77,7 @@ export function CompanyChecklists({
       )}
 
       {showCreate && (
-        <CreateTemplateModal companies={[{ id: companyId, name: companyName }]} onClose={() => setShowCreate(false)} />
+        <CreateTemplateModal companies={[{ id: companyId, name: companyName }]} sites={sites} onClose={() => setShowCreate(false)} />
       )}
       {showAssign && (
         <AssignChecklistModal

@@ -144,6 +144,15 @@ export interface Checklist {
   created_at: string;
 }
 
+export interface ChecklistAssignment {
+  id: string;
+  template_id: string;
+  company_id: string;
+  employee_id: string;
+  admin_note: string | null;
+  created_at: string;
+}
+
 export interface Communication {
   id: string;
   company_id: string;

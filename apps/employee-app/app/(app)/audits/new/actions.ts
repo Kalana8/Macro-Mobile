@@ -2,10 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@macro/shared/supabase/server";
+import { uploadImageToImageKit } from "@macro/shared/imagekit";
 
 export interface CreateAuditState {
   error?: string;
   success?: boolean;
+}
+
+/** Uploads one audit photo to ImageKit and returns its public URL — keeps the private key server-only. */
+export async function uploadAuditImageAction(formData: FormData): Promise<{ url?: string; error?: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { error: "No file provided." };
+
+  try {
+    const url = await uploadImageToImageKit(file, "audits");
+    return { url };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Upload failed." };
+  }
 }
 
 export async function createAuditAction(
@@ -30,10 +44,8 @@ export async function createAuditAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Your session expired. Log in again." };
 
-  // TODO(feature-pass): wire Camera/Gallery image upload to the
-  // `audit-images` Storage bucket (path prefix `{employee_id}/...` per the
-  // RLS policy in supabase/migrations/0002_rls.sql) — `images` stays empty
-  // until that's implemented.
+  const images = formData.getAll("images").map(String).filter(Boolean);
+
   const { error } = await supabase.from("audits").insert({
     employee_id: user.id,
     company_id: companyId,
@@ -43,6 +55,7 @@ export async function createAuditAction(
     location,
     priority,
     notes,
+    images,
     status: "submit",
   });
 

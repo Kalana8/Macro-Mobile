@@ -13,6 +13,7 @@
     "./firebase/client": "./src/firebase/client.ts",
     "./firebase/chat": "./src/firebase/chat.ts",
     "./storage": "./src/storage/index.ts",
+    "./imagekit": "./src/imagekit/index.ts",
     "./geo": "./src/geo/index.ts",
     "./rbac": "./src/rbac/index.ts",
     "./tokens": "./src/tokens/index.ts"
@@ -20,7 +21,8 @@
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.58.0",
-    "firebase": "^11.3.0"
+    "firebase": "^11.3.0",
+    "@imagekit/nodejs": "^7.10.0"
   },
   "devDependencies": {
     "typescript": "^5.9.0"

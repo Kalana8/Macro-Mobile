@@ -1,30 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createClient } from "@macro/shared/supabase/client";
 import { ensureFirebaseSession, sendMessage, subscribeToMessages, type ChatMessage } from "@macro/shared/firebase/chat";
-import { resolveSignedUrl, uploadImage } from "@macro/shared/storage";
 import { PrimaryButton, TextArea } from "@/components/ui";
-import { touchCommunicationAction } from "@/app/(app)/communication/actions";
+import { touchCommunicationAction, uploadCommunicationImageAction } from "@/app/(app)/communication/actions";
 
-const BUCKET = "communication-images";
-
-function ChatImage({ path }: { path: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    resolveSignedUrl(createClient(), BUCKET, path).then((resolved) => {
-      if (!cancelled) setUrl(resolved);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [path]);
-
-  if (!url) return <div className="h-24 w-24 animate-pulse rounded-lg bg-bg" />;
+// ImageKit URLs are public CDN URLs — no signed-URL resolution needed, just render them.
+function ChatImage({ url }: { url: string }) {
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={url} alt="Attachment" className="h-24 w-24 rounded-lg object-cover" />;
+}
+
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.set("file", file);
+  const result = await uploadCommunicationImageAction(formData);
+  if (result.error || !result.url) throw new Error(result.error ?? "Upload failed.");
+  return result.url;
 }
 
 export function ChatThread({
@@ -64,9 +56,8 @@ export function ChatThread({
     if (!trimmed && files.length === 0) return;
     setSending(true);
     try {
-      const supabase = createClient();
-      const imagePaths = await Promise.all(files.map((f) => uploadImage(supabase, BUCKET, currentUserId, f)));
-      await sendMessage(conversationId, currentUserId, currentUserName, trimmed, imagePaths);
+      const imageUrls = await Promise.all(files.map(uploadFile));
+      await sendMessage(conversationId, currentUserId, currentUserName, trimmed, imageUrls);
       await touchCommunicationAction(conversationId, `${currentUserName}: ${trimmed || "Sent an image"}`);
       setText("");
       setFiles([]);
@@ -99,8 +90,8 @@ export function ChatThread({
                 {m.text && <div>{m.text}</div>}
                 {m.images?.length > 0 && (
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {m.images.map((path) => (
-                      <ChatImage key={path} path={path} />
+                    {m.images.map((url) => (
+                      <ChatImage key={url} url={url} />
                     ))}
                   </div>
                 )}

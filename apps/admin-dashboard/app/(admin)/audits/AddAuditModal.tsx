@@ -3,13 +3,23 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
+import { ImagePicker } from "@/components/ImagePicker";
 import { FieldLabel, PrimaryButton, Select, TextInput } from "@/components/ui";
-import { createAuditAction, type AuditFormState } from "./actions";
+import { createAuditAction, uploadAuditImageAction, type AuditFormState } from "./actions";
 
 interface DraftMainAudit {
   title: string;
   comment: string;
   subAudits: string[];
+  images: string[];
+}
+
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.set("file", file);
+  const result = await uploadAuditImageAction(formData);
+  if (result.error || !result.url) throw new Error(result.error ?? "Upload failed.");
+  return result.url;
 }
 
 function SubmitButton() {
@@ -17,23 +27,47 @@ function SubmitButton() {
   return <PrimaryButton type="submit" disabled={pending}>{pending ? "Saving…" : "Save Audit"}</PrimaryButton>;
 }
 
+interface Site {
+  id: string;
+  name: string;
+  company_id: string;
+}
+
 export function AddAuditModal({
   companies,
+  sites,
   employeeCompanyMap,
   onClose,
 }: {
   companies: { id: string; name: string }[];
+  sites: Site[];
   employeeCompanyMap: { id: string; full_name: string; companyIds: string[] }[];
   onClose: () => void;
 }) {
   const [state, formAction] = useActionState<AuditFormState, FormData>(createAuditAction, {});
-  const [companyId, setCompanyId] = useState(companies[0]?.id ?? "");
-  const [mainAudits, setMainAudits] = useState<DraftMainAudit[]>([{ title: "", comment: "", subAudits: [""] }]);
+  // Two rows can share a company name (a known data quirk) — collapse to
+  // one entry per name so the picker doesn't show apparent duplicates.
+  const uniqueCompanies = useMemo(() => {
+    const seen = new Set<string>();
+    return companies.filter((c) => {
+      const key = c.name.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [companies]);
+  const [companyId, setCompanyId] = useState(uniqueCompanies[0]?.id ?? "");
+  const [siteId, setSiteId] = useState("");
+  const [mainAudits, setMainAudits] = useState<DraftMainAudit[]>([
+    { title: "", comment: "", subAudits: [""], images: [] },
+  ]);
 
   const employeeOptions = useMemo(
     () => employeeCompanyMap.filter((e) => e.companyIds.includes(companyId)),
     [employeeCompanyMap, companyId]
   );
+  const siteOptions = useMemo(() => sites.filter((s) => s.company_id === companyId), [sites, companyId]);
+  const selectedSiteName = siteOptions.find((s) => s.id === siteId)?.name ?? "";
 
   useEffect(() => {
     if (state.success) onClose();
@@ -55,10 +89,25 @@ export function AddAuditModal({
     <Modal title="Add Audit" onClose={onClose}>
       <form action={formAction} className="flex flex-col gap-3.5">
         <input type="hidden" name="mainAuditsJson" value={JSON.stringify(mainAudits)} />
+        <input type="hidden" name="location" value={selectedSiteName} />
         <div>
           <FieldLabel>Company</FieldLabel>
-          <Select name="companyId" value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
-            {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          <Select
+            name="companyId"
+            value={companyId}
+            onChange={(e) => {
+              setCompanyId(e.target.value);
+              setSiteId("");
+            }}
+          >
+            {uniqueCompanies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </Select>
+        </div>
+        <div>
+          <FieldLabel>Site</FieldLabel>
+          <Select name="siteId" value={siteId} onChange={(e) => setSiteId(e.target.value)}>
+            <option value="">No specific site</option>
+            {siteOptions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </Select>
         </div>
         <div>
@@ -130,11 +179,18 @@ export function AddAuditModal({
                 className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </div>
+            <div className="mt-2.5">
+              <ImagePicker
+                images={ma.images}
+                onChange={(images) => updateMain(mi, { images })}
+                uploadFile={uploadFile}
+              />
+            </div>
           </div>
         ))}
         <button
           type="button"
-          onClick={() => setMainAudits((prev) => [...prev, { title: "", comment: "", subAudits: [""] }])}
+          onClick={() => setMainAudits((prev) => [...prev, { title: "", comment: "", subAudits: [""], images: [] }])}
           className="w-fit text-sm font-bold text-primary"
         >
           + Add another main audit

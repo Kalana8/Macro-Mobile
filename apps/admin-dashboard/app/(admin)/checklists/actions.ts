@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@macro/shared/supabase/server";
+import { uploadImageToImageKit } from "@macro/shared/imagekit";
 import type { ChecklistArea } from "@macro/shared/types";
 
 export interface ChecklistFormState {
@@ -14,6 +15,20 @@ interface DraftArea {
   mainArea: string;
   note: string;
   subtasks: string[];
+  images: string[];
+}
+
+/** Uploads one checklist photo to ImageKit and returns its public URL — keeps the private key server-only. */
+export async function uploadChecklistImageAction(formData: FormData): Promise<{ url?: string; error?: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { error: "No file provided." };
+
+  try {
+    const url = await uploadImageToImageKit(file, "checklists");
+    return { url };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Upload failed." };
+  }
 }
 
 function buildAreas(draft: DraftArea[]): ChecklistArea[] {
@@ -22,7 +37,7 @@ function buildAreas(draft: DraftArea[]): ChecklistArea[] {
     .map((a) => ({
       main_area: a.mainArea.trim(),
       note: a.note.trim(),
-      images: [],
+      images: a.images ?? [],
       subtasks: a.subtasks
         .filter((s) => s.trim())
         .map((text) => ({ id: randomUUID(), text: text.trim() })),
@@ -69,54 +84,46 @@ export async function deleteTemplateAction(formData: FormData): Promise<void> {
   revalidatePath("/checklists");
 }
 
-export async function assignChecklistAction(
+/**
+ * Standing assignment (no date) — links an employee to a template. The
+ * actual daily `checklists` instance is auto-created by the scheduled
+ * generate_due_checklists() function whenever the company's visit_days/
+ * visit_time (set on the company itself) comes around, not from this form.
+ */
+export async function createAssignmentAction(
   _prev: ChecklistFormState,
   formData: FormData
 ): Promise<ChecklistFormState> {
   const templateId = String(formData.get("templateId") ?? "");
   const companyId = String(formData.get("companyId") ?? "");
-  const site = String(formData.get("site") ?? "");
-  const date = String(formData.get("date") ?? "");
   const adminNote = String(formData.get("adminNote") ?? "").trim() || null;
   const employeeIds = formData.getAll("employeeIds").map(String);
-  const areasJson = String(formData.get("areasJson") ?? "[]");
 
-  if (!templateId || !companyId || employeeIds.length === 0 || !date) {
-    return { error: "Company, site, date and at least one employee are required." };
+  if (!templateId || !companyId || employeeIds.length === 0) {
+    return { error: "Company, template and at least one employee are required." };
   }
-
-  let templateAreas: ChecklistArea[];
-  try {
-    templateAreas = JSON.parse(areasJson);
-  } catch {
-    return { error: "Invalid checklist data." };
-  }
-
-  // Deep-copy the template's areas per assignment, seeding `done: false` —
-  // an assigned checklist snapshots the template rather than referencing it live.
-  const areasForInstance = (): ChecklistArea[] =>
-    templateAreas.map((area) => ({
-      ...area,
-      subtasks: area.subtasks.map((s) => ({ ...s, id: randomUUID(), done: false })),
-    }));
 
   const supabase = await createClient();
-  const { error } = await supabase.from("checklists").insert(
+  const { error } = await supabase.from("checklist_assignments").upsert(
     employeeIds.map((employee_id) => ({
       template_id: templateId,
       company_id: companyId,
-      site,
       employee_id,
-      assigned_date: date,
-      areas: areasForInstance(),
-      status: "pending",
       admin_note: adminNote,
-    }))
+    })),
+    { onConflict: "template_id,employee_id" }
   );
 
   if (error) return { error: error.message };
 
   revalidatePath("/checklists");
-  revalidatePath("/companies");
   return { success: true };
+}
+
+export async function deleteAssignmentAction(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase.from("checklist_assignments").delete().eq("id", id);
+  revalidatePath("/checklists");
 }

@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
 import { LocationField } from "@/components/LocationField";
 import { FieldLabel, PrimaryButton, Select, TextInput } from "@/components/ui";
-import { createCompanyAction, updateCompanyAction, type CompanyFormState } from "./actions";
+import { checkCompanyNameAction, createCompanyAction, updateCompanyAction, type CompanyFormState } from "./actions";
 import type { Company } from "@macro/shared/types";
 
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -24,6 +24,9 @@ export function CompanyModal({ company, onClose }: { company?: Company; onClose:
   // saved visit_days value is the deduped set of weekdays across whichever
   // cells are selected — the 4 rows are just a visual grid, not 4 separate weeks.
   const [selectedCells, setSelectedCells] = useState<number[]>(company?.visit_days ?? []);
+  const [name, setName] = useState(company?.name ?? "");
+  const [checkingName, setCheckingName] = useState(false);
+  const [nameCheck, setNameCheck] = useState<"idle" | "clear" | "duplicate">("idle");
 
   useEffect(() => {
     if (state.success) onClose();
@@ -38,6 +41,17 @@ export function CompanyModal({ company, onClose }: { company?: Company; onClose:
     );
   }
 
+  async function handleCheckName() {
+    if (!name.trim()) return;
+    setCheckingName(true);
+    try {
+      const { exists } = await checkCompanyNameAction(name);
+      setNameCheck(exists ? "duplicate" : "clear");
+    } finally {
+      setCheckingName(false);
+    }
+  }
+
   return (
     <Modal title={isEdit ? "Edit Company" : "Add Company"} onClose={onClose}>
       <form action={formAction} className="flex flex-col gap-3.5">
@@ -45,7 +59,36 @@ export function CompanyModal({ company, onClose }: { company?: Company; onClose:
 
         <div>
           <FieldLabel>Company Name</FieldLabel>
-          <TextInput name="name" required defaultValue={company?.name} placeholder="e.g. Acme Corp" />
+          <TextInput
+            name="name"
+            required
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setNameCheck("idle");
+            }}
+            placeholder="e.g. Acme Corp"
+          />
+          {!isEdit && (
+            <>
+              <button
+                type="button"
+                onClick={handleCheckName}
+                disabled={checkingName || !name.trim()}
+                className="mt-1.5 text-[12.5px] font-semibold text-primary disabled:opacity-40"
+              >
+                {checkingName ? "Checking…" : "Check Name"}
+              </button>
+              {nameCheck === "duplicate" && (
+                <p className="mt-1 text-[11.5px] text-[#B35A10]">
+                  A company named &quot;{name}&quot; already exists. You can continue anyway, or use a different name.
+                </p>
+              )}
+              {nameCheck === "clear" && (
+                <p className="mt-1 text-[11.5px] text-olive-text">No existing company has this name.</p>
+              )}
+            </>
+          )}
         </div>
 
         {!isEdit && (
