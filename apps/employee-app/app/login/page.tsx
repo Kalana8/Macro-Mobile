@@ -23,7 +23,9 @@ export default function LoginPage() {
 function LoginPageInner() {
   const [credState, credAction] = useActionState<LoginState, FormData>(verifyCredentialsAction, {});
   const searchParams = useSearchParams();
-  const sessionExpired = searchParams.get("reason") === "session-expired";
+  const reason = searchParams.get("reason");
+  const sessionExpired = reason === "session-expired";
+  const locationMismatch = reason === "location-mismatch";
 
   return (
     <div className="min-h-screen bg-page-bg">
@@ -37,6 +39,12 @@ function LoginPageInner() {
         {sessionExpired && (
           <div className="mb-4 rounded-lg bg-orange/10 px-3 py-2 text-center text-[12.5px] text-[#B35A10]">
             Your session expired. Log in again to continue.
+          </div>
+        )}
+
+        {locationMismatch && (
+          <div className="mb-4 rounded-lg bg-orange/10 px-3 py-2 text-center text-[12.5px] text-[#B35A10]">
+            You were signed out because your location didn&apos;t match the site. Log in again once you&apos;re on-site.
           </div>
         )}
 

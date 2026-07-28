@@ -13,6 +13,7 @@ export interface Company {
   id: string;
   name: string;
   location: string | null;
+  logo: string | null;
   status: CompanyStatus;
   visit_days: number[]; // 0=Sun..6=Sat
   visit_time: string | null; // "HH:MM"

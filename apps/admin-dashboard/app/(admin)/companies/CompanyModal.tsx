@@ -4,9 +4,24 @@ import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
 import { LocationField } from "@/components/LocationField";
+import { ImagePicker } from "@/components/ImagePicker";
 import { FieldLabel, PrimaryButton, Select, TextInput } from "@/components/ui";
-import { checkCompanyNameAction, createCompanyAction, updateCompanyAction, type CompanyFormState } from "./actions";
+import {
+  checkCompanyNameAction,
+  createCompanyAction,
+  updateCompanyAction,
+  uploadCompanyLogoAction,
+  type CompanyFormState,
+} from "./actions";
 import type { Company } from "@macro/shared/types";
+
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.set("file", file);
+  const result = await uploadCompanyLogoAction(formData);
+  if (result.error || !result.url) throw new Error(result.error ?? "Upload failed.");
+  return result.url;
+}
 
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
@@ -27,6 +42,7 @@ export function CompanyModal({ company, onClose }: { company?: Company; onClose:
   const [name, setName] = useState(company?.name ?? "");
   const [checkingName, setCheckingName] = useState(false);
   const [nameCheck, setNameCheck] = useState<"idle" | "clear" | "duplicate">("idle");
+  const [logo, setLogo] = useState<string | null>(company?.logo ?? null);
 
   useEffect(() => {
     if (state.success) onClose();
@@ -113,6 +129,16 @@ export function CompanyModal({ company, onClose }: { company?: Company; onClose:
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </Select>
+        </div>
+
+        <div>
+          <FieldLabel>Company Logo</FieldLabel>
+          <input type="hidden" name="logo" value={logo ?? ""} />
+          <ImagePicker
+            images={logo ? [logo] : []}
+            onChange={(images) => setLogo(images[images.length - 1] ?? null)}
+            uploadFile={uploadFile}
+          />
         </div>
 
         <div>

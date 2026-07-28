@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/server";
 import { withinGeofence } from "@macro/shared/geo";
 
@@ -43,7 +44,11 @@ export async function clockInAction(
 
   const geoVerified = withinGeofence(lat, lng, site.lat, site.lng);
   if (!geoVerified) {
-    return { error: "You must be within 20m of the site to clock in." };
+    // Not just a rejected clock-in — being at the wrong location when
+    // trying to clock in ends the session outright, matching the site's
+    // access-control intent (only reachable from the site itself).
+    await supabase.auth.signOut();
+    redirect("/login?reason=location-mismatch");
   }
 
   const { error: insertError } = await supabase.from("attendance").insert({

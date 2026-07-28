@@ -2,10 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@macro/shared/supabase/server";
+import { uploadImageToImageKit } from "@macro/shared/imagekit";
 
 export interface CompanyFormState {
   error?: string;
   success?: boolean;
+}
+
+/** Uploads a company logo to ImageKit and returns its public URL — keeps the private key server-only. */
+export async function uploadCompanyLogoAction(formData: FormData): Promise<{ url?: string; error?: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { error: "No file provided." };
+
+  try {
+    const url = await uploadImageToImageKit(file, "company-logos");
+    return { url };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Upload failed." };
+  }
 }
 
 function parseVisitDays(formData: FormData): number[] {
@@ -32,6 +46,7 @@ export async function createCompanyAction(
 ): Promise<CompanyFormState> {
   const name = String(formData.get("name") ?? "").trim();
   const location = String(formData.get("location") ?? "").trim() || null;
+  const logo = String(formData.get("logo") ?? "").trim() || null;
   const status = String(formData.get("status") ?? "active");
   const visitTime = String(formData.get("visitTime") ?? "") || null;
 
@@ -55,6 +70,7 @@ export async function createCompanyAction(
     .insert({
       name,
       location,
+      logo,
       status,
       visit_days: parseVisitDays(formData),
       visit_time: visitTime,
@@ -85,6 +101,7 @@ export async function updateCompanyAction(
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const location = String(formData.get("location") ?? "").trim() || null;
+  const logo = String(formData.get("logo") ?? "").trim() || null;
   const status = String(formData.get("status") ?? "active");
   const visitTime = String(formData.get("visitTime") ?? "") || null;
 
@@ -93,7 +110,7 @@ export async function updateCompanyAction(
   const supabase = await createClient();
   const { error } = await supabase
     .from("companies")
-    .update({ name, location, status, visit_days: parseVisitDays(formData), visit_time: visitTime })
+    .update({ name, location, logo, status, visit_days: parseVisitDays(formData), visit_time: visitTime })
     .eq("id", id);
 
   if (error) return { error: error.message };
