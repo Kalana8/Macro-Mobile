@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@macro/shared/supabase/middleware";
-import { ACTIVE_SITE_COOKIE, LOGIN_AT_COOKIE, SESSION_MAX_AGE_MS } from "@/lib/constants";
+import { LOGIN_AT_COOKIE, SESSION_MAX_AGE_MS } from "@/lib/constants";
 
 const PUBLIC_PATHS = ["/login"];
 const CHANGE_PASSWORD_PATH = "/profile/change-password";
@@ -50,7 +50,6 @@ export async function middleware(request: NextRequest) {
       url.pathname = "/login";
       url.searchParams.set("reason", "session-expired");
       const redirectResponse = NextResponse.redirect(url);
-      redirectResponse.cookies.delete(ACTIVE_SITE_COOKIE);
       redirectResponse.cookies.delete(LOGIN_AT_COOKIE);
       return redirectResponse;
     }

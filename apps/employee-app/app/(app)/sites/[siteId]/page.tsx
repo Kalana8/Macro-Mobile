@@ -51,7 +51,7 @@ export default async function SiteDetailsPage({
         </div>
 
         <Link
-          href="/attendance"
+          href={`/attendance?siteId=${site.id}`}
           className="rounded-xl border border-border bg-white px-4 py-3 text-center text-sm font-semibold text-primary"
         >
           Clock in / out at this site →
