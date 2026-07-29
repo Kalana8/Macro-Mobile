@@ -91,8 +91,8 @@ export default async function DashboardPage({
   const maxDayCount = Math.max(1, ...attendanceByDay.map((d) => d.count));
 
   const auditBars = [
-    { label: "Submit", count: submitAudits ?? 0, color: "var(--color-orange)" },
-    { label: "Verify", count: verifyAudits ?? 0, color: "var(--color-olive-text)" },
+    { label: "Pending", count: submitAudits ?? 0, color: "var(--color-orange)" },
+    { label: "Saved", count: verifyAudits ?? 0, color: "var(--color-olive-text)" },
     { label: "Complete", count: completedAudits ?? 0, color: "var(--color-primary)" },
   ];
   const maxAuditCount = Math.max(1, ...auditBars.map((b) => b.count));

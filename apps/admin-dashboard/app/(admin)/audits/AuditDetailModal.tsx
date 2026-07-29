@@ -8,6 +8,7 @@ import type { Audit, AuditMainItem, AuditRating } from "@macro/shared/types";
 import { sendAuditResultsAction, updateAuditRatingsAction, type AuditFormState } from "./actions";
 
 const STATUS_TONE = { submit: "info", verify: "warning", complete: "success" } as const;
+const STATUS_LABEL = { submit: "Pending", verify: "Saved", complete: "Complete" } as const;
 const RATINGS: { key: AuditRating; label: string }[] = [
   { key: "not_satisfactory", label: "Not Satisfactory" },
   { key: "satisfactory", label: "Satisfactory" },
@@ -79,7 +80,7 @@ export function AuditDetailModal({
     <Modal title={companyName} onClose={onClose}>
       <div className="mb-1 flex items-center justify-between">
         <div className="text-xs text-text-muted">{audit.date}</div>
-        <Badge tone={STATUS_TONE[status] ?? "neutral"}>{status}</Badge>
+        <Badge tone={STATUS_TONE[status] ?? "neutral"}>{STATUS_LABEL[status] ?? audit.status}</Badge>
       </div>
       <div className="mb-4 text-sm text-text-muted">{employeeName}</div>
 

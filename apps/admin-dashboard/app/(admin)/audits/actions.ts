@@ -116,8 +116,10 @@ export async function updateAuditRatingsAction(
     return { error: "Invalid audit data." };
   }
 
-  const allRated = mainAudits.every((m) => m.sub_audits.every((s) => s.result));
-  const status = allRated && mainAudits.length > 0 ? "verify" : "submit";
+  // Any explicit "Save Ratings & Marks" click moves the audit to "verify"
+  // (displayed as "Saved") — not conditional on every sub-item being
+  // rated, since the admin may save partial progress and come back later.
+  const status = "verify";
 
   const supabase = await createClient();
   const { error } = await supabase

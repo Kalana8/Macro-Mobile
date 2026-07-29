@@ -47,9 +47,7 @@ export default async function ChecklistsPage() {
     employeeName: (c.employees as { full_name?: string } | null)?.full_name ?? "—",
   });
 
-  const all = (checklists ?? []).map(joinChecklist);
-  const submitted = all.filter((c) => c.status === "submitted");
-  const assigned = all;
+  const submitted = (checklists ?? []).map(joinChecklist).filter((c) => c.status === "submitted");
 
   const templateRows = (templates ?? []).map((t) => ({
     ...(t as unknown as ChecklistTemplate),
@@ -71,7 +69,6 @@ export default async function ChecklistsPage() {
       <ChecklistsTabs
         submitted={submitted}
         templates={templateRows}
-        assigned={assigned}
         assignments={assignmentRows}
         companies={companies ?? []}
         sites={sites ?? []}

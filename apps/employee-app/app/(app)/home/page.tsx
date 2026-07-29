@@ -29,6 +29,7 @@ export default async function HomePage() {
     { data: pendingChecklists },
     { data: openComms },
     { data: recentAudits },
+    { data: dismissals },
   ] = await Promise.all([
     supabase
       .from("sites")
@@ -54,9 +55,12 @@ export default async function HomePage() {
       .eq("status", "open")
       .order("last_message_at", { ascending: false, nullsFirst: false })
       .limit(5),
-    // No updated_at column on audits, so "recent" here means recently
-    // created rather than recently reviewed — an accepted approximation
-    // rather than adding a column just for notification ordering.
+    // Covers both audits the employee owns and ones they're a recipient
+    // of via sent_to (audits_recipient_select RLS policy) — "sending" an
+    // audit's results is what sets status to complete + populates sent_to.
+    // No updated_at column on audits, so "recent" means recently created
+    // rather than recently reviewed — an accepted approximation rather
+    // than adding a column just for notification ordering.
     supabase
       .from("audits")
       .select("id, title, final_marks, max_marks, status")
@@ -64,9 +68,11 @@ export default async function HomePage() {
       .not("final_marks", "is", null)
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase.from("notification_dismissals").select("item_type, item_id"),
   ]);
 
   const activeSiteId = activeRecord?.site_id ?? null;
+  const dismissedKeys = new Set((dismissals ?? []).map((d) => `${d.item_type}-${d.item_id}`));
 
   const notifications: NotificationItem[] = [
     ...(pendingChecklists ?? []).map((c) => {
@@ -95,7 +101,7 @@ export default async function HomePage() {
       subtitle: `Marks ${a.final_marks} / ${a.max_marks}`,
       kind: "audit" as const,
     })),
-  ];
+  ].filter((item) => !dismissedKeys.has(`${item.kind}-${item.id}`));
 
   return (
     <div>

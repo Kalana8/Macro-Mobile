@@ -85,10 +85,12 @@ export async function deleteTemplateAction(formData: FormData): Promise<void> {
 }
 
 /**
- * Standing assignment (no date) — links an employee to a template. The
- * actual daily `checklists` instance is auto-created by the scheduled
- * generate_due_checklists() function whenever the company's visit_days/
- * visit_time (set on the company itself) comes around, not from this form.
+ * Standing assignment (no date) — links an employee to a template. From
+ * then on, the daily `checklists` instance for subsequent days is
+ * auto-created by the scheduled generate_due_checklists() function
+ * whenever the company's visit_days/visit_time comes around. But an admin
+ * assigning someone expects it to show up for the employee right away, not
+ * wait for that schedule — so this also sends today's instance immediately.
  */
 export async function createAssignmentAction(
   _prev: ChecklistFormState,
@@ -115,6 +117,40 @@ export async function createAssignmentAction(
   );
 
   if (error) return { error: error.message };
+
+  const { data: template } = await supabase
+    .from("checklist_templates")
+    .select("site, areas")
+    .eq("id", templateId)
+    .maybeSingle();
+
+  if (template) {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: existing } = await supabase
+      .from("checklists")
+      .select("employee_id")
+      .eq("template_id", templateId)
+      .eq("assigned_date", today)
+      .in("employee_id", employeeIds);
+
+    const alreadySent = new Set((existing ?? []).map((c) => c.employee_id));
+    const toSend = employeeIds.filter((id) => !alreadySent.has(id));
+
+    if (toSend.length > 0) {
+      await supabase.from("checklists").insert(
+        toSend.map((employee_id) => ({
+          template_id: templateId,
+          company_id: companyId,
+          site: template.site,
+          employee_id,
+          assigned_date: today,
+          areas: template.areas,
+          status: "pending",
+          admin_note: adminNote,
+        }))
+      );
+    }
+  }
 
   revalidatePath("/checklists");
   return { success: true };

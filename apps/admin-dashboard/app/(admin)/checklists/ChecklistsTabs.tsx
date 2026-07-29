@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, EmptyState, IconChip, PlusIcon, PrimaryButton, Table } from "@/components/ui";
+import { EmptyState, IconChip, PlusIcon, PrimaryButton, Table } from "@/components/ui";
 import { DeleteButton } from "@/components/DeleteButton";
 import type { Checklist, ChecklistTemplate } from "@macro/shared/types";
 import { deleteAssignmentAction, deleteTemplateAction } from "./actions";
@@ -42,7 +42,6 @@ interface AssignmentRow {
 export function ChecklistsTabs({
   submitted,
   templates,
-  assigned,
   assignments,
   companies,
   sites,
@@ -50,7 +49,6 @@ export function ChecklistsTabs({
 }: {
   submitted: JoinedChecklist[];
   templates: JoinedTemplate[];
-  assigned: JoinedChecklist[];
   assignments: AssignmentRow[];
   companies: { id: string; name: string }[];
   sites: Site[];
@@ -183,30 +181,6 @@ export function ChecklistsTabs({
             </Table>
           )}
 
-          <div className="mb-2 mt-6 text-xs font-bold text-text-muted">GENERATED CHECKLISTS</div>
-          {assigned.length === 0 ? (
-            <EmptyState title="No checklists generated yet" hint="These appear automatically once a company's visit day/time arrives." />
-          ) : (
-            <Table head={["Date", "Main Areas", "Company", "Employee", "Site", "Subtasks", "Status"]}>
-              {assigned.map((row) => {
-                const done = row.areas.reduce((n, a) => n + a.subtasks.filter((t) => t.done).length, 0);
-                const total = row.areas.reduce((n, a) => n + a.subtasks.length, 0);
-                return (
-                  <tr key={row.id} onClick={() => setChecklistDetail(row)} className="cursor-pointer border-b border-border last:border-0">
-                    <td className="px-5 py-3.5 text-text-muted">{row.assigned_date}</td>
-                    <td className="px-5 py-3.5 font-semibold text-text-dark">{row.areas.map((a) => a.main_area).join(", ")}</td>
-                    <td className="px-5 py-3.5 text-text-muted">{row.companyName}</td>
-                    <td className="px-5 py-3.5 text-text-muted">{row.employeeName}</td>
-                    <td className="px-5 py-3.5 text-text-muted">{row.site}</td>
-                    <td className="px-5 py-3.5 text-text-muted">{done}/{total}</td>
-                    <td className="px-5 py-3.5">
-                      <Badge tone={row.status === "submitted" ? "success" : "warning"}>{row.status}</Badge>
-                    </td>
-                  </tr>
-                );
-              })}
-            </Table>
-          )}
         </div>
       )}
 

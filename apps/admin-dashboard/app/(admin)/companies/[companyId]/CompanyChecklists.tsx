@@ -1,41 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Card, PlusIcon, PrimaryButton } from "@/components/ui";
-import type { Checklist, ChecklistTemplate } from "@macro/shared/types";
+import { IconChip, PlusIcon, PrimaryButton } from "@/components/ui";
+import { DeleteButton } from "@/components/DeleteButton";
+import type { ChecklistTemplate } from "@macro/shared/types";
+import { deleteTemplateAction } from "../../checklists/actions";
 import { CreateTemplateModal } from "../../checklists/CreateTemplateModal";
+import { TemplateDetailModal } from "../../checklists/TemplateDetailModal";
 import { AssignChecklistModal } from "../../checklists/AssignChecklistModal";
-import { ChecklistDetailModal } from "../../checklists/ChecklistDetailModal";
-
-interface JoinedChecklist extends Checklist {
-  employeeName: string;
-}
 
 export function CompanyChecklists({
   companyId,
   companyName,
-  checklists,
   templates,
   sites,
   employees,
 }: {
   companyId: string;
   companyName: string;
-  checklists: JoinedChecklist[];
   templates: ChecklistTemplate[];
   sites: { id: string; name: string; company_id: string }[];
   employees: { id: string; full_name: string; companyIds: string[] }[];
 }) {
-  const [showCreate, setShowCreate] = useState(false);
+  const [templateModal, setTemplateModal] = useState<ChecklistTemplate | "new" | null>(null);
+  const [templateDetail, setTemplateDetail] = useState<ChecklistTemplate | null>(null);
   const [showAssign, setShowAssign] = useState(false);
-  const [selected, setSelected] = useState<JoinedChecklist | null>(null);
 
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <div className="text-sm font-semibold text-text-dark">Daily Checklists</div>
+        <div className="text-sm font-semibold text-text-dark">Checklist Templates</div>
         <div className="flex gap-2">
-          <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-[11px] bg-bg px-[18px] py-2.5 text-[13.5px] font-bold text-text-dark">
+          <button onClick={() => setTemplateModal("new")} className="flex items-center gap-2 rounded-[11px] bg-bg px-[18px] py-2.5 text-[13.5px] font-bold text-text-dark">
             <PlusIcon />
             Create Checklist
           </button>
@@ -46,38 +42,46 @@ export function CompanyChecklists({
         </div>
       </div>
 
-      {checklists.length === 0 ? (
+      {templates.length === 0 ? (
         <div className="rounded-[16px] border border-dashed border-border p-8 text-center text-sm text-text-muted">
-          No checklists yet.
+          No checklist templates yet.
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {checklists.map((checklist) => {
-            const doneCount = checklist.areas.reduce((n, a) => n + a.subtasks.filter((t) => t.done).length, 0);
-            const totalCount = checklist.areas.reduce((n, a) => n + a.subtasks.length, 0);
+          {templates.map((template) => {
+            const subtasks = template.areas.reduce((n, a) => n + a.subtasks.length, 0);
             return (
-              <Card key={checklist.id} className="flex cursor-pointer items-center justify-between" >
-                <button type="button" onClick={() => setSelected(checklist)} className="flex flex-1 items-center justify-between text-left">
-                  <div>
-                    <div className="text-sm font-semibold text-text-dark">
-                      {checklist.areas.map((a) => a.main_area).join(", ") || "Checklist"}
-                    </div>
-                    <div className="text-xs text-text-muted">
-                      {checklist.employeeName} · {checklist.site} · {doneCount}/{totalCount} subtasks
-                    </div>
+              <div key={template.id} className="flex items-center justify-between rounded-[16px] border border-border bg-white p-4">
+                <button type="button" onClick={() => setTemplateDetail(template)} className="flex-1 text-left">
+                  <div className="text-sm font-semibold text-text-dark">
+                    {template.areas.map((a) => a.main_area).join(", ") || "Checklist"}
                   </div>
-                  <Badge tone={checklist.status === "submitted" ? "success" : "warning"}>
-                    {checklist.status === "submitted" ? "Submitted" : "Pending Review"}
-                  </Badge>
+                  <div className="text-xs text-text-muted">{template.site} · {subtasks} subtasks</div>
                 </button>
-              </Card>
+                <div className="flex items-center gap-2">
+                  <IconChip onClick={() => setTemplateModal(template)} aria-label="Edit">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                  </IconChip>
+                  <DeleteButton action={deleteTemplateAction} confirmText="Delete this template?" hiddenFields={{ id: template.id }} />
+                </div>
+              </div>
             );
           })}
         </div>
       )}
 
-      {showCreate && (
-        <CreateTemplateModal companies={[{ id: companyId, name: companyName }]} sites={sites} onClose={() => setShowCreate(false)} />
+      {templateModal && (
+        <CreateTemplateModal
+          companies={[{ id: companyId, name: companyName }]}
+          sites={sites}
+          template={templateModal === "new" ? undefined : templateModal}
+          onClose={() => setTemplateModal(null)}
+        />
+      )}
+      {templateDetail && (
+        <TemplateDetailModal template={templateDetail} companyName={companyName} onClose={() => setTemplateDetail(null)} />
       )}
       {showAssign && (
         <AssignChecklistModal
@@ -85,14 +89,6 @@ export function CompanyChecklists({
           templates={templates}
           employees={employees}
           onClose={() => setShowAssign(false)}
-        />
-      )}
-      {selected && (
-        <ChecklistDetailModal
-          checklist={selected}
-          companyName={companyName}
-          employeeName={selected.employeeName}
-          onClose={() => setSelected(null)}
         />
       )}
     </div>

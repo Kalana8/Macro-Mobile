@@ -9,6 +9,7 @@ import { AddAuditModal } from "./AddAuditModal";
 import { AuditDetailModal } from "./AuditDetailModal";
 
 const STATUS_TONE = { submit: "info", verify: "warning", complete: "success" } as const;
+const STATUS_LABEL = { submit: "Pending", verify: "Saved", complete: "Complete" } as const;
 
 export interface AuditRow extends Audit {
   companyName: string;
@@ -67,7 +68,7 @@ export function AuditsTable({
               <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => setSelected(audit)}>{ratedCount}/{subAuditCount}</td>
               <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => setSelected(audit)}>{audit.final_marks ?? "—"}/{audit.max_marks}</td>
               <td className="cursor-pointer px-5 py-3.5" onClick={() => setSelected(audit)}>
-                <Badge tone={STATUS_TONE[status] ?? "neutral"}>{status?.charAt(0).toUpperCase() + status?.slice(1)}</Badge>
+                <Badge tone={STATUS_TONE[status] ?? "neutral"}>{STATUS_LABEL[status] ?? audit.status}</Badge>
               </td>
               <td className="px-5 py-3.5">
                 <div className="flex items-center gap-2">

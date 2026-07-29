@@ -9,8 +9,8 @@ const STATUS_TONE = {
 } as const;
 
 const STATUS_LABEL = {
-  submit: "Submit",
-  verify: "Verify",
+  submit: "Pending",
+  verify: "Saved",
   complete: "Complete",
 } as const;
 

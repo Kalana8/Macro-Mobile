@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { dismissNotificationAction } from "@/app/(app)/home/actions";
 
 export interface NotificationItem {
   id: string;
@@ -30,7 +31,16 @@ function KindIcon({ kind }: { kind: NotificationItem["kind"] }) {
 
 export function NotificationBell({ items }: { items: NotificationItem[] }) {
   const [open, setOpen] = useState(false);
-  const count = items.length;
+  const [dismissedKeys, setDismissedKeys] = useState<Set<string>>(new Set());
+
+  const visibleItems = items.filter((item) => !dismissedKeys.has(`${item.kind}-${item.id}`));
+  const count = visibleItems.length;
+
+  function handleDismiss(item: NotificationItem) {
+    const key = `${item.kind}-${item.id}`;
+    setDismissedKeys((prev) => new Set(prev).add(key));
+    dismissNotificationAction(item.kind, item.id);
+  }
 
   return (
     <>
@@ -61,27 +71,39 @@ export function NotificationBell({ items }: { items: NotificationItem[] }) {
               </button>
             </div>
             <div className="max-h-[60vh] overflow-y-auto">
-              {items.length === 0 ? (
+              {visibleItems.length === 0 ? (
                 <div className="px-4 py-8 text-center text-sm text-text-muted">You&apos;re all caught up.</div>
               ) : (
-                items.map((item) => {
+                visibleItems.map((item) => {
                   const meta = KIND_META[item.kind];
                   return (
-                    <Link
+                    <div
                       key={`${item.kind}-${item.id}`}
-                      href={item.href}
-                      onClick={() => setOpen(false)}
-                      className="flex items-start gap-3 border-b border-border px-4 py-3 last:border-0"
+                      className="flex items-start gap-2 border-b border-border px-4 py-3 last:border-0"
                     >
-                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${meta.iconBg} ${meta.iconText}`}>
-                        <KindIcon kind={item.kind} />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold uppercase tracking-wide text-text-muted">{meta.label}</div>
-                        <div className="truncate text-sm font-semibold text-text-dark">{item.title}</div>
-                        <div className="truncate text-xs text-text-muted">{item.subtitle}</div>
-                      </div>
-                    </Link>
+                      <Link
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className="flex min-w-0 flex-1 items-start gap-3"
+                      >
+                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${meta.iconBg} ${meta.iconText}`}>
+                          <KindIcon kind={item.kind} />
+                        </span>
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold uppercase tracking-wide text-text-muted">{meta.label}</div>
+                          <div className="truncate text-sm font-semibold text-text-dark">{item.title}</div>
+                          <div className="truncate text-xs text-text-muted">{item.subtitle}</div>
+                        </div>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleDismiss(item)}
+                        aria-label="Dismiss notification"
+                        className="shrink-0 px-1 text-sm text-text-muted"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   );
                 })
               )}

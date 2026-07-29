@@ -4,7 +4,7 @@ import { Badge, Card, ScreenHeader } from "@/components/ui";
 import type { AuditMainItem, AuditRating } from "@macro/shared/types";
 
 const STATUS_TONE = { submit: "info", verify: "warning", complete: "success" } as const;
-const STATUS_LABEL = { submit: "Submit", verify: "Verify", complete: "Complete" } as const;
+const STATUS_LABEL = { submit: "Pending", verify: "Saved", complete: "Complete" } as const;
 const PRIORITY_TONE = { low: "neutral", medium: "info", high: "error" } as const;
 const RATING_TONE: Record<AuditRating, "neutral" | "error" | "warning" | "success"> = {
   "": "neutral",
