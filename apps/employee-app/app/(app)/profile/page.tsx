@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getCurrentEmployee } from "@/lib/session";
 import { Card, ScreenHeader } from "@/components/ui";
-import { logoutAction } from "../actions";
+import { LogoutButton } from "@/components/LogoutButton";
 
 export default async function ProfilePage() {
   const session = await getCurrentEmployee();
@@ -48,11 +48,7 @@ export default async function ProfilePage() {
           <Link href="/profile/change-password" className="px-4 py-3.5 text-sm font-medium text-text-dark">
             Change Password
           </Link>
-          <form action={logoutAction}>
-            <button type="submit" className="w-full px-4 py-3.5 text-left text-sm font-semibold text-error">
-              Log Out
-            </button>
-          </form>
+          <LogoutButton variant="menu-item" />
         </Card>
       </div>
     </div>

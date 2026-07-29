@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { getCurrentPosition } from "@macro/shared/geo";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   breakEndAction,
   breakStartAction,
@@ -82,16 +83,20 @@ function ActionCard({
   icon,
   disabled,
   color,
+  onClick,
 }: {
   children: React.ReactNode;
   icon: React.ReactNode;
   disabled?: boolean;
   color: { iconBg: string; iconText: string };
+  /** When provided, this renders as a plain button (e.g. to open a confirm dialog first) instead of submitting its parent form directly. */
+  onClick?: () => void;
 }) {
   const { pending } = useFormStatus();
   return (
     <button
-      type="submit"
+      type={onClick ? "button" : "submit"}
+      onClick={onClick}
       disabled={disabled || pending}
       className="flex w-full flex-col items-center gap-2 rounded-2xl border border-border bg-white p-4 text-center shadow-sm transition-all enabled:hover:-translate-y-0.5 enabled:hover:shadow-md disabled:opacity-40"
     >
@@ -112,7 +117,10 @@ export function AttendanceClock({
 }) {
   const [now, setNow] = useState(() => Date.now());
   const [locating, setLocating] = useState(false);
+  const [locatingOut, setLocatingOut] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
+  const [confirmingClockOut, setConfirmingClockOut] = useState(false);
+  const [, startTransition] = useTransition();
 
   const [clockInState, clockInFormAction] = useActionState<AttendanceActionState, FormData>(
     clockInAction,
@@ -157,12 +165,39 @@ export function AttendanceClock({
       formData.set("siteId", site.id);
       formData.set("lat", String(lat));
       formData.set("lng", String(lng));
-      clockInFormAction(formData);
+      startTransition(() => {
+        clockInFormAction(formData);
+      });
     } catch {
       setGeoError("Location access is required to clock in.");
     } finally {
       setLocating(false);
     }
+  }
+
+  async function handleClockOut() {
+    if (!activeRecord) return;
+    setGeoError(null);
+    setLocatingOut(true);
+    try {
+      const { lat, lng } = await getCurrentPosition();
+      const formData = new FormData();
+      formData.set("attendanceId", activeRecord.id);
+      formData.set("lat", String(lat));
+      formData.set("lng", String(lng));
+      startTransition(() => {
+        clockOutFormAction(formData);
+      });
+    } catch {
+      setGeoError("Location access is required to clock out.");
+    } finally {
+      setLocatingOut(false);
+    }
+  }
+
+  function confirmClockOut() {
+    setConfirmingClockOut(false);
+    handleClockOut();
   }
 
   const statusLabel = isOnBreak ? "On Break" : isClockedIn ? "Clocked In" : "Clocked Out";
@@ -205,12 +240,14 @@ export function AttendanceClock({
             {locating ? "Getting GPS fix…" : "Clock In"}
           </ActionCard>
         </form>
-        <form action={clockOutFormAction}>
-          <input type="hidden" name="attendanceId" value={activeRecord?.id ?? ""} />
-          <ActionCard icon={ICONS.clockOut} color={CARD_COLORS.clockOut} disabled={!isClockedIn}>
-            Clock Out
-          </ActionCard>
-        </form>
+        <ActionCard
+          icon={ICONS.clockOut}
+          color={CARD_COLORS.clockOut}
+          disabled={!isClockedIn || locatingOut}
+          onClick={() => setConfirmingClockOut(true)}
+        >
+          {locatingOut ? "Getting GPS fix…" : "Clock Out"}
+        </ActionCard>
         <form action={breakStartFormAction}>
           <input type="hidden" name="attendanceId" value={activeRecord?.id ?? ""} />
           <ActionCard icon={ICONS.breakStart} color={CARD_COLORS.breakStart} disabled={!isClockedIn}>
@@ -224,6 +261,17 @@ export function AttendanceClock({
           </ActionCard>
         </form>
       </div>
+
+      <ConfirmDialog
+        open={confirmingClockOut}
+        title="Clock out?"
+        message="This will end your shift and record your location."
+        confirmLabel={locatingOut ? "Getting GPS fix…" : "Clock Out"}
+        danger
+        busy={locatingOut}
+        onConfirm={confirmClockOut}
+        onCancel={() => setConfirmingClockOut(false)}
+      />
     </div>
   );
 }

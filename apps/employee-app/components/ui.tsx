@@ -85,11 +85,22 @@ export function EmptyState({ title, hint }: { title: string; hint?: string }) {
   );
 }
 
-export function ScreenHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+export function ScreenHeader({
+  title,
+  subtitle,
+  actions,
+}: {
+  title: string;
+  subtitle?: string;
+  actions?: ReactNode;
+}) {
   return (
-    <div className="sticky top-0 z-10 border-b border-border bg-white px-5 py-4">
-      <div className="text-[19px] font-extrabold text-text-dark">{title}</div>
-      {subtitle && <div className="mt-0.5 text-xs text-text-muted">{subtitle}</div>}
+    <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-white px-5 py-4">
+      <div>
+        <div className="text-[19px] font-extrabold text-text-dark">{title}</div>
+        {subtitle && <div className="mt-0.5 text-xs text-text-muted">{subtitle}</div>}
+      </div>
+      {actions}
     </div>
   );
 }

@@ -29,6 +29,21 @@ function parseVisitDays(formData: FormData): number[] {
     .filter((n) => !Number.isNaN(n));
 }
 
+function parseVisitSchedule(formData: FormData) {
+  const visitFrequency = String(formData.get("visitFrequency") ?? "weekly");
+  const visitTime = String(formData.get("visitTime") ?? "") || null;
+  const visitStartDate = String(formData.get("visitStartDate") ?? "") || null;
+  const visitEndDate = String(formData.get("visitEndDate") ?? "") || null;
+
+  return {
+    visit_frequency: visitFrequency,
+    visit_time: visitTime,
+    visit_days: visitFrequency === "custom" ? [] : parseVisitDays(formData),
+    visit_start_date: visitStartDate,
+    visit_end_date: visitEndDate,
+  };
+}
+
 /** Case-insensitive exact-name check, surfaced by the "Check Name" button before Add Company is submitted. */
 export async function checkCompanyNameAction(name: string): Promise<{ exists: boolean }> {
   const trimmed = name.trim();
@@ -48,7 +63,6 @@ export async function createCompanyAction(
   const location = String(formData.get("location") ?? "").trim() || null;
   const logo = String(formData.get("logo") ?? "").trim() || null;
   const status = String(formData.get("status") ?? "active");
-  const visitTime = String(formData.get("visitTime") ?? "") || null;
 
   // The first site is created alongside the company — Site Name plus its
   // geographic coordinates (never trust these for anything other than
@@ -72,8 +86,7 @@ export async function createCompanyAction(
       location,
       logo,
       status,
-      visit_days: parseVisitDays(formData),
-      visit_time: visitTime,
+      ...parseVisitSchedule(formData),
     })
     .select("id")
     .single();
@@ -103,14 +116,13 @@ export async function updateCompanyAction(
   const location = String(formData.get("location") ?? "").trim() || null;
   const logo = String(formData.get("logo") ?? "").trim() || null;
   const status = String(formData.get("status") ?? "active");
-  const visitTime = String(formData.get("visitTime") ?? "") || null;
 
   if (!id || !name) return { error: "Company name is required." };
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("companies")
-    .update({ name, location, logo, status, visit_days: parseVisitDays(formData), visit_time: visitTime })
+    .update({ name, location, logo, status, ...parseVisitSchedule(formData) })
     .eq("id", id);
 
   if (error) return { error: error.message };

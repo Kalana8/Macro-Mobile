@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/server";
 import { withinGeofence } from "@macro/shared/geo";
 
@@ -10,10 +9,9 @@ export interface AttendanceActionState {
 }
 
 /**
- * Clock in — re-runs the geofence check server-side against the chosen
- * site (Architecture Document §8/§9: "never trust a client-only distance
- * calculation for the authoritative clock-in"). The client-side check on
- * the Attendance screen is UX-only; this is the write that matters.
+ * Clock in — records the geofence result (Architecture Document §8/§9)
+ * alongside the clock-in rather than blocking on it: a mismatch is marked
+ * on the attendance row for the admin to see, not rejected or logged out.
  */
 export async function clockInAction(
   _prev: AttendanceActionState,
@@ -43,13 +41,6 @@ export async function clockInAction(
   if (siteError || !site) return { error: "Site not found." };
 
   const geoVerified = withinGeofence(lat, lng, site.lat, site.lng);
-  if (!geoVerified) {
-    // Not just a rejected clock-in — being at the wrong location when
-    // trying to clock in ends the session outright, matching the site's
-    // access-control intent (only reachable from the site itself).
-    await supabase.auth.signOut();
-    redirect("/login?reason=location-mismatch");
-  }
 
   const { error: insertError } = await supabase.from("attendance").insert({
     employee_id: user.id,
@@ -57,6 +48,8 @@ export async function clockInAction(
     site_id: site.id,
     clock_in_at: new Date().toISOString(),
     geo_verified: geoVerified,
+    clock_in_lat: lat,
+    clock_in_lng: lng,
     status: "clocked_in",
   });
 
@@ -66,17 +59,44 @@ export async function clockInAction(
   return {};
 }
 
+/**
+ * Clock out — same as Clock In, records the geofence result rather than
+ * blocking on it.
+ */
 export async function clockOutAction(
   _prev: AttendanceActionState,
   formData: FormData
 ): Promise<AttendanceActionState> {
   const attendanceId = String(formData.get("attendanceId") ?? "");
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+
   if (!attendanceId) return { error: "No active clock-in found." };
+  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+    return { error: "Location access is required to clock out." };
+  }
 
   const supabase = await createClient();
+  const { data: record, error: fetchError } = await supabase
+    .from("attendance")
+    .select("site_id, sites(lat, lng)")
+    .eq("id", attendanceId)
+    .maybeSingle();
+
+  if (fetchError || !record) return { error: "Active attendance record not found." };
+
+  const site = Array.isArray(record.sites) ? record.sites[0] : record.sites;
+  const geoVerified = site ? withinGeofence(lat, lng, site.lat, site.lng) : false;
+
   const { error } = await supabase
     .from("attendance")
-    .update({ clock_out_at: new Date().toISOString(), status: "complete" })
+    .update({
+      clock_out_at: new Date().toISOString(),
+      clock_out_lat: lat,
+      clock_out_lng: lng,
+      clock_out_geo_verified: geoVerified,
+      status: "complete",
+    })
     .eq("id", attendanceId);
 
   if (error) return { error: error.message };

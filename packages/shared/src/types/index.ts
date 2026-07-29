@@ -9,14 +9,19 @@ export type CommStatus = "open" | "closed";
 export type EmployeeStatus = "active" | "on_leave" | "inactive";
 export type CompanyStatus = "active" | "inactive";
 
+export type VisitFrequency = "weekly" | "fortnightly" | "custom";
+
 export interface Company {
   id: string;
   name: string;
   location: string | null;
   logo: string | null;
   status: CompanyStatus;
-  visit_days: number[]; // 0=Sun..6=Sat
+  visit_frequency: VisitFrequency;
+  visit_days: number[]; // 0=Sun..6=Sat — used by weekly & fortnightly
   visit_time: string | null; // "HH:MM"
+  visit_start_date: string | null; // "YYYY-MM-DD" — fortnightly anchor, or custom range start
+  visit_end_date: string | null; // "YYYY-MM-DD" — custom range end
   created_at: string;
 }
 
@@ -69,6 +74,11 @@ export interface Attendance {
   break_started_at: string | null;
   total_break_minutes: number;
   geo_verified: boolean;
+  clock_in_lat: number | null;
+  clock_in_lng: number | null;
+  clock_out_lat: number | null;
+  clock_out_lng: number | null;
+  clock_out_geo_verified: boolean;
   status: "clocked_in" | "on_break" | "complete";
   created_at: string;
 }

@@ -23,15 +23,12 @@ export default async function AuditsPage() {
 
   return (
     <div>
-      <ScreenHeader title="Audits" subtitle="Your submitted and assigned audits" />
+      <ScreenHeader
+        title="Audits"
+        subtitle="Your submitted and assigned audits"
+       
+      />
       <div className="flex flex-col gap-3 p-5">
-        <Link
-          href="/audits/new"
-          className="rounded-lg bg-orange px-4 py-3 text-center text-sm font-bold text-white"
-        >
-          + New Audit
-        </Link>
-
         {error && (
           <div className="rounded-lg bg-error/10 px-3 py-2 text-[12.5px] text-error">
             Couldn&apos;t load audits — connect Supabase to see live data.
