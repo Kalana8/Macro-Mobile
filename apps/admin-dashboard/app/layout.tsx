@@ -11,7 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Macro — Admin Console",
   description: "Companies, employees, attendance, audits, checklists and roles.",
-  icons: { icon: "/uploads/macro-logo.webp" },
+  icons: { icon: "/favicon-icon.png" },
 };
 
 export const viewport: Viewport = {

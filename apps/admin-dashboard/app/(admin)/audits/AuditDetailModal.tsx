@@ -3,9 +3,18 @@
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
+import { ImagePicker } from "@/components/ImagePicker";
 import { Badge, CheckboxSquare, PrimaryButton, TextInput } from "@/components/ui";
 import type { Audit, AuditMainItem, AuditRating } from "@macro/shared/types";
-import { sendAuditResultsAction, updateAuditRatingsAction, type AuditFormState } from "./actions";
+import { sendAuditResultsAction, updateAuditRatingsAction, uploadAuditImageAction, type AuditFormState } from "./actions";
+
+async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.set("file", file);
+  const result = await uploadAuditImageAction(formData);
+  if (result.error || !result.url) throw new Error(result.error ?? "Upload failed.");
+  return result.url;
+}
 
 const STATUS_TONE = { submit: "info", verify: "warning", complete: "success" } as const;
 const STATUS_LABEL = { submit: "Pending", verify: "Saved", complete: "Complete" } as const;
@@ -173,14 +182,13 @@ export function AuditDetailModal({
               placeholder="Additional notes for this audit"
               className="mt-2.5"
             />
-            {ma.images.length > 0 && (
-              <div className="mt-2.5 flex flex-wrap gap-1.5">
-                {ma.images.map((url) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img key={url} src={url} alt="Attachment" className="h-16 w-16 rounded-lg object-cover" />
-                ))}
-              </div>
-            )}
+            <div className="mt-2.5">
+              <ImagePicker
+                images={ma.images}
+                onChange={(images) => updateMain(mi, { images })}
+                uploadFile={uploadFile}
+              />
+            </div>
           </div>
         ))}
 

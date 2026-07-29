@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "Macro — Field Audit & Attendance",
   description: "Employee attendance, audits, checklists and communication.",
   manifest: "/manifest.json",
-  icons: { icon: "/uploads/macro-logo.webp", apple: "/uploads/macro-logo.webp" },
+  icons: { icon: "/favicon-icon.png", apple: "/icon-192.png" },
 };
 
 export const viewport: Viewport = {

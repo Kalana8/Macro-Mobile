@@ -106,6 +106,15 @@ export default async function AuditDetailPage({
                 )}
 
                 {ma.comment && <div className="mt-2.5 text-xs text-text-muted">{ma.comment}</div>}
+
+                {ma.images.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    {ma.images.map((url) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={url} src={url} alt="Attachment" className="h-16 w-16 rounded-lg object-cover" />
+                    ))}
+                  </div>
+                )}
               </Card>
             ))}
           </div>
