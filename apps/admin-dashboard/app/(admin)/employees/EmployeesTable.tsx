@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, EmptyState, PlusIcon, PrimaryButton, Table } from "@/components/ui";
+import { Badge, EmptyState, IconChip, PlusIcon, PrimaryButton, Table } from "@/components/ui";
 import { DeleteButton } from "@/components/DeleteButton";
 import { deleteEmployeeAction } from "./actions";
 import { AddEmployeeModal } from "./AddEmployeeModal";
+import { EditEmployeeModal } from "./EditEmployeeModal";
 
 const STATUS_LABEL: Record<string, string> = {
   active: "Active",
@@ -18,6 +19,9 @@ export interface EmployeeRow {
   username: string;
   job_role: string;
   status: string;
+  phone: string | null;
+  department: string | null;
+  accessRoleId: string;
   companyNames: string[];
   roleName: string;
 }
@@ -30,6 +34,7 @@ export function EmployeesTable({
   roles: { id: string; name: string }[];
 }) {
   const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState<EmployeeRow | null>(null);
 
   return (
     <div>
@@ -56,11 +61,18 @@ export function EmployeesTable({
               </Badge>
             </td>
             <td className="px-5 py-3.5">
-              <DeleteButton
-                action={deleteEmployeeAction}
-                confirmText={`Delete ${employee.full_name}'s login? This can't be undone.`}
-                hiddenFields={{ id: employee.id }}
-              />
+              <div className="flex items-center gap-2">
+                <IconChip onClick={() => setEditing(employee)} aria-label="Edit">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                </IconChip>
+                <DeleteButton
+                  action={deleteEmployeeAction}
+                  confirmText={`Delete ${employee.full_name}'s login? This can't be undone.`}
+                  hiddenFields={{ id: employee.id }}
+                />
+              </div>
             </td>
           </tr>
         ))}
@@ -68,6 +80,7 @@ export function EmployeesTable({
       )}
 
       {showModal && <AddEmployeeModal roles={roles} onClose={() => setShowModal(false)} />}
+      {editing && <EditEmployeeModal employee={editing} roles={roles} onClose={() => setEditing(null)} />}
     </div>
   );
 }

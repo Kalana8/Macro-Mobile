@@ -24,6 +24,9 @@ export default async function EmployeesPage() {
     username: e.username,
     job_role: e.job_role,
     status: e.status,
+    phone: e.phone,
+    department: e.department,
+    accessRoleId: e.access_role_id,
     companyNames: companyNamesByEmployee[e.id] ?? [],
     roleName: (e.roles as { name?: string } | null)?.name ?? "—",
   }));
