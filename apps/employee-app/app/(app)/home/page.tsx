@@ -99,7 +99,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between border-b border-primary/20 bg-primary/15 px-5 py-4">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-primary/20 bg-primary/15 px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-white">
             {headerName.charAt(0).toUpperCase()}

@@ -28,8 +28,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     return <div className="mx-auto flex min-h-screen max-w-lg flex-col bg-page-bg">{children}</div>;
   }
 
+  // h-screen (not min-h-screen) so this container never grows taller than
+  // the viewport — otherwise the whole page (not just the middle content)
+  // scrolls, and the header/bottom nav move with it despite being sticky.
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col bg-page-bg">
+    <div className="mx-auto flex h-screen max-w-lg flex-col bg-page-bg">
       <div className="flex-1 overflow-y-auto pb-2">{children}</div>
       <BottomNav />
     </div>
