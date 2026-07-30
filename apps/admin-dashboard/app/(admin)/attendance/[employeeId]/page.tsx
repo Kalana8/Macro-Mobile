@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/server";
+import { formatDate, formatTime, todayInBusinessTimezone } from "@macro/shared/datetime";
 import { Badge, EmptyState, PageHeader, Table } from "@/components/ui";
 
 function addDays(date: string, days: number): string {
@@ -14,15 +15,15 @@ function toDateStr(d: Date): string {
 }
 
 function startOfWeek(offsetWeeks: number): Date {
-  const now = new Date();
-  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const [y, m, day] = todayInBusinessTimezone().split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1, day));
   d.setUTCDate(d.getUTCDate() - d.getUTCDay() + offsetWeeks * 7);
   return d;
 }
 
 function timeOf(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  return formatTime(iso, { hour: "2-digit", minute: "2-digit" });
 }
 
 function hoursOf(clockIn: string | null, clockOut: string | null, breakMinutes: number): string {
@@ -73,18 +74,18 @@ export default async function EmployeeAttendancePage({
 
   if (!employee) notFound();
 
-  const day = date ?? toDateStr(new Date());
+  const day = date ?? todayInBusinessTimezone();
   const weekOffset = Number(week ?? 0) || 0;
   const weekStart = startOfWeek(weekOffset);
   const weekEnd = new Date(weekStart);
   weekEnd.setUTCDate(weekStart.getUTCDate() + 6);
 
-  const selectedDayLabel = new Date(day + "T00:00:00").toLocaleDateString(undefined, {
+  const selectedDayLabel = formatDate(new Date(day + "T00:00:00"), {
     weekday: "long",
     month: "short",
     day: "numeric",
   });
-  const selectedWeekLabel = `${weekStart.toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${weekEnd.toLocaleDateString(undefined, { month: "short", day: "numeric" })}, ${weekEnd.getFullYear()}`;
+  const selectedWeekLabel = `${formatDate(weekStart, { month: "short", day: "numeric" })} – ${formatDate(weekEnd, { month: "short", day: "numeric" })}, ${weekEnd.getFullYear()}`;
 
   const baseQuery = supabase
     .from("attendance")

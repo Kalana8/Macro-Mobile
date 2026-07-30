@@ -196,7 +196,9 @@ export interface DashboardPermissions {
 export interface AppPermissions {
   home: { view: boolean };
   attendance: { clockInOut: boolean; viewHistory: boolean };
-  checklists: { view: boolean; submit: boolean };
+  // imagesOnly is a restricted view (e.g. the Client role) — the checklist
+  // detail page shows just submitted photos, no subtasks/notes/status.
+  checklists: { view: boolean; submit: boolean; imagesOnly: boolean };
   audits: { view: boolean };
   communication: { view: boolean; send: boolean };
   profile: { view: boolean; changePassword: boolean };

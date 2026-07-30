@@ -34,7 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="mx-auto flex h-screen max-w-lg flex-col bg-page-bg">
       <div className="flex-1 overflow-y-auto pb-2">{children}</div>
-      <BottomNav />
+      <BottomNav permissions={session.role?.permissions ?? null} />
     </div>
   );
 }

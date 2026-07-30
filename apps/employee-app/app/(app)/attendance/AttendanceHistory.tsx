@@ -1,3 +1,4 @@
+import { formatTime } from "@macro/shared/datetime";
 import { Badge, Card, EmptyState } from "@/components/ui";
 
 interface HistoryRecord {
@@ -17,7 +18,7 @@ function siteName(sites: HistoryRecord["sites"]): string {
 
 function timeOf(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  return formatTime(iso, { hour: "2-digit", minute: "2-digit" });
 }
 
 function hoursWorked(record: HistoryRecord): string {

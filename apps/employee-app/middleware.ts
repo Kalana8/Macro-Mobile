@@ -1,9 +1,35 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@macro/shared/supabase/middleware";
+import { canViewAppArea } from "@macro/shared/rbac";
+import type { RolePermissions } from "@macro/shared/types";
 import { LOGIN_AT_COOKIE, SESSION_MAX_AGE_MS } from "@/lib/constants";
 
 const PUBLIC_PATHS = ["/login"];
 const CHANGE_PASSWORD_PATH = "/profile/change-password";
+
+// Each app-side permission area maps to the route prefix(es) it gates —
+// /sites/[id] hangs off Home (reached by tapping a site card there), so it
+// shares Home's permission rather than needing its own.
+const AREA_ROUTES: [keyof RolePermissions["app"], string[]][] = [
+  ["home", ["/home", "/sites"]],
+  ["attendance", ["/attendance"]],
+  ["checklists", ["/checklists"]],
+  ["audits", ["/audits"]],
+  ["communication", ["/communication"]],
+  ["profile", ["/profile"]],
+];
+
+function areaForPath(pathname: string): keyof RolePermissions["app"] | null {
+  for (const [area, prefixes] of AREA_ROUTES) {
+    if (prefixes.some((p) => pathname.startsWith(p))) return area;
+  }
+  return null;
+}
+
+function firstAvailableRoute(permissions: RolePermissions): string {
+  const match = AREA_ROUTES.find(([area]) => canViewAppArea(permissions, area));
+  return match?.[1][0] ?? "/home";
+}
 
 export async function middleware(request: NextRequest) {
   const { response, user, supabase } = await updateSession(request);
@@ -29,18 +55,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isPublic) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/home";
-    return NextResponse.redirect(url);
+  if (!user) {
+    return response;
   }
 
-  if (user && !isPublic) {
-    // Supabase's own session otherwise stays alive indefinitely via silent
-    // refresh — force a sign-out ~2 hours after login regardless of
-    // activity. LOGIN_AT_COOKIE is stamped in app/login/actions.ts; a
-    // session predating this feature (no cookie yet) just gets stamped
-    // "now" rather than being kicked out immediately.
+  // Supabase's own session otherwise stays alive indefinitely via silent
+  // refresh — force a sign-out ~2 hours after login regardless of
+  // activity. LOGIN_AT_COOKIE is stamped in app/login/actions.ts; a
+  // session predating this feature (no cookie yet) just gets stamped
+  // "now" rather than being kicked out immediately.
+  if (!isPublic) {
     const loginAtRaw = request.cookies.get(LOGIN_AT_COOKIE)?.value;
     const loginAt = loginAtRaw ? Number(loginAtRaw) : null;
 
@@ -59,28 +83,48 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (user && !isPublic && !pathname.startsWith(CHANGE_PASSWORD_PATH)) {
+  const { data: employee } = await supabase
+    .from("employees")
+    .select("must_change_password, access_role_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const { data: role } = employee
+    ? await supabase.from("roles").select("permissions").eq("id", employee.access_role_id).maybeSingle()
+    : { data: null };
+  const permissions = role?.permissions as RolePermissions | undefined;
+
+  if (isPublic) {
+    // Logged in and hitting /login — send them to change-password if that's
+    // still pending, otherwise whichever app area their role actually
+    // grants (not a hardcoded /home a restricted role might not see).
+    const url = request.nextUrl.clone();
+    url.pathname = employee?.must_change_password
+      ? CHANGE_PASSWORD_PATH
+      : permissions
+        ? firstAvailableRoute(permissions)
+        : "/home";
+    return NextResponse.redirect(url);
+  }
+
+  if (!pathname.startsWith(CHANGE_PASSWORD_PATH)) {
     // Force a password change on first login — the admin sets the initial
     // password when provisioning the account (Employees page), and the
     // employee must set their own before reaching Home/Attendance/etc.
-    const { data: employee } = await supabase
-      .from("employees")
-      .select("must_change_password")
-      .eq("id", user.id)
-      .maybeSingle();
-
     if (employee?.must_change_password) {
       const url = request.nextUrl.clone();
       url.pathname = CHANGE_PASSWORD_PATH;
       url.searchParams.set("first", "1");
       return NextResponse.redirect(url);
     }
-  }
 
-  // Role-level page gating (which /( app ) routes this employee's role can
-  // open) is enforced in app/(app)/layout.tsx once the employee's row +
-  // role permissions are loaded — middleware only handles the auth gate
-  // here to avoid an extra DB round trip on every request.
+    const area = areaForPath(pathname);
+    if (area && permissions && !canViewAppArea(permissions, area)) {
+      const url = request.nextUrl.clone();
+      url.pathname = firstAvailableRoute(permissions);
+      return NextResponse.redirect(url);
+    }
+  }
 
   return response;
 }

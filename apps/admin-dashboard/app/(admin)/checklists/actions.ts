@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@macro/shared/supabase/server";
 import { uploadImageToImageKit } from "@macro/shared/imagekit";
+import { todayInBusinessTimezone } from "@macro/shared/datetime";
 import type { ChecklistArea } from "@macro/shared/types";
 
 export interface ChecklistFormState {
@@ -125,7 +126,7 @@ export async function createAssignmentAction(
     .maybeSingle();
 
   if (template) {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayInBusinessTimezone();
     const { data: existing } = await supabase
       .from("checklists")
       .select("employee_id")

@@ -4,6 +4,7 @@ import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
 import { FieldLabel, PrimaryButton, Select, TextInput } from "@/components/ui";
+import { PasswordInput } from "@/components/PasswordInput";
 import { createEmployeeAction, type EmployeeFormState } from "./actions";
 
 interface RoleOption {
@@ -51,11 +52,11 @@ export function AddEmployeeModal({ roles, onClose }: { roles: RoleOption[]; onCl
         <div className="grid grid-cols-2 gap-3">
           <div>
             <FieldLabel>Password</FieldLabel>
-            <TextInput type="password" name="password" required minLength={8} autoComplete="new-password" />
+            <PasswordInput name="password" required minLength={8} autoComplete="new-password" />
           </div>
           <div>
             <FieldLabel>Confirm Password</FieldLabel>
-            <TextInput type="password" name="confirmPassword" required minLength={8} autoComplete="new-password" />
+            <PasswordInput name="confirmPassword" required minLength={8} autoComplete="new-password" />
           </div>
         </div>
 

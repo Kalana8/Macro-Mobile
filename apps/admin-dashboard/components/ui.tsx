@@ -6,9 +6,9 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
   return (
-    <div className="mb-6 flex items-center justify-between">
+    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <div className="text-2xl font-extrabold text-text-dark">{title}</div>
+        <div className="text-xl font-extrabold text-text-dark sm:text-2xl">{title}</div>
         {subtitle && <div className="mt-1 text-sm text-text-muted">{subtitle}</div>}
       </div>
       {actions}

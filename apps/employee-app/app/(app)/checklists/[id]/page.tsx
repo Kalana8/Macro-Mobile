@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/server";
+import { hasAppAccess } from "@macro/shared/rbac";
 import { Badge, Card, ScreenHeader } from "@/components/ui";
 import type { ChecklistArea } from "@macro/shared/types";
+import { getCurrentEmployee } from "@/lib/session";
 import { ChecklistSubmitForm } from "./ChecklistSubmitForm";
 
 export default async function ChecklistDetailPage({
@@ -12,17 +14,44 @@ export default async function ChecklistDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: checklist } = await supabase
-    .from("checklists")
-    .select("*, companies(name)")
-    .eq("id", id)
-    .maybeSingle();
+  const [{ data: checklist }, session] = await Promise.all([
+    supabase.from("checklists").select("*, companies(name)").eq("id", id).maybeSingle(),
+    getCurrentEmployee(),
+  ]);
 
   if (!checklist) notFound();
 
   const areas = (checklist.areas as ChecklistArea[]) ?? [];
   const companyName = (checklist.companies as { name?: string } | null)?.name ?? "—";
   const submitted = checklist.status === "submitted";
+  const imagesOnly = hasAppAccess(session?.role?.permissions, "checklists", "imagesOnly");
+
+  if (imagesOnly) {
+    const allImages = [...checklist.images, ...areas.flatMap((a) => a.images)] as string[];
+    return (
+      <div>
+        <ScreenHeader
+          title={areas.map((a) => a.main_area).join(", ") || "Checklist"}
+          subtitle={`${checklist.assigned_date} · ${companyName} · ${checklist.site}`}
+        />
+        <div className="flex flex-col gap-4 p-5">
+          <Card>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Images</div>
+            {allImages.length === 0 ? (
+              <div className="text-sm italic text-text-muted">No images yet.</div>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {allImages.map((url) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={url} src={url} alt="Attachment" className="h-24 w-24 rounded-lg object-cover" />
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

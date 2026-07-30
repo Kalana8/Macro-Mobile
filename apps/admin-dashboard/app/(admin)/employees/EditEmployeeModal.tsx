@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
 import { FieldLabel, PrimaryButton, Select, TextInput } from "@/components/ui";
+import { PasswordInput } from "@/components/PasswordInput";
 import { updateEmployeeAction, type EmployeeFormState } from "./actions";
 import type { EmployeeRow } from "./EmployeesTable";
 
@@ -95,11 +96,11 @@ export function EditEmployeeModal({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <FieldLabel>New Password</FieldLabel>
-                  <TextInput type="password" name="newPassword" minLength={8} autoComplete="new-password" />
+                  <PasswordInput name="newPassword" minLength={8} autoComplete="new-password" />
                 </div>
                 <div>
                   <FieldLabel>Confirm New Password</FieldLabel>
-                  <TextInput type="password" name="confirmNewPassword" minLength={8} autoComplete="new-password" />
+                  <PasswordInput name="confirmNewPassword" minLength={8} autoComplete="new-password" />
                 </div>
               </div>
               <p className="mt-2 text-[11.5px] text-text-muted">

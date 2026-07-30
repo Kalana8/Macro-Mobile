@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/session";
-import { Sidebar } from "@/components/Sidebar";
+import { AdminShell } from "@/components/AdminShell";
 import { logoutAction } from "./actions";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -22,9 +22,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="flex min-h-screen bg-page-bg">
-      <Sidebar permissions={session.role?.permissions ?? null} onLogout={logoutAction} />
-      <main className="flex-1 overflow-y-auto px-10 py-8">{children}</main>
-    </div>
+    <AdminShell permissions={session.role?.permissions ?? null} onLogout={logoutAction}>
+      {children}
+    </AdminShell>
   );
 }

@@ -91,33 +91,53 @@ const NAV_ITEMS = [
 export function Sidebar({
   permissions,
   onLogout,
+  mobileOpen = false,
+  onCloseMobile,
 }: {
   permissions: RolePermissions | null;
   onLogout: () => Promise<void>;
+  /** Mobile-only slide-in state — desktop (md+) ignores this and is always visible. */
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <aside
-      className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-border bg-white py-6 transition-all duration-200 ${
-        collapsed ? "w-[68px] px-2" : "w-60 px-4"
-      }`}
+      className={`fixed inset-y-0 left-0 z-50 flex h-screen w-64 shrink-0 flex-col border-r border-border bg-white py-6 transition-transform duration-200 md:sticky md:top-0 md:translate-x-0 md:transition-[width] ${
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      } ${collapsed ? "md:w-[68px] md:px-2" : "md:w-60 md:px-4"} px-4`}
     >
-      <div className={`mb-7 flex items-center ${collapsed ? "flex-col gap-3" : "justify-between"}`}>
-        {collapsed ? (
-          <Image src="/favicon-icon.png" alt="MACRO" width={28} height={28} className="h-7 w-7" />
-        ) : (
-          <Image src="/uploads/footer.webp" alt="MACRO" width={140} height={52} className="h-[52px] w-auto" />
+      <div className={`mb-7 flex items-center ${collapsed ? "justify-between md:flex-col md:gap-3" : "justify-between"}`}>
+        {collapsed && (
+          <Image src="/favicon-icon.png" alt="MACRO" width={28} height={28} className="hidden h-7 w-7 md:block" />
         )}
+        <Image
+          src="/uploads/footer.webp"
+          alt="MACRO"
+          width={140}
+          height={52}
+          className={`h-[52px] w-auto ${collapsed ? "md:hidden" : ""}`}
+        />
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-text-muted hover:bg-bg"
+          className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-md text-text-muted hover:bg-bg md:flex"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             {collapsed ? <path d="M9 6l6 6-6 6" /> : <path d="M15 6l-6 6 6 6" />}
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={onCloseMobile}
+          aria-label="Close menu"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-text-muted hover:bg-bg md:hidden"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </button>
       </div>
@@ -126,20 +146,21 @@ export function Sidebar({
         <div className="px-2.5 pb-2 text-[11px] font-bold tracking-wide text-text-muted">ADMIN CONSOLE</div>
       )}
 
-      <nav className="flex flex-col gap-0.5">
+      <nav className="flex flex-col gap-0.5 overflow-y-auto">
         {NAV_ITEMS.filter((item) => canViewDashboardArea(permissions, item.area)).map((item) => {
           const active = pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={onCloseMobile}
               title={collapsed ? item.label : undefined}
               className={`flex items-center gap-3 rounded-[11px] px-3 py-2.5 text-sm font-semibold ${
-                collapsed ? "justify-center" : ""
+                collapsed ? "md:justify-center" : ""
               } ${active ? "bg-primary/10 text-primary" : "text-text-dark hover:bg-bg"}`}
             >
               <NavIcon name={item.icon} />
-              {!collapsed && item.label}
+              <span className={collapsed ? "md:hidden" : ""}>{item.label}</span>
             </Link>
           );
         })}
@@ -150,7 +171,7 @@ export function Sidebar({
           type="submit"
           title={collapsed ? "Log Out" : undefined}
           className={`flex w-full items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-left text-[13.5px] font-semibold text-text-muted ${
-            collapsed ? "justify-center" : ""
+            collapsed ? "md:justify-center" : ""
           }`}
         >
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -158,7 +179,7 @@ export function Sidebar({
             <path d="M10 12h10" />
             <path d="M17 8l4 4-4 4" />
           </svg>
-          {!collapsed && "Log Out"}
+          <span className={collapsed ? "md:hidden" : ""}>Log Out</span>
         </button>
       </form>
     </aside>

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@macro/shared/supabase/server";
+import { todayInBusinessTimezone } from "@macro/shared/datetime";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
 
 export default async function AttendancePage() {
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInBusinessTimezone();
 
   const [{ data: companies }, { data: memberships }, { data: employees }, { data: todayRecords }] =
     await Promise.all([

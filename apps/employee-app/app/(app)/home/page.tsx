@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@macro/shared/supabase/server";
+import { currentHourInBusinessTimezone, todayInBusinessTimezone } from "@macro/shared/datetime";
 import { getCurrentEmployee } from "@/lib/session";
 import { EmptyState } from "@/components/ui";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -21,11 +22,11 @@ export default async function HomePage() {
   const session = await getCurrentEmployee();
   const supabase = await createClient();
   const headerName = session?.employee?.full_name ?? "Field Employee";
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInBusinessTimezone();
 
   const [
     { data: sites, error },
-    { data: activeRecord },
+    { data: activeRecords },
     { data: pendingChecklists },
     { data: openComms },
     { data: recentAudits },
@@ -35,14 +36,14 @@ export default async function HomePage() {
       .from("sites")
       .select("id, name, company_id, companies(name, logo)")
       .order("name"),
+    // Not scoped to a single record — an employee can be clocked in at more
+    // than one site simultaneously, and each site's card must independently
+    // reflect its own state.
     supabase
       .from("attendance")
       .select("site_id")
       .eq("date", today)
-      .neq("status", "complete")
-      .order("clock_in_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .neq("status", "complete"),
     supabase
       .from("checklists")
       .select("id, site, assigned_date, areas, companies(name)")
@@ -71,7 +72,7 @@ export default async function HomePage() {
     supabase.from("notification_dismissals").select("item_type, item_id"),
   ]);
 
-  const activeSiteId = activeRecord?.site_id ?? null;
+  const activeSiteIds = new Set((activeRecords ?? []).map((r) => r.site_id));
   const dismissedKeys = new Set((dismissals ?? []).map((d) => `${d.item_type}-${d.item_id}`));
 
   const notifications: NotificationItem[] = [
@@ -111,7 +112,7 @@ export default async function HomePage() {
             {headerName.charAt(0).toUpperCase()}
           </div>
           <div>
-            <div className="text-xs font-medium text-text-muted">{greetingFor(new Date().getHours())} 👋</div>
+            <div className="text-xs font-medium text-text-muted">{greetingFor(currentHourInBusinessTimezone())} 👋</div>
             <div className="text-[17px] font-extrabold leading-tight text-text-dark">{headerName}</div>
           </div>
         </div>
@@ -144,7 +145,7 @@ export default async function HomePage() {
 
         {(sites ?? []).map((site) => {
           const company = companyOf(site.companies);
-          const isActiveHere = activeSiteId === site.id;
+          const isActiveHere = activeSiteIds.has(site.id);
           return (
             <div key={site.id} className="overflow-hidden rounded-2xl border border-border bg-white">
               <Link href={`/sites/${site.id}`}>
@@ -154,9 +155,9 @@ export default async function HomePage() {
                 </div>
                 {company.logo ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={company.logo} alt={company.name} className="h-28 w-full object-cover" />
+                  <img src={company.logo} alt={company.name} className="h-32 w-full object-cover" />
                 ) : (
-                  <div className="flex h-28 w-full items-center justify-center bg-bg text-sm font-semibold text-text-muted">
+                  <div className="flex h-32 w-full items-center justify-center bg-bg text-sm font-semibold text-text-muted">
                     {company.name}
                   </div>
                 )}

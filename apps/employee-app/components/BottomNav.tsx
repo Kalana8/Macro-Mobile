@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { canViewAppArea } from "@macro/shared/rbac";
+import type { RolePermissions } from "@macro/shared/types";
 
 const TABS = [
-  { href: "/home", label: "Home", icon: "home" },
-  { href: "/attendance", label: "Attendance", icon: "clock" },
-  { href: "/checklists", label: "Checklist", icon: "check" },
-  { href: "/audits", label: "Audits", icon: "clipboard" },
-  { href: "/communication", label: "Comms", icon: "chat" },
+  { href: "/home", label: "Home", icon: "home", area: "home" as const },
+  { href: "/attendance", label: "Attendance", icon: "clock", area: "attendance" as const },
+  { href: "/checklists", label: "Checklist", icon: "check", area: "checklists" as const },
+  { href: "/audits", label: "Audits", icon: "clipboard", area: "audits" as const },
+  { href: "/communication", label: "Comms", icon: "chat", area: "communication" as const },
 ] as const;
 
 function Icon({ name, active }: { name: string; active: boolean }) {
@@ -30,12 +32,13 @@ function Icon({ name, active }: { name: string; active: boolean }) {
   }
 }
 
-export function BottomNav() {
+export function BottomNav({ permissions }: { permissions: RolePermissions | null }) {
   const pathname = usePathname();
+  const tabs = TABS.filter((tab) => canViewAppArea(permissions, tab.area));
 
   return (
     <nav className="sticky bottom-0 z-20 flex border-t border-primary/20 bg-primary/15 px-1 pb-[max(env(safe-area-inset-bottom),8px)] pt-1.5">
-      {TABS.map((tab) => {
+      {tabs.map((tab) => {
         const active = pathname.startsWith(tab.href);
         return (
           <Link

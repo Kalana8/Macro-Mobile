@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@macro/shared/supabase/server";
+import { formatDate, formatTime, todayInBusinessTimezone } from "@macro/shared/datetime";
 import { Badge, Card, PageHeader } from "@/components/ui";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function startOfWeek(offsetWeeks: number): Date {
-  const now = new Date();
-  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const [y, m, day] = todayInBusinessTimezone().split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1, day));
   d.setUTCDate(d.getUTCDate() - d.getUTCDay() + offsetWeeks * 7);
   return d;
 }
@@ -17,7 +18,7 @@ function toDateStr(d: Date): string {
 
 function timeOf(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  return formatTime(iso, { hour: "2-digit", minute: "2-digit" });
 }
 
 export default async function DashboardPage({
@@ -29,7 +30,7 @@ export default async function DashboardPage({
   const weekOffset = Number(week ?? 0) || 0;
 
   const supabase = await createClient();
-  const today = toDateStr(new Date());
+  const today = todayInBusinessTimezone();
   const weekStart = startOfWeek(weekOffset);
   const weekDates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart);
@@ -43,7 +44,7 @@ export default async function DashboardPage({
         ? "Last Week"
         : weekOffset === 1
           ? "Next Week"
-          : `${weekDates[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${weekDates[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+          : `${formatDate(weekDates[0], { month: "short", day: "numeric" })} – ${formatDate(weekDates[6], { month: "short", day: "numeric" })}`;
 
   const [
     { count: submitAudits },

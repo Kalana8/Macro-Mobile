@@ -15,6 +15,7 @@
     "./storage": "./src/storage/index.ts",
     "./imagekit": "./src/imagekit/index.ts",
     "./geo": "./src/geo/index.ts",
+    "./datetime": "./src/datetime/index.ts",
     "./rbac": "./src/rbac/index.ts",
     "./tokens": "./src/tokens/index.ts"
   },

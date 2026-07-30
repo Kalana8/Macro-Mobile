@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { getCurrentPosition } from "@macro/shared/geo";
+import { formatDate } from "@macro/shared/datetime";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   breakEndAction,
@@ -209,7 +210,7 @@ export function AttendanceClock({
         <div className="flex items-start justify-between">
           <div>
             <div className="text-xs font-medium text-white/70">
-              {new Date(now).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+              {formatDate(new Date(now), { weekday: "long", month: "long", day: "numeric" })}
             </div>
             <div className="mt-1 text-[38px] font-extrabold leading-none tabular-nums">{formatDuration(workingMs)}</div>
             <div className="mt-1.5 text-xs text-white/80">Working hours</div>

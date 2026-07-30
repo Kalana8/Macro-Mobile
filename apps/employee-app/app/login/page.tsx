@@ -5,6 +5,7 @@ import { Suspense, useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { PrimaryButton, TextInput, FieldLabel } from "@/components/ui";
+import { PasswordInput } from "@/components/PasswordInput";
 import { verifyCredentialsAction, type LoginState } from "./actions";
 
 function SubmitButton() {
@@ -48,7 +49,7 @@ function LoginPageInner() {
           </div>
           <div>
             <FieldLabel>Password</FieldLabel>
-            <TextInput type="password" name="password" placeholder="••••••••" required autoComplete="current-password" />
+            <PasswordInput name="password" placeholder="••••••••" required autoComplete="current-password" />
           </div>
           <div className="mb-1.5 mt-0.5 flex items-center justify-between">
             <label className="flex items-center gap-2 text-[13px] text-text-dark">

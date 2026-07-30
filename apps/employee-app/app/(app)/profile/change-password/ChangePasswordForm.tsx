@@ -3,7 +3,8 @@
 import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import { FieldLabel, PrimaryButton, TextInput } from "@/components/ui";
+import { FieldLabel, PrimaryButton } from "@/components/ui";
+import { PasswordInput } from "@/components/PasswordInput";
 import { SuccessOverlay } from "@/components/SuccessOverlay";
 import { logoutAction } from "../../actions";
 import { changePasswordAction, type ChangePasswordState } from "./actions";
@@ -31,15 +32,15 @@ export function ChangePasswordForm({ isFirstLogin = false }: { isFirstLogin?: bo
       <form action={formAction} className="flex flex-col gap-3.5">
         <div>
           <FieldLabel>{isFirstLogin ? "Temporary Password" : "Current Password"}</FieldLabel>
-          <TextInput type="password" name="currentPassword" required autoComplete="current-password" />
+          <PasswordInput name="currentPassword" required autoComplete="current-password" />
         </div>
         <div>
           <FieldLabel>New Password</FieldLabel>
-          <TextInput type="password" name="newPassword" required minLength={8} autoComplete="new-password" />
+          <PasswordInput name="newPassword" required minLength={8} autoComplete="new-password" />
         </div>
         <div>
           <FieldLabel>Confirm New Password</FieldLabel>
-          <TextInput type="password" name="confirmPassword" required minLength={8} autoComplete="new-password" />
+          <PasswordInput name="confirmPassword" required minLength={8} autoComplete="new-password" />
         </div>
 
         {state.error && (

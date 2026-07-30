@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@macro/shared/supabase/server";
+import { todayInBusinessTimezone } from "@macro/shared/datetime";
 import { Badge, Card, ScreenHeader } from "@/components/ui";
 import { AttendanceClock } from "./AttendanceClock";
 import { AttendanceHistory } from "./AttendanceHistory";
@@ -16,7 +17,7 @@ export default async function AttendancePage({
 }) {
   const { siteId: requestedSiteId } = await searchParams;
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInBusinessTimezone();
 
   // No login-time site pinning anymore — the employee picks which site
   // they're at by navigating there from Home, and location is only
@@ -51,15 +52,21 @@ export default async function AttendancePage({
     );
   }
 
+  // Scoped to THIS site specifically — an employee can be clocked in at
+  // more than one site at once, so a global (site-agnostic) lookup here
+  // would show the wrong site's active record when they have several.
   const [{ data: activeRecord }, { data: history }] = await Promise.all([
-    supabase
-      .from("attendance")
-      .select("*")
-      .eq("date", today)
-      .neq("status", "complete")
-      .order("clock_in_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+    siteId
+      ? supabase
+          .from("attendance")
+          .select("*")
+          .eq("site_id", siteId)
+          .eq("date", today)
+          .neq("status", "complete")
+          .order("clock_in_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
     supabase
       .from("attendance")
       .select("id, date, clock_in_at, clock_out_at, total_break_minutes, status, sites(name)")

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
+import { todayInBusinessTimezone } from "@macro/shared/datetime";
 import { FieldLabel, PrimaryButton, TextArea, TextInput } from "@/components/ui";
 import { SuccessOverlay } from "@/components/SuccessOverlay";
 import { ImagePicker } from "@/components/ImagePicker";
@@ -93,7 +94,7 @@ export function CreateAuditForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <FieldLabel>Date</FieldLabel>
-          <TextInput type="date" name="date" required defaultValue={new Date().toISOString().slice(0, 10)} />
+          <TextInput type="date" name="date" required defaultValue={todayInBusinessTimezone()} />
         </div>
         <div>
           <FieldLabel>Priority</FieldLabel>
