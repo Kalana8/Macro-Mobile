@@ -1,11 +1,22 @@
-import Link from "next/link";
 import { getCurrentEmployee } from "@/lib/session";
-import { Card, ScreenHeader } from "@/components/ui";
+import { canViewAppArea } from "@macro/shared/rbac";
+import type { AppPermissions } from "@macro/shared/types";
+import { Badge, Card, ScreenHeader } from "@/components/ui";
 import { LogoutButton } from "@/components/LogoutButton";
+
+const APP_AREA_LABELS: [keyof AppPermissions, string][] = [
+  ["home", "Home"],
+  ["attendance", "Attendance"],
+  ["checklists", "Checklists"],
+  ["audits", "Audits"],
+  ["communication", "Communication"],
+  ["profile", "Profile"],
+];
 
 export default async function ProfilePage() {
   const session = await getCurrentEmployee();
   const employee = session?.employee;
+  const permissions = session?.role?.permissions;
 
   const rows = [
     { label: "Username", value: employee?.username ?? "—" },
@@ -13,6 +24,8 @@ export default async function ProfilePage() {
     { label: "Department", value: employee?.department || "—" },
     { label: "Phone", value: employee?.phone || "—" },
   ];
+
+  const grantedAreas = APP_AREA_LABELS.filter(([area]) => canViewAppArea(permissions, area)).map(([, label]) => label);
 
   return (
     <div>
@@ -37,6 +50,21 @@ export default async function ProfilePage() {
           ))}
         </Card>
 
+        <Card>
+          <div className="text-xs font-semibold uppercase tracking-wide text-text-muted">Access Role</div>
+          <div className="mb-3 text-sm font-semibold text-text-dark">{session?.role?.name ?? "—"}</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-text-muted">Grants Access To</div>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {grantedAreas.length > 0 ? (
+              grantedAreas.map((label) => (
+                <Badge key={label} tone="info">{label}</Badge>
+              ))
+            ) : (
+              <span className="text-sm text-text-muted">No app access granted</span>
+            )}
+          </div>
+        </Card>
+
         <Card className="flex flex-col divide-y divide-border p-0">
           <button
             type="button"
@@ -45,9 +73,7 @@ export default async function ProfilePage() {
           >
             Settings
           </button>
-          <Link href="/profile/change-password" className="px-4 py-3.5 text-sm font-medium text-text-dark">
-            Change Password
-          </Link>
+          {/* TEMPORARILY REMOVED: Change Password link (feature unlinked, not deleted — see middleware.ts) */}
           <LogoutButton variant="menu-item" />
         </Card>
       </div>

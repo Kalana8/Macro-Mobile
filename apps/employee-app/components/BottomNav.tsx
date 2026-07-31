@@ -13,6 +13,11 @@ const TABS = [
   { href: "/communication", label: "Comms", icon: "chat", area: "communication" as const },
 ] as const;
 
+// Not permission-filtered like the tabs above — Profile is where Log Out
+// lives, and every signed-in account needs a way to log out regardless of
+// which feature areas their role grants.
+const PROFILE_TAB = { href: "/profile", label: "Profile", icon: "person" } as const;
+
 function Icon({ name, active }: { name: string; active: boolean }) {
   const color = active ? "#0E62D1" : "#6E7887";
   const common = { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -27,6 +32,8 @@ function Icon({ name, active }: { name: string; active: boolean }) {
       return <svg {...common}><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 3h6v3H9z" /></svg>;
     case "chat":
       return <svg {...common}><path d="M4 5h16v11H8l-4 4V5Z" /></svg>;
+    case "person":
+      return <svg {...common}><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" /></svg>;
     default:
       return null;
   }
@@ -34,7 +41,7 @@ function Icon({ name, active }: { name: string; active: boolean }) {
 
 export function BottomNav({ permissions }: { permissions: RolePermissions | null }) {
   const pathname = usePathname();
-  const tabs = TABS.filter((tab) => canViewAppArea(permissions, tab.area));
+  const tabs = [...TABS.filter((tab) => canViewAppArea(permissions, tab.area)), PROFILE_TAB];
 
   return (
     <nav className="sticky bottom-0 z-20 flex border-t border-primary/20 bg-primary/15 px-1 pb-[max(env(safe-area-inset-bottom),8px)] pt-1.5">

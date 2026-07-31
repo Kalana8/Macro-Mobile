@@ -21,13 +21,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // No bottom nav while a password change is required — middleware.ts
-  // redirects every other route back to /profile/change-password anyway,
-  // so showing nav links here would just be misleading.
-  if (session.employee.must_change_password) {
-    return <div className="mx-auto flex min-h-screen max-w-lg flex-col bg-page-bg">{children}</div>;
-  }
-
   // h-screen (not min-h-screen) so this container never grows taller than
   // the viewport — otherwise the whole page (not just the middle content)
   // scrolls, and the header/bottom nav move with it despite being sticky.

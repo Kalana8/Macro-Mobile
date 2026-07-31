@@ -9,14 +9,15 @@ const CHANGE_PASSWORD_PATH = "/profile/change-password";
 
 // Each app-side permission area maps to the route prefix(es) it gates —
 // /sites/[id] hangs off Home (reached by tapping a site card there), so it
-// shares Home's permission rather than needing its own.
+// shares Home's permission rather than needing its own. Profile is
+// deliberately NOT gated here — it's where Log Out lives, and every
+// signed-in account needs a way to log out regardless of role.
 const AREA_ROUTES: [keyof RolePermissions["app"], string[]][] = [
   ["home", ["/home", "/sites"]],
   ["attendance", ["/attendance"]],
   ["checklists", ["/checklists"]],
   ["audits", ["/audits"]],
   ["communication", ["/communication"]],
-  ["profile", ["/profile"]],
 ];
 
 function areaForPath(pathname: string): keyof RolePermissions["app"] | null {
@@ -28,7 +29,10 @@ function areaForPath(pathname: string): keyof RolePermissions["app"] | null {
 
 function firstAvailableRoute(permissions: RolePermissions): string {
   const match = AREA_ROUTES.find(([area]) => canViewAppArea(permissions, area));
-  return match?.[1][0] ?? "/home";
+  // /profile is always reachable (see AREA_ROUTES above), so it's a safe
+  // landing spot for a role with no feature areas granted at all — falling
+  // back to /home here instead would redirect-loop for such a role.
+  return match?.[1][0] ?? "/profile";
 }
 
 export async function middleware(request: NextRequest) {
@@ -85,7 +89,7 @@ export async function middleware(request: NextRequest) {
 
   const { data: employee } = await supabase
     .from("employees")
-    .select("must_change_password, access_role_id")
+    .select("access_role_id")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -95,28 +99,21 @@ export async function middleware(request: NextRequest) {
   const permissions = role?.permissions as RolePermissions | undefined;
 
   if (isPublic) {
-    // Logged in and hitting /login — send them to change-password if that's
-    // still pending, otherwise whichever app area their role actually
-    // grants (not a hardcoded /home a restricted role might not see).
+    // Logged in and hitting /login — send them to whichever app area their
+    // role actually grants (not a hardcoded /home a restricted role might
+    // not see).
+    // TEMPORARILY REMOVED: forced-change-password-on-first-login redirect.
+    // Was: employee?.must_change_password ? CHANGE_PASSWORD_PATH : ...
     const url = request.nextUrl.clone();
-    url.pathname = employee?.must_change_password
-      ? CHANGE_PASSWORD_PATH
-      : permissions
-        ? firstAvailableRoute(permissions)
-        : "/home";
+    url.pathname = permissions ? firstAvailableRoute(permissions) : "/home";
     return NextResponse.redirect(url);
   }
 
   if (!pathname.startsWith(CHANGE_PASSWORD_PATH)) {
-    // Force a password change on first login — the admin sets the initial
-    // password when provisioning the account (Employees page), and the
-    // employee must set their own before reaching Home/Attendance/etc.
-    if (employee?.must_change_password) {
-      const url = request.nextUrl.clone();
-      url.pathname = CHANGE_PASSWORD_PATH;
-      url.searchParams.set("first", "1");
-      return NextResponse.redirect(url);
-    }
+    // TEMPORARILY REMOVED: forced password change on first login. Used to
+    // redirect here whenever employee.must_change_password was true — the
+    // Change Password page/link are still in the codebase (just unlinked
+    // from Profile), so this whole block is easy to restore later.
 
     const area = areaForPath(pathname);
     if (area && permissions && !canViewAppArea(permissions, area)) {
