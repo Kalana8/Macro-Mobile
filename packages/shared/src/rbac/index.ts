@@ -105,3 +105,33 @@ export function hasAnyDashboardAccess(permissions: RolePermissions | null | unde
     canViewDashboardArea(permissions, area)
   );
 }
+
+/**
+ * True if this role has ANY app-side permission enabled, anywhere — the
+ * gate for "can this account open the employee app at all", not just "can
+ * it see Home specifically". A role like Client can have Communication/
+ * Checklists/Profile access with Home turned off.
+ */
+export function hasAnyAppAccess(permissions: RolePermissions | null | undefined): boolean {
+  if (!permissions) return false;
+  return (Object.keys(permissions.app) as AppArea[]).some((area) => canViewAppArea(permissions, area));
+}
+
+// Priority order for picking a landing route — first area the role
+// actually grants wins. Profile isn't listed: it's always reachable
+// regardless of role (see employee-app/middleware.ts), so it's the safe
+// fallback here rather than a "first choice" landing page.
+const APP_AREA_ROUTES: [AppArea, string][] = [
+  ["home", "/home"],
+  ["attendance", "/attendance"],
+  ["checklists", "/checklists"],
+  ["audits", "/audits"],
+  ["communication", "/communication"],
+];
+
+/** Which employee-app route to land a role on — after login, or when they hit an area they don't have access to. */
+export function firstAvailableAppRoute(permissions: RolePermissions | null | undefined): string {
+  if (!permissions) return "/profile";
+  const match = APP_AREA_ROUTES.find(([area]) => canViewAppArea(permissions, area));
+  return match?.[1] ?? "/profile";
+}

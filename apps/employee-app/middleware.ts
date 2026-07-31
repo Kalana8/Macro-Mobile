@@ -1,17 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@macro/shared/supabase/middleware";
-import { canViewAppArea } from "@macro/shared/rbac";
+import { canViewAppArea, firstAvailableAppRoute } from "@macro/shared/rbac";
 import type { RolePermissions } from "@macro/shared/types";
 import { LOGIN_AT_COOKIE, SESSION_MAX_AGE_MS } from "@/lib/constants";
 
 const PUBLIC_PATHS = ["/login"];
 const CHANGE_PASSWORD_PATH = "/profile/change-password";
 
-// Each app-side permission area maps to the route prefix(es) it gates —
-// /sites/[id] hangs off Home (reached by tapping a site card there), so it
-// shares Home's permission rather than needing its own. Profile is
-// deliberately NOT gated here — it's where Log Out lives, and every
-// signed-in account needs a way to log out regardless of role.
+// Route prefix(es) each app-side permission area gates, for matching an
+// incoming pathname back to its area — /sites/[id] hangs off Home (reached
+// by tapping a site card there), so it shares Home's permission rather than
+// needing its own. Profile is deliberately NOT listed — it's where Log Out
+// lives, and every signed-in account needs a way to log out regardless of
+// role (see firstAvailableAppRoute in @macro/shared/rbac, which is what
+// actually picks a landing route and treats /profile as the safe fallback).
 const AREA_ROUTES: [keyof RolePermissions["app"], string[]][] = [
   ["home", ["/home", "/sites"]],
   ["attendance", ["/attendance"]],
@@ -25,14 +27,6 @@ function areaForPath(pathname: string): keyof RolePermissions["app"] | null {
     if (prefixes.some((p) => pathname.startsWith(p))) return area;
   }
   return null;
-}
-
-function firstAvailableRoute(permissions: RolePermissions): string {
-  const match = AREA_ROUTES.find(([area]) => canViewAppArea(permissions, area));
-  // /profile is always reachable (see AREA_ROUTES above), so it's a safe
-  // landing spot for a role with no feature areas granted at all — falling
-  // back to /home here instead would redirect-loop for such a role.
-  return match?.[1][0] ?? "/profile";
 }
 
 export async function middleware(request: NextRequest) {
@@ -105,7 +99,7 @@ export async function middleware(request: NextRequest) {
     // TEMPORARILY REMOVED: forced-change-password-on-first-login redirect.
     // Was: employee?.must_change_password ? CHANGE_PASSWORD_PATH : ...
     const url = request.nextUrl.clone();
-    url.pathname = permissions ? firstAvailableRoute(permissions) : "/home";
+    url.pathname = permissions ? firstAvailableAppRoute(permissions) : "/home";
     return NextResponse.redirect(url);
   }
 
@@ -118,7 +112,7 @@ export async function middleware(request: NextRequest) {
     const area = areaForPath(pathname);
     if (area && permissions && !canViewAppArea(permissions, area)) {
       const url = request.nextUrl.clone();
-      url.pathname = firstAvailableRoute(permissions);
+      url.pathname = firstAvailableAppRoute(permissions);
       return NextResponse.redirect(url);
     }
   }

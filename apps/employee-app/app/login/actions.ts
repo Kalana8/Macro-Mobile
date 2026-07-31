@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/server";
+import { firstAvailableAppRoute, hasAnyAppAccess } from "@macro/shared/rbac";
 import type { RolePermissions } from "@macro/shared/types";
 import { LOGIN_AT_COOKIE } from "@/lib/constants";
 
@@ -57,11 +58,11 @@ export async function verifyCredentialsAction(_prevState: LoginState, formData: 
     .maybeSingle();
   const permissions = (role?.permissions as RolePermissions | undefined) ?? null;
 
-  if (!permissions?.app?.home?.view) {
+  if (!hasAnyAppAccess(permissions)) {
     await supabase.auth.signOut();
     return { error: "This account doesn't have mobile app access. Use the Admin Dashboard instead." };
   }
 
   await markLoggedIn();
-  redirect("/home");
+  redirect(firstAvailableAppRoute(permissions));
 }
