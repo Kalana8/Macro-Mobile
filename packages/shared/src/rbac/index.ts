@@ -19,7 +19,7 @@ export const EMPTY_PERMISSIONS: RolePermissions = {
   app: {
     home: { view: false },
     attendance: { clockInOut: false, viewHistory: false },
-    checklists: { view: false, submit: false, imagesOnly: false },
+    checklists: { view: false, submit: false, imagesOnly: false, reviewAll: false },
     audits: { view: false },
     communication: { view: false, send: false },
     profile: { view: false, changePassword: false },
@@ -40,7 +40,7 @@ export const FULL_PERMISSIONS: RolePermissions = {
   app: {
     home: { view: true },
     attendance: { clockInOut: true, viewHistory: true },
-    checklists: { view: true, submit: true, imagesOnly: false },
+    checklists: { view: true, submit: true, imagesOnly: false, reviewAll: false },
     audits: { view: true },
     communication: { view: true, send: true },
     profile: { view: true, changePassword: true },

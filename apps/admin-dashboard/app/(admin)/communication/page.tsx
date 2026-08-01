@@ -3,6 +3,10 @@ import { PageHeader } from "@/components/ui";
 import { getCurrentAdmin } from "@/lib/session";
 import { CommunicationTable } from "./CommunicationTable";
 
+// Per-user private data — never let this be served from any cache
+// (client router cache included) across an account switch in one browser.
+export const dynamic = "force-dynamic";
+
 export default async function CommunicationPage() {
   const supabase = await createClient();
   const admin = await getCurrentAdmin();
@@ -57,7 +61,7 @@ export default async function CommunicationPage() {
 
   return (
     <div>
-      <PageHeader title="Communication" subtitle="All company threads — click a row to open the chat" />
+      <PageHeader title="Communication" subtitle="Threads you're part of — click a row to open the chat" />
 
       {error && (
         <div className="mb-4 rounded-lg bg-error/10 px-3 py-2 text-sm text-error">

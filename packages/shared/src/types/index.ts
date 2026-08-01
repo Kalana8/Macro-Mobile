@@ -198,7 +198,9 @@ export interface AppPermissions {
   attendance: { clockInOut: boolean; viewHistory: boolean };
   // imagesOnly is a restricted view (e.g. the Client role) — the checklist
   // detail page shows just submitted photos, no subtasks/notes/status.
-  checklists: { view: boolean; submit: boolean; imagesOnly: boolean };
+  // reviewAll (e.g. Supervisor) is the opposite direction — full detail,
+  // but for every submission across their company, not just their own.
+  checklists: { view: boolean; submit: boolean; imagesOnly: boolean; reviewAll: boolean };
   audits: { view: boolean };
   communication: { view: boolean; send: boolean };
   profile: { view: boolean; changePassword: boolean };

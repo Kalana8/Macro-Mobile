@@ -45,6 +45,11 @@ export async function createCommunicationAction(
   if (!title) return { error: "Title is required." };
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session expired. Log in again." };
+
   const { data, error } = await supabase
     .from("communications")
     .insert({ company_id: companyId, site_id: siteId, title, priority, status: "open" })
@@ -53,9 +58,13 @@ export async function createCommunicationAction(
 
   if (error) return { error: error.message };
 
+  // Admin is included as a recipient too — visibility is now scoped to
+  // actual participants only (no more blanket oversight), so without this
+  // the admin would lose access to a thread right after starting it.
+  const allRecipientIds = Array.from(new Set([user.id, ...employeeIds]));
   const { error: recipientsError } = await supabase
     .from("communication_recipients")
-    .insert(employeeIds.map((employee_id) => ({ communication_id: data.id, employee_id })));
+    .insert(allRecipientIds.map((employee_id) => ({ communication_id: data.id, employee_id })));
 
   if (recipientsError) return { error: recipientsError.message };
 

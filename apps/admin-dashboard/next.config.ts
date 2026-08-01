@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+    // Without this, the client Router Cache can serve a page's previously
+    // fetched RSC payload on in-app <Link> navigation even though the page
+    // is force-dynamic — force-dynamic only controls server-side caching,
+    // not this separate client-side layer. Setting this to 0 makes every
+    // in-app navigation always re-fetch live, correctly-scoped data —
+    // important for per-user private pages like Communication/Attendance.
+    staleTimes: {
+      dynamic: 0,
+    },
   },
 };
 

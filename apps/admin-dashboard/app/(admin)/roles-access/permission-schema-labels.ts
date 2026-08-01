@@ -81,6 +81,7 @@ export const APP_SCHEMA = [
       { key: "view", label: "View assigned" },
       { key: "submit", label: "Submit" },
       { key: "imagesOnly", label: "View images only (no subtasks/notes)" },
+      { key: "reviewAll", label: "View all company submissions (supervisor)" },
     ],
   },
   { key: "audits", label: "Audits", functions: [{ key: "view", label: "View assigned" }] },

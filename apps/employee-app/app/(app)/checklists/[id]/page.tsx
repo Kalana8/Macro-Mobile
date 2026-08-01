@@ -15,7 +15,7 @@ export default async function ChecklistDetailPage({
   const supabase = await createClient();
 
   const [{ data: checklist }, session] = await Promise.all([
-    supabase.from("checklists").select("*, companies(name)").eq("id", id).maybeSingle(),
+    supabase.from("checklists").select("*, companies(name), employees(full_name)").eq("id", id).maybeSingle(),
     getCurrentEmployee(),
   ]);
 
@@ -23,8 +23,14 @@ export default async function ChecklistDetailPage({
 
   const areas = (checklist.areas as ChecklistArea[]) ?? [];
   const companyName = (checklist.companies as { name?: string } | null)?.name ?? "—";
+  const employeeName = (checklist.employees as { full_name?: string } | null)?.full_name;
   const submitted = checklist.status === "submitted";
+  const isOwner = checklist.employee_id === session?.employee?.id;
   const imagesOnly = hasAppAccess(session?.role?.permissions, "checklists", "imagesOnly");
+
+  const subtitle = [checklist.assigned_date, companyName, checklist.site, !isOwner ? employeeName : null]
+    .filter(Boolean)
+    .join(" · ");
 
   if (imagesOnly) {
     const allImages = [...checklist.images, ...areas.flatMap((a) => a.images)] as string[];
@@ -32,7 +38,7 @@ export default async function ChecklistDetailPage({
       <div>
         <ScreenHeader
           title={areas.map((a) => a.main_area).join(", ") || "Checklist"}
-          subtitle={`${checklist.assigned_date} · ${companyName} · ${checklist.site}`}
+          subtitle={subtitle}
         />
         <div className="flex flex-col gap-4 p-5">
           <Card>
@@ -57,7 +63,7 @@ export default async function ChecklistDetailPage({
     <div>
       <ScreenHeader
         title={areas.map((a) => a.main_area).join(", ") || "Checklist"}
-        subtitle={`${checklist.assigned_date} · ${companyName} · ${checklist.site}`}
+        subtitle={subtitle}
       />
       <div className="flex flex-col gap-4 p-5">
         <div>
@@ -115,8 +121,14 @@ export default async function ChecklistDetailPage({
               </Card>
             )}
           </>
-        ) : (
+        ) : isOwner ? (
           <ChecklistSubmitForm checklistId={checklist.id} initialAreas={areas} initialNotes={checklist.notes ?? ""} />
+        ) : (
+          <Card>
+            <div className="text-sm italic text-text-muted">
+              Not yet submitted{employeeName ? ` by ${employeeName}` : ""}.
+            </div>
+          </Card>
         )}
       </div>
     </div>

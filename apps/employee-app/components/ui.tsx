@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
@@ -76,6 +77,22 @@ export function Badge({ tone = "neutral", children }: { tone?: BadgeTone; childr
   );
 }
 
+export function CheckboxSquare({ checked }: { checked: boolean }) {
+  return (
+    <span
+      className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border-2 ${
+        checked ? "border-primary bg-primary" : "border-border"
+      }`}
+    >
+      {checked && (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12.5l4.5 4.5L19 7" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
 export function EmptyState({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-border bg-white/60 p-8 text-center">
@@ -89,16 +106,31 @@ export function ScreenHeader({
   title,
   subtitle,
   actions,
+  backHref,
 }: {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
+  backHref?: string;
 }) {
   return (
-    <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-white px-5 py-4">
-      <div>
-        <div className="text-[19px] font-extrabold text-text-dark">{title}</div>
-        {subtitle && <div className="mt-0.5 text-xs text-text-muted">{subtitle}</div>}
+    <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-white px-5 py-4">
+      <div className="flex items-center gap-3">
+        {backHref && (
+          <Link
+            href={backHref}
+            aria-label="Back"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-dark"
+          >
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </Link>
+        )}
+        <div>
+          <div className="text-[19px] font-extrabold text-text-dark">{title}</div>
+          {subtitle && <div className="mt-0.5 text-xs text-text-muted">{subtitle}</div>}
+        </div>
       </div>
       {actions}
     </div>

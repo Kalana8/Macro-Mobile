@@ -24,10 +24,12 @@ export async function uploadCommunicationImageAction(formData: FormData): Promis
 }
 
 /**
- * An employee starting their own thread ("Report an issue") — the
- * counterpart to the admin's createCommunicationAction. Metadata lands in
- * Postgres; the client mirrors it into Firestore right after (see
- * ChatThread.tsx) and sends the first message there.
+ * An employee starting their own thread — the counterpart to the admin's
+ * createCommunicationAction. They can pick other people at their company to
+ * send it to (communication_recipients_company_insert RLS), always
+ * including themselves. Metadata lands in Postgres; the client mirrors it
+ * into Firestore right after (see ChatThread.tsx) and sends the first
+ * message there.
  */
 export async function createCommunicationAction(
   _prev: CommunicationFormState,
@@ -37,6 +39,7 @@ export async function createCommunicationAction(
   const siteId = String(formData.get("siteId") ?? "") || null;
   const title = String(formData.get("title") ?? "").trim();
   const priority = String(formData.get("priority") ?? "medium");
+  const recipientIds = formData.getAll("recipientIds").map(String);
 
   if (!companyId) return { error: "Choose which company this is about." };
   if (!title) return { error: "Title is required." };
@@ -55,11 +58,10 @@ export async function createCommunicationAction(
 
   if (error) return { error: error.message };
 
-  // An employee reporting their own issue is always its (initial) recipient
-  // — RLS only lets them add themselves, not anyone else.
+  const allRecipientIds = Array.from(new Set([user.id, ...recipientIds]));
   const { error: recipientError } = await supabase
     .from("communication_recipients")
-    .insert({ communication_id: data.id, employee_id: user.id });
+    .insert(allRecipientIds.map((employee_id) => ({ communication_id: data.id, employee_id })));
 
   if (recipientError) return { error: recipientError.message };
 
@@ -77,4 +79,17 @@ export async function touchCommunicationAction(id: string, preview: string): Pro
     .eq("id", id);
 
   revalidatePath("/communication");
+}
+
+/** Any recipient can close/reopen a thread once it's done — RLS (communications_recipient_update) scopes this to threads they're actually part of. */
+export async function toggleThreadStatusAction(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  const nextStatus = String(formData.get("nextStatus") ?? "");
+  if (!id || !nextStatus) return;
+
+  const supabase = await createClient();
+  await supabase.from("communications").update({ status: nextStatus }).eq("id", id);
+
+  revalidatePath("/communication");
+  revalidatePath(`/communication/${id}`);
 }

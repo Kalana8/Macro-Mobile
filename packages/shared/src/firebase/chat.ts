@@ -9,9 +9,10 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  type FirestoreError,
   type Unsubscribe,
 } from "firebase/firestore";
-import { signInWithCustomToken } from "firebase/auth";
+import { signInWithCustomToken, signOut as firebaseSignOut } from "firebase/auth";
 import { createClient } from "../supabase/client";
 import { getChatDb, getFirebaseAuthClient } from "./client";
 
@@ -32,16 +33,31 @@ let signInPromise: Promise<boolean> | null = null;
  * mint-firebase-token) — so there's no second login screen. Memoized per
  * page load: safe to call before every chat action. Returns false if
  * Firebase isn't configured yet (see firebase/client.ts) or minting fails.
+ *
+ * Always confirms the cached Firebase identity (auth.currentUser) actually
+ * matches the current Supabase user before trusting it — logging out of
+ * Supabase doesn't automatically sign Firebase out, so without this check,
+ * switching accounts in the same browser (e.g. testing multiple employees)
+ * could leave the chat SDK authenticated as the *previous* user, either
+ * denying access it should have or — before Firestore rules were tightened
+ * to check per-conversation membership — showing another account's chats.
  */
 export function ensureFirebaseSession(): Promise<boolean> {
   const auth = getFirebaseAuthClient();
   if (!auth) return Promise.resolve(false);
-  if (auth.currentUser) return Promise.resolve(true);
 
   if (!signInPromise) {
     signInPromise = (async () => {
       try {
         const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return false;
+
+        if (auth.currentUser?.uid === user.id) return true;
+        if (auth.currentUser) await firebaseSignOut(auth);
+
         const { data, error } = await supabase.functions.invoke<{ token: string }>("mint-firebase-token");
         if (error || !data?.token) return false;
         await signInWithCustomToken(auth, data.token);
@@ -77,10 +93,17 @@ export async function createConversation(
   });
 }
 
-/** Subscribes to conversations/{conversationId}/messages, newest last. Returns an unsubscribe fn. */
+/**
+ * Subscribes to conversations/{conversationId}/messages, newest last.
+ * Returns an unsubscribe fn. `onError` is required, not optional — without
+ * an error callback, onSnapshot has nothing to hand a permission-denied
+ * error to (e.g. someone who isn't actually a participant) and it surfaces
+ * as an uncaught console error instead of a handleable one.
+ */
 export function subscribeToMessages(
   conversationId: string,
-  onMessages: (messages: ChatMessage[]) => void
+  onMessages: (messages: ChatMessage[]) => void,
+  onError: (error: FirestoreError) => void
 ): Unsubscribe | null {
   const db = getChatDb();
   if (!db) return null;
@@ -88,11 +111,15 @@ export function subscribeToMessages(
   const messagesRef = collection(db, "conversations", conversationId, "messages");
   const q = query(messagesRef, orderBy("createdAt", "asc"));
 
-  return onSnapshot(q, (snapshot) => {
-    onMessages(
-      snapshot.docs.map((d) => ({ id: d.id, images: [], ...d.data() }) as unknown as ChatMessage)
-    );
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      onMessages(
+        snapshot.docs.map((d) => ({ id: d.id, images: [], ...d.data() }) as unknown as ChatMessage)
+      );
+    },
+    onError
+  );
 }
 
 export async function sendMessage(

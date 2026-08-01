@@ -154,3 +154,54 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string |
   const result: { display_name?: string } = await res.json();
   return result.display_name ?? null;
 }
+
+interface NominatimAddress {
+  suburb?: string;
+  neighbourhood?: string;
+  village?: string;
+  town?: string;
+  city_district?: string;
+  city?: string;
+  county?: string;
+  state?: string;
+}
+
+// Preferred order for picking a short, recognizable place name (e.g.
+// "Kadawatha") out of Nominatim's address breakdown — nearest/most specific
+// locality-ish field first, falling back to broader areas.
+const NOMINATIM_SHORT_NAME_FIELDS: (keyof NominatimAddress)[] = [
+  "suburb",
+  "neighbourhood",
+  "village",
+  "town",
+  "city_district",
+  "city",
+  "county",
+  "state",
+];
+
+/**
+ * Resolves the device's GPS coordinates to a short, recognizable place name
+ * (e.g. "Kadawatha") via OpenStreetMap Nominatim — free, no API key. Used to
+ * record a human-readable clock in/out location alongside the raw lat/lng,
+ * so the admin dashboard doesn't need a live lookup per row. Never throws —
+ * returns null if the request fails or nothing matches, so callers can
+ * record it best-effort without blocking clock in/out on this.
+ */
+export async function reverseGeocodeShortName(lat: number, lng: number): Promise<string | null> {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&zoom=14`;
+    const res = await fetch(url, {
+      headers: { Accept: "application/json", "User-Agent": "MacroAuditApp (attendance geocoding)" },
+    });
+    if (!res.ok) return null;
+    const result: { display_name?: string; address?: NominatimAddress } = await res.json();
+    const address = result.address;
+    for (const field of NOMINATIM_SHORT_NAME_FIELDS) {
+      if (address?.[field]) return address[field]!;
+    }
+    return result.display_name ?? null;
+  } catch {
+    return null;
+  }
+}

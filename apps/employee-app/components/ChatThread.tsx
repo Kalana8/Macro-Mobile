@@ -6,9 +6,33 @@ import { PrimaryButton, TextArea } from "@/components/ui";
 import { touchCommunicationAction, uploadCommunicationImageAction } from "@/app/(app)/communication/actions";
 
 // ImageKit URLs are public CDN URLs — no signed-URL resolution needed, just render them.
-function ChatImage({ url }: { url: string }) {
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={url} alt="Attachment" className="h-24 w-24 rounded-lg object-cover" />;
+function ChatImage({ url, onOpen }: { url: string; onOpen: (url: string) => void }) {
+  return (
+    <button type="button" onClick={() => onOpen(url)} className="block">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={url} alt="Attachment" className="h-24 w-24 rounded-lg object-cover" />
+    </button>
+  );
+}
+
+function ImageLightbox({ url, onClose }: { url: string; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(22,32,46,0.85)] p-6"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-lg text-white"
+      >
+        ✕
+      </button>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={url} alt="Attachment" className="max-h-full max-w-full rounded-lg object-contain" />
+    </div>
+  );
 }
 
 async function uploadFile(file: File): Promise<string> {
@@ -33,6 +57,7 @@ export function ChatThread({
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,7 +67,16 @@ export function ChatThread({
         setFirebaseError("Chat isn't connected yet — ask your admin to finish setting up Firebase.");
         return;
       }
-      unsubscribe = subscribeToMessages(conversationId, setMessages);
+      unsubscribe = subscribeToMessages(conversationId, setMessages, (err) => {
+        // Deliberately no "you don't have access" text — that would still
+        // confirm a conversation exists here. Someone irrelevant should see
+        // nothing distinguishable from an empty/quiet thread, not a denial.
+        if (err.code === "permission-denied") {
+          setMessages([]);
+          return;
+        }
+        setFirebaseError("Couldn't load this conversation — try again.");
+      });
     });
     return () => unsubscribe?.();
   }, [conversationId]);
@@ -91,7 +125,7 @@ export function ChatThread({
                 {m.images?.length > 0 && (
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {m.images.map((url) => (
-                      <ChatImage key={url} url={url} />
+                      <ChatImage key={url} url={url} onOpen={setPreviewUrl} />
                     ))}
                   </div>
                 )}
@@ -119,6 +153,8 @@ export function ChatThread({
           </PrimaryButton>
         </div>
       </div>
+
+      {previewUrl && <ImageLightbox url={previewUrl} onClose={() => setPreviewUrl(null)} />}
     </div>
   );
 }

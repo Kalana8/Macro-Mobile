@@ -39,17 +39,30 @@ function breakOf(minutes: number): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-function LocationLink({ lat, lng }: { lat: number | null; lng: number | null }) {
+function LocationPinIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
+function LocationLink({ lat, lng, address }: { lat: number | null; lng: number | null; address: string | null }) {
   if (lat == null || lng == null) return <span className="text-text-muted">—</span>;
   return (
-    <a
-      href={`https://www.google.com/maps?q=${lat},${lng}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="font-semibold text-primary"
-    >
-      📍 View
-    </a>
+    <div className="flex items-center gap-1.5">
+      <span className="max-w-[140px] truncate text-text-dark">{address ?? "—"}</span>
+      <a
+        href={`https://www.google.com/maps?q=${lat},${lng}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="View on map"
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"
+      >
+        <LocationPinIcon />
+      </a>
+    </div>
   );
 }
 
@@ -90,7 +103,7 @@ export default async function EmployeeAttendancePage({
   const baseQuery = supabase
     .from("attendance")
     .select(
-      "id, date, clock_in_at, clock_out_at, total_break_minutes, geo_verified, clock_in_lat, clock_in_lng, clock_out_lat, clock_out_lng, clock_out_geo_verified, status, companies(name), sites(name)"
+      "id, date, clock_in_at, clock_out_at, total_break_minutes, geo_verified, clock_in_lat, clock_in_lng, clock_in_address, clock_out_lat, clock_out_lng, clock_out_address, clock_out_geo_verified, status, companies(name), sites(name)"
     )
     .eq("employee_id", employeeId);
 
@@ -192,11 +205,11 @@ export default async function EmployeeAttendancePage({
               {tab === "weekly" && <td className="px-5 py-3.5 text-text-muted">{r.date}</td>}
               <td className="px-5 py-3.5 text-text-muted">{timeOf(r.clock_in_at)}</td>
               <td className="px-5 py-3.5">
-                <LocationLink lat={r.clock_in_lat} lng={r.clock_in_lng} />
+                <LocationLink lat={r.clock_in_lat} lng={r.clock_in_lng} address={r.clock_in_address} />
               </td>
               <td className="px-5 py-3.5 text-text-muted">{timeOf(r.clock_out_at)}</td>
               <td className="px-5 py-3.5">
-                <LocationLink lat={r.clock_out_lat} lng={r.clock_out_lng} />
+                <LocationLink lat={r.clock_out_lat} lng={r.clock_out_lng} address={r.clock_out_address} />
               </td>
               <td className="px-5 py-3.5 text-text-muted">{breakOf(r.total_break_minutes)}</td>
               <td className="px-5 py-3.5 text-text-muted">{hoursOf(r.clock_in_at, r.clock_out_at, r.total_break_minutes)}</td>

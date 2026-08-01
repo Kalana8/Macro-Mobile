@@ -7,7 +7,7 @@ export default async function ChecklistsPage() {
   const supabase = await createClient();
   const { data: checklists, error } = await supabase
     .from("checklists")
-    .select("id, site, assigned_date, status, areas, companies(name)")
+    .select("id, site, assigned_date, status, areas, companies(name), employees(full_name)")
     .order("assigned_date", { ascending: false });
 
   return (
@@ -28,6 +28,7 @@ export default async function ChecklistsPage() {
           const areas = (checklist.areas as ChecklistArea[]) ?? [];
           const title = areas.map((a) => a.main_area).join(", ") || "Checklist";
           const companyName = (checklist.companies as { name?: string } | null)?.name ?? "—";
+          const employeeName = (checklist.employees as { full_name?: string } | null)?.full_name;
           return (
             <Link key={checklist.id} href={`/checklists/${checklist.id}`}>
               <Card>
@@ -35,7 +36,10 @@ export default async function ChecklistsPage() {
                   <div>
                     <div className="text-xs text-text-muted">{checklist.assigned_date} · {companyName}</div>
                     <div className="text-sm font-semibold text-text-dark">{title}</div>
-                    <div className="text-xs text-text-muted">{checklist.site}</div>
+                    <div className="text-xs text-text-muted">
+                      {checklist.site}
+                      {employeeName && ` · ${employeeName}`}
+                    </div>
                   </div>
                   <Badge tone={checklist.status === "submitted" ? "success" : "warning"}>
                     {checklist.status === "submitted" ? "Submitted" : "Pending Review"}

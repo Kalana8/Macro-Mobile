@@ -84,7 +84,8 @@ export function AddCommunicationModal({
 
       const ready = await ensureFirebaseSession();
       if (ready) {
-        await createConversation(result.id, { employeeIds, companyId, siteId: siteId || null });
+        const allRecipientIds = Array.from(new Set([adminId, ...employeeIds]));
+        await createConversation(result.id, { employeeIds: allRecipientIds, companyId, siteId: siteId || null });
         if (message.trim() || files.length > 0) {
           const imageUrls = await Promise.all(files.map(uploadFile));
           await sendMessage(result.id, adminId, adminName, message.trim(), imageUrls);

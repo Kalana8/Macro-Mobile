@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+    // Without this, the client Router Cache can serve a page's previously
+    // fetched RSC payload on in-app <Link> navigation even though the page
+    // is force-dynamic — force-dynamic only controls server-side caching,
+    // not this separate client-side layer. That let a stale Comm Log (from
+    // before an access-control fix) keep showing threads that had already
+    // been revoked, until a full app close/reopen. Setting this to 0 makes
+    // every in-app navigation always re-fetch live, correctly-scoped data.
+    staleTimes: {
+      dynamic: 0,
+    },
   },
 };
 

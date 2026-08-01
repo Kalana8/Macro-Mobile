@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/server";
 import { hasAnyDashboardAccess } from "@macro/shared/rbac";
@@ -71,5 +72,9 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     Object.values(permissions!.dashboard[area] as Record<string, boolean>).some(Boolean)
   );
 
+  // Purges the client Router Cache for every route — otherwise a plain
+  // <Link> navigation right after login could still serve a page cached
+  // from whichever account was previously signed in in this same tab.
+  revalidatePath("/", "layout");
   redirect(firstAvailable?.[1] ?? "/dashboard");
 }

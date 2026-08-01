@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@macro/shared/supabase/server";
-import { withinGeofence } from "@macro/shared/geo";
+import { withinGeofence, reverseGeocodeShortName } from "@macro/shared/geo";
 
 export interface AttendanceActionState {
   error?: string;
@@ -41,6 +41,7 @@ export async function clockInAction(
   if (siteError || !site) return { error: "Site not found." };
 
   const geoVerified = withinGeofence(lat, lng, site.lat, site.lng);
+  const address = await reverseGeocodeShortName(lat, lng);
 
   const { error: insertError } = await supabase.from("attendance").insert({
     employee_id: user.id,
@@ -50,6 +51,7 @@ export async function clockInAction(
     geo_verified: geoVerified,
     clock_in_lat: lat,
     clock_in_lng: lng,
+    clock_in_address: address,
     status: "clocked_in",
   });
 
@@ -87,6 +89,7 @@ export async function clockOutAction(
 
   const site = Array.isArray(record.sites) ? record.sites[0] : record.sites;
   const geoVerified = site ? withinGeofence(lat, lng, site.lat, site.lng) : false;
+  const address = await reverseGeocodeShortName(lat, lng);
 
   const { error } = await supabase
     .from("attendance")
@@ -94,6 +97,7 @@ export async function clockOutAction(
       clock_out_at: new Date().toISOString(),
       clock_out_lat: lat,
       clock_out_lng: lng,
+      clock_out_address: address,
       clock_out_geo_verified: geoVerified,
       status: "complete",
     })

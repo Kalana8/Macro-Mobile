@@ -3,8 +3,13 @@ import { createClient } from "@macro/shared/supabase/server";
 import { getCurrentEmployee } from "@/lib/session";
 import { Badge, ScreenHeader } from "@/components/ui";
 import { ChatThread } from "@/components/ChatThread";
+import { toggleThreadStatusAction } from "../actions";
 
 const PRIORITY_TONE = { low: "neutral", medium: "warning", high: "error" } as const;
+
+// Per-user private data — never let this be served from any cache
+// (client router cache included) across an account switch in one browser.
+export const dynamic = "force-dynamic";
 
 export default async function CommunicationThreadPage({
   params,
@@ -30,11 +35,24 @@ export default async function CommunicationThreadPage({
 
   return (
     <div>
-      <ScreenHeader title={thread.title} subtitle={siteName ? `${companyName} · ${siteName}` : companyName} />
+      <ScreenHeader
+        title={thread.title}
+        subtitle={siteName ? `${companyName} · ${siteName}` : companyName}
+        backHref="/communication"
+      />
       <div className="flex flex-col gap-3 p-5">
-        <div className="flex items-center gap-1.5">
-          <Badge tone={PRIORITY_TONE[thread.priority as keyof typeof PRIORITY_TONE]}>{thread.priority}</Badge>
-          <Badge tone={thread.status === "open" ? "info" : "neutral"}>{thread.status}</Badge>
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <Badge tone={PRIORITY_TONE[thread.priority as keyof typeof PRIORITY_TONE]}>{thread.priority}</Badge>
+            <Badge tone={thread.status === "open" ? "info" : "neutral"}>{thread.status}</Badge>
+          </div>
+          <form action={toggleThreadStatusAction}>
+            <input type="hidden" name="id" value={thread.id} />
+            <input type="hidden" name="nextStatus" value={thread.status === "open" ? "closed" : "open"} />
+            <button type="submit" className="text-[12.5px] font-semibold text-primary">
+              {thread.status === "open" ? "Close Chat" : "Reopen"}
+            </button>
+          </form>
         </div>
 
         <ChatThread

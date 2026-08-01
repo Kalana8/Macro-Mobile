@@ -15,6 +15,12 @@ interface Communication {
 
 const PRIORITY_TONE = { low: "neutral", medium: "warning", high: "error" } as const;
 
+/** last_update is stored as "SenderName: message" (see touchCommunicationAction) — pull just the name back out. */
+function senderNameOf(lastUpdate: string): string | null {
+  const idx = lastUpdate.indexOf(": ");
+  return idx > -1 ? lastUpdate.slice(0, idx) : null;
+}
+
 export function CommunicationList({ communications }: { communications: Communication[] }) {
   const [tab, setTab] = useState<"open" | "closed">("open");
   const filtered = communications.filter((c) => c.status === tab);
@@ -39,17 +45,25 @@ export function CommunicationList({ communications }: { communications: Communic
         <EmptyState title="Nothing here yet" />
       ) : (
         <div className="flex flex-col gap-2">
-          {filtered.map((c) => (
-            <Link key={c.id} href={`/communication/${c.id}`}>
-              <Card>
-                <div className="flex items-start justify-between">
-                  <div className="text-sm font-semibold text-text-dark">{c.title}</div>
-                  <Badge tone={PRIORITY_TONE[c.priority]}>{c.priority}</Badge>
-                </div>
-                <div className="mt-1 text-xs text-text-muted">{c.last_update || "No messages yet"}</div>
-              </Card>
-            </Link>
-          ))}
+          {filtered.map((c) => {
+            const senderName = c.last_update ? senderNameOf(c.last_update) : null;
+            return (
+              <Link key={c.id} href={`/communication/${c.id}`}>
+                <Card>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      {senderName && (
+                        <div className="text-[11px] font-semibold text-primary">{senderName}</div>
+                      )}
+                      <div className="text-sm font-semibold text-text-dark">{c.title}</div>
+                    </div>
+                    <Badge tone={PRIORITY_TONE[c.priority]}>{c.priority}</Badge>
+                  </div>
+                  <div className="mt-1 text-xs text-text-muted">{c.last_update || "No messages yet"}</div>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
 
@@ -57,7 +71,7 @@ export function CommunicationList({ communications }: { communications: Communic
         href="/communication/new"
         className="mt-4 block w-full rounded-lg bg-orange px-4 py-3 text-center text-sm font-bold text-white"
       >
-        + Report an issue
+        + Send
       </Link>
     </div>
   );

@@ -19,7 +19,7 @@ async function uploadFile(file: File): Promise<string> {
 
 function SubmitButton() {
   const { pending } = useFormStatus();
-  return <PrimaryButton type="submit" disabled={pending}>{pending ? "Sending…" : "Send to Admin"}</PrimaryButton>;
+  return <PrimaryButton type="submit" disabled={pending}>Submit</PrimaryButton>;
 }
 
 export function ChecklistSubmitForm({

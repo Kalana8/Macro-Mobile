@@ -2,6 +2,10 @@ import { createClient } from "@macro/shared/supabase/server";
 import { ScreenHeader } from "@/components/ui";
 import { CommunicationList } from "./CommunicationList";
 
+// Per-user private data — never let this be served from any cache
+// (client router cache included) across an account switch in one browser.
+export const dynamic = "force-dynamic";
+
 export default async function CommunicationPage() {
   const supabase = await createClient();
   const { data: communications, error } = await supabase

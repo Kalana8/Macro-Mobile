@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/server";
 import { firstAvailableAppRoute, hasAnyAppAccess } from "@macro/shared/rbac";
@@ -64,5 +65,9 @@ export async function verifyCredentialsAction(_prevState: LoginState, formData: 
   }
 
   await markLoggedIn();
+  // Purges the client Router Cache for every route — otherwise a plain
+  // <Link> navigation right after login could still serve a page cached
+  // from whichever account was previously signed in in this same tab.
+  revalidatePath("/", "layout");
   redirect(firstAvailableAppRoute(permissions));
 }
