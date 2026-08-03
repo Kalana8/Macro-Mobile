@@ -50,26 +50,43 @@ export async function createCommunicationAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Your session expired. Log in again." };
 
-  const { data, error } = await supabase
+  // Generate the id ourselves rather than using .select() to read it back:
+  // after 0024 admins have no blanket SELECT policy on communications, and the
+  // employee SELECT policy is is_communication_recipient(id) — false until the
+  // recipient rows below exist. So an INSERT ... RETURNING (what .select()
+  // adds) trips RLS with "new row violates row-level security policy".
+  // Inserting without RETURNING sidesteps that.
+  const id = crypto.randomUUID();
+  const { error } = await supabase
     .from("communications")
-    .insert({ company_id: companyId, site_id: siteId, title, priority, status: "open" })
-    .select("id")
-    .single();
+    .insert({ id, company_id: companyId, site_id: siteId, title, priority, status: "open" });
 
   if (error) return { error: error.message };
 
-  // Admin is included as a recipient too — visibility is now scoped to
-  // actual participants only (no more blanket oversight), so without this
-  // the admin would lose access to a thread right after starting it.
-  const allRecipientIds = Array.from(new Set([user.id, ...employeeIds]));
-  const { error: recipientsError } = await supabase
+  // Admin is included as a recipient too — visibility is now scoped to actual
+  // participants only (no more blanket oversight), so without this the admin
+  // would lose access to a thread right after starting it. Insert the admin's
+  // own recipient row FIRST: it makes the thread visible under RLS, which the
+  // company-scoped insert policy for the OTHER recipients relies on (that
+  // policy checks the parent communications row, hidden until a recipient
+  // exists).
+  const { error: selfError } = await supabase
     .from("communication_recipients")
-    .insert(allRecipientIds.map((employee_id) => ({ communication_id: data.id, employee_id })));
+    .insert({ communication_id: id, employee_id: user.id });
 
-  if (recipientsError) return { error: recipientsError.message };
+  if (selfError) return { error: selfError.message };
+
+  const otherIds = employeeIds.filter((eid) => eid && eid !== user.id);
+  if (otherIds.length > 0) {
+    const { error: recipientsError } = await supabase
+      .from("communication_recipients")
+      .insert(otherIds.map((employee_id) => ({ communication_id: id, employee_id })));
+
+    if (recipientsError) return { error: recipientsError.message };
+  }
 
   revalidatePath("/communication");
-  return { success: true, id: data.id };
+  return { success: true, id };
 }
 
 /** Called from the client right after a Firestore message send succeeds — keeps the table's preview/sort in sync without needing a Firebase Cloud Function. */
