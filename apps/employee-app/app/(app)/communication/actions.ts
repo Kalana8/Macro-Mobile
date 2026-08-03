@@ -50,23 +50,39 @@ export async function createCommunicationAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Your session expired. Log in again." };
 
-  const { data, error } = await supabase
+  // Generate the id ourselves rather than using .select() to read it back:
+  // the communications SELECT policy is is_communication_recipient(id), which
+  // is false until the recipient rows below exist, so an INSERT ... RETURNING
+  // (what .select() adds) trips RLS with "new row violates row-level security
+  // policy". Inserting without RETURNING sidesteps that.
+  const id = crypto.randomUUID();
+  const { error } = await supabase
     .from("communications")
-    .insert({ company_id: companyId, site_id: siteId, title, priority, status: "open" })
-    .select("id")
-    .single();
+    .insert({ id, company_id: companyId, site_id: siteId, title, priority, status: "open" });
 
   if (error) return { error: error.message };
 
-  const allRecipientIds = Array.from(new Set([user.id, ...recipientIds]));
-  const { error: recipientError } = await supabase
+  // Add the creator as a recipient FIRST: this makes the thread visible to
+  // them under RLS, which the company-scoped insert policy for the OTHER
+  // recipients relies on (that policy checks the parent communications row,
+  // which stays hidden until at least one recipient row exists).
+  const { error: selfError } = await supabase
     .from("communication_recipients")
-    .insert(allRecipientIds.map((employee_id) => ({ communication_id: data.id, employee_id })));
+    .insert({ communication_id: id, employee_id: user.id });
 
-  if (recipientError) return { error: recipientError.message };
+  if (selfError) return { error: selfError.message };
+
+  const otherIds = recipientIds.filter((rid) => rid && rid !== user.id);
+  if (otherIds.length > 0) {
+    const { error: recipientError } = await supabase
+      .from("communication_recipients")
+      .insert(otherIds.map((employee_id) => ({ communication_id: id, employee_id })));
+
+    if (recipientError) return { error: recipientError.message };
+  }
 
   revalidatePath("/communication");
-  return { success: true, id: data.id };
+  return { success: true, id };
 }
 
 /** Called from the client right after a Firestore message send succeeds — keeps the list's preview/sort in sync without needing a Firebase Cloud Function. */

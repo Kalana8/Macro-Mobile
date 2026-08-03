@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentEmployee } from "@/lib/session";
 import { BottomNav } from "@/components/BottomNav";
+import { PushRegistration } from "@/components/PushRegistration";
 import { logoutAction } from "./actions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -26,6 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // scrolls, and the header/bottom nav move with it despite being sticky.
   return (
     <div className="mx-auto flex h-screen max-w-lg flex-col bg-page-bg">
+      <PushRegistration />
       <div className="flex-1 overflow-y-auto pb-2">{children}</div>
       <BottomNav permissions={session.role?.permissions ?? null} />
     </div>

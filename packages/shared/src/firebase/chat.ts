@@ -134,4 +134,25 @@ export async function sendMessage(
 
   const messagesRef = collection(db, "conversations", conversationId, "messages");
   await addDoc(messagesRef, { senderId, senderName, text, images, createdAt: serverTimestamp() });
+
+  // Fire-and-forget: push a "new message" notification to the thread's OTHER
+  // recipients (the Edge Function scopes it to them — never a broadcast). Never
+  // await or throw here: a push failure must not fail the message send.
+  void notifyRecipients(conversationId, text || (images.length ? "📷 Photo" : "New message"));
+}
+
+/**
+ * Asks the notify-chat Edge Function to push a new-message alert to the thread's
+ * recipients. The function authorizes on the caller's Supabase session and only
+ * targets that conversation's members, so this can't be used to spam others.
+ */
+async function notifyRecipients(conversationId: string, preview: string): Promise<void> {
+  try {
+    const supabase = createClient();
+    await supabase.functions.invoke("notify-chat", {
+      body: { conversationId, preview },
+    });
+  } catch {
+    // Best-effort — the message is already delivered via Firestore.
+  }
 }
