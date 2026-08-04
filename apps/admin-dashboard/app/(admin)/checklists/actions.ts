@@ -88,8 +88,8 @@ export async function deleteTemplateAction(formData: FormData): Promise<void> {
 /**
  * Standing assignment (no date) — links an employee to a template. From
  * then on, the daily `checklists` instance for subsequent days is
- * auto-created by the scheduled generate_due_checklists() function
- * whenever the company's visit_days/visit_time comes around. But an admin
+ * auto-created by the scheduled generate_due_checklists() function right
+ * after midnight on each of the company's visit_days. But an admin
  * assigning someone expects it to show up for the employee right away, not
  * wait for that schedule — so this also sends today's instance immediately.
  */

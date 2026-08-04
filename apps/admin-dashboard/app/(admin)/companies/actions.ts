@@ -31,13 +31,11 @@ function parseVisitDays(formData: FormData): number[] {
 
 function parseVisitSchedule(formData: FormData) {
   const visitFrequency = String(formData.get("visitFrequency") ?? "weekly");
-  const visitTime = String(formData.get("visitTime") ?? "") || null;
   const visitStartDate = String(formData.get("visitStartDate") ?? "") || null;
   const visitEndDate = String(formData.get("visitEndDate") ?? "") || null;
 
   return {
     visit_frequency: visitFrequency,
-    visit_time: visitTime,
     visit_days: visitFrequency === "custom" ? [] : parseVisitDays(formData),
     visit_start_date: visitStartDate,
     visit_end_date: visitEndDate,

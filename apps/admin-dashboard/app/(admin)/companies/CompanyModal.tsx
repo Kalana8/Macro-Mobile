@@ -23,7 +23,11 @@ async function uploadFile(file: File): Promise<string> {
   return result.url;
 }
 
+// Indices match Postgres extract(dow): 0 = Sunday ... 6 = Saturday.
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
+const WEEKDAYS = [1, 2, 3, 4, 5];
+const WEEKEND_DAYS = [0, 6];
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
 
 const FREQUENCY_OPTIONS: { value: VisitFrequency; label: string }[] = [
   { value: "weekly", label: "Weekly" },
@@ -162,7 +166,6 @@ export function CompanyModal({ company, onClose }: { company?: Company; onClose:
 
   const [visitFrequency, setVisitFrequency] = useState<VisitFrequency>(company?.visit_frequency ?? "weekly");
   const [visitDays, setVisitDays] = useState<number[]>(company?.visit_days ?? []);
-  const [visitTime, setVisitTime] = useState(company?.visit_time ?? "");
   const [visitStartDate, setVisitStartDate] = useState(company?.visit_start_date ?? "");
   const [visitEndDate, setVisitEndDate] = useState(company?.visit_end_date ?? "");
 
@@ -278,6 +281,32 @@ export function CompanyModal({ company, onClose }: { company?: Company; onClose:
             </div>
 
             {visitFrequency !== "custom" && (
+              <div className="mb-2 flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setVisitDays(WEEKDAYS)}
+                  className="rounded-md bg-bg px-2.5 py-1 text-[11px] font-semibold text-text-muted"
+                >
+                  Weekdays only
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVisitDays(WEEKEND_DAYS)}
+                  className="rounded-md bg-bg px-2.5 py-1 text-[11px] font-semibold text-text-muted"
+                >
+                  Weekends only
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVisitDays(ALL_DAYS)}
+                  className="rounded-md bg-bg px-2.5 py-1 text-[11px] font-semibold text-text-muted"
+                >
+                  Every day
+                </button>
+              </div>
+            )}
+
+            {visitFrequency !== "custom" && (
               <div className="grid grid-cols-7 gap-1.5">
                 {DAY_LETTERS.map((letter, day) => {
                   const active = visitDays.includes(day);
@@ -317,10 +346,9 @@ export function CompanyModal({ company, onClose }: { company?: Company; onClose:
               </p>
             )}
 
-            <div className="mt-3">
-              <FieldLabel>Time</FieldLabel>
-              <TextInput type="time" value={visitTime} onChange={(e) => setVisitTime(e.target.value)} />
-            </div>
+            <p className="mt-3 text-[11px] text-text-muted">
+              Checklists auto-generate right after midnight (Australia/Sydney) on each selected day above.
+            </p>
 
             {/* Keyed on startDate so picking a new start date snaps the calendar to that month, without a setState-in-effect. */}
             <ScheduleCalendar
@@ -333,7 +361,6 @@ export function CompanyModal({ company, onClose }: { company?: Company; onClose:
           </div>
 
           <input type="hidden" name="visitFrequency" value={visitFrequency} />
-          <input type="hidden" name="visitTime" value={visitTime} />
           <input type="hidden" name="visitStartDate" value={visitStartDate} />
           <input type="hidden" name="visitEndDate" value={visitEndDate} />
           {visitDays.map((day) => (
