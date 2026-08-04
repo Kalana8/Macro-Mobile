@@ -12,6 +12,7 @@
     "./supabase/middleware": "./src/supabase/middleware.ts",
     "./firebase/client": "./src/firebase/client.ts",
     "./firebase/chat": "./src/firebase/chat.ts",
+    "./firebase/push": "./src/firebase/push.ts",
     "./storage": "./src/storage/index.ts",
     "./imagekit": "./src/imagekit/index.ts",
     "./geo": "./src/geo/index.ts",
