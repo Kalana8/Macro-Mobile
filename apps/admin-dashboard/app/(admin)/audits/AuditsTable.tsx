@@ -53,7 +53,7 @@ export function AuditsTable({
       {audits.length === 0 ? (
         <EmptyState title="No audits in the last 2 months" />
       ) : (
-      <Table head={["Date", "Company", "Employee", "Audit", "Sub-audits", "Total Marks", "Status", "Actions"]}>
+      <Table head={["Date", "Company", "Employee", "Audit", "Sub-sections", "Total Marks", "Status", "Actions"]}>
         {audits.map((audit) => {
           const mainAudits = audit.main_audits as AuditMainItem[];
           const subAuditCount = mainAudits.reduce((n, m) => n + m.sub_audits.length, 0);

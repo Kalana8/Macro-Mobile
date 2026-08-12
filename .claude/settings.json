@@ -49,7 +49,17 @@
       "Bash(cp /private/tmp/claude-501/-Users-shalini-Downloads-Mobile-first-employee-audit-app--1-/ddfe2c3b-d529-4dc7-99e2-fe8dbd73b59c/scratchpad/favicon-final-32.png apps/employee-app/public/favicon-icon.png)",
       "Bash(cp /private/tmp/claude-501/-Users-shalini-Downloads-Mobile-first-employee-audit-app--1-/ddfe2c3b-d529-4dc7-99e2-fe8dbd73b59c/scratchpad/favicon-final-32.png apps/admin-dashboard/public/favicon-icon.png)",
       "Bash(cp /private/tmp/claude-501/-Users-shalini-Downloads-Mobile-first-employee-audit-app--1-/ddfe2c3b-d529-4dc7-99e2-fe8dbd73b59c/scratchpad/favicon-final-192.png apps/employee-app/public/icon-192.png)",
-      "Bash(cp /private/tmp/claude-501/-Users-shalini-Downloads-Mobile-first-employee-audit-app--1-/ddfe2c3b-d529-4dc7-99e2-fe8dbd73b59c/scratchpad/favicon-final-512.png apps/employee-app/public/icon-512.png)"
+      "Bash(cp /private/tmp/claude-501/-Users-shalini-Downloads-Mobile-first-employee-audit-app--1-/ddfe2c3b-d529-4dc7-99e2-fe8dbd73b59c/scratchpad/favicon-final-512.png apps/employee-app/public/icon-512.png)",
+      "Read(//Applications/**)",
+      "Bash(npx --no-install puppeteer --version)",
+      "Bash(ls \"/Applications/Google Chrome.app/Contents/MacOS/\" 2>/dev/null)",
+      "Read(//Applications/Google Chrome.app/Contents/MacOS/**)",
+      "Bash(sips -g pixelWidth -g pixelHeight \"/private/tmp/claude-501/-Users-shalini-Downloads-Mobile-first-employee-audit-app--1-/ddfe2c3b-d529-4dc7-99e2-fe8dbd73b59c/scratchpad/preview.png\")",
+      "Bash(python3 -c \"import fitz; print\\('pymupdf available'\\)\")",
+      "Bash(brew install *)",
+      "mcp__claude_ai_Supabase__list_edge_functions",
+      "mcp__claude_ai_Supabase__get_edge_function",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --no-pdf-header-footer '--print-to-pdf=/Users/shalini/Downloads/Mobile-first employee audit app \\(1\\)/docs/architecture-document.pdf' file:///private/tmp/claude-501/-Users-shalini-Downloads-Mobile-first-employee-audit-app--1-/ddfe2c3b-d529-4dc7-99e2-fe8dbd73b59c/scratchpad/architecture-document.html)"
     ],
     "additionalDirectories": [
       "/Users/shalini/Downloads/Mobile-first employee audit app (1)/apps/employee-app/app/(app)/communication",

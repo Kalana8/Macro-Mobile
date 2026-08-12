@@ -67,7 +67,7 @@ function LoginPageInner() {
         </form>
 
         <div className="mt-10 text-center text-xs text-placeholder">
-          v0.1 · Field Audit &amp; Attendance
+          V0.1 · Field Audit &amp; Attendance
         </div>
       </div>
     </div>

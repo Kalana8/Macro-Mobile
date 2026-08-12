@@ -111,7 +111,7 @@ export function AuditDetailModal({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-bg">
-                    <th className="px-3 py-2.5 text-left text-[11px] font-bold text-text-muted">Subsection</th>
+                    <th className="px-3 py-2.5 text-left text-[11px] font-bold text-text-muted">Sub-section</th>
                     {RATINGS.map((r) => (
                       <th key={r.key} className="px-1.5 py-2.5 text-center text-[11px] font-bold text-text-muted">{r.label}</th>
                     ))}
@@ -164,10 +164,10 @@ export function AuditDetailModal({
               }
               className="mt-2 text-[12.5px] font-semibold text-primary"
             >
-              + Add sub-audit
+              + Add sub-section
             </button>
             <div className="mt-2.5 flex items-center gap-2">
-              <div className="whitespace-nowrap text-xs font-semibold text-text-muted">Main Audit Marks</div>
+              <div className="whitespace-nowrap text-xs font-semibold text-text-muted">Main Section Marks</div>
               <input
                 type="number"
                 min={0}
