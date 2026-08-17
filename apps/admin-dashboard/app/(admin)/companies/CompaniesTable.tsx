@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 import { Badge, EmptyState, IconChip, PlusIcon, PrimaryButton, Table } from "@/components/ui";
 import { DeleteButton } from "@/components/DeleteButton";
-import type { Company } from "@macro/shared/types";
+import type { Company, Site } from "@macro/shared/types";
 import { deleteCompanyAction, removeEmployeeFromCompanyAction } from "./actions";
 import { CompanyModal } from "./CompanyModal";
 import { AssignEmployeeModal } from "./[companyId]/AssignEmployeeModal";
@@ -21,14 +21,19 @@ export function CompaniesTable({
   employeeCounts,
   companyEmployees,
   allEmployees,
-  siteNamesByCompany,
+  sitesByCompany,
 }: {
   companies: Company[];
   employeeCounts: Record<string, number>;
   companyEmployees: Record<string, CompanyEmployeeRow[]>;
   allEmployees: { id: string; full_name: string }[];
-  siteNamesByCompany: Record<string, string[]>;
+  sitesByCompany: Record<string, Site[]>;
 }) {
+  const siteNamesByCompany: Record<string, string[]> = {};
+  for (const [companyId, sites] of Object.entries(sitesByCompany)) {
+    siteNamesByCompany[companyId] = sites.map((s) => s.name);
+  }
+  const existingSiteNames = Array.from(new Set(Object.values(siteNamesByCompany).flat())).sort();
   const [modalCompany, setModalCompany] = useState<Company | "new" | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [assignCompany, setAssignCompany] = useState<Company | null>(null);
@@ -136,6 +141,9 @@ export function CompaniesTable({
       {modalCompany && (
         <CompanyModal
           company={modalCompany === "new" ? undefined : modalCompany}
+          companies={companies}
+          existingSiteNames={existingSiteNames}
+          sitesByCompany={sitesByCompany}
           onClose={() => setModalCompany(null)}
         />
       )}

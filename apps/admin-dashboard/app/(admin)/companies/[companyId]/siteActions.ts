@@ -25,7 +25,9 @@ export async function createSiteAction(_prev: SiteFormState, formData: FormData)
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("sites").insert({ company_id: companyId, name, address, lat, lng, status });
+  const { error } = await supabase
+    .from("sites")
+    .insert({ company_id: companyId, name, address, lat, lng, status });
 
   if (error) return { error: error.message };
 
@@ -51,7 +53,10 @@ export async function updateSiteAction(_prev: SiteFormState, formData: FormData)
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("sites").update({ name, address, lat, lng, status }).eq("id", id);
+  const { error } = await supabase
+    .from("sites")
+    .update({ name, address, lat, lng, status })
+    .eq("id", id);
 
   if (error) return { error: error.message };
 

@@ -7,7 +7,7 @@ export default async function ChecklistsPage() {
   const supabase = await createClient();
   const { data: checklists, error } = await supabase
     .from("checklists")
-    .select("id, site, assigned_date, status, areas, companies(name), employees(full_name)")
+    .select("id, site, assigned_date, status, areas, special_note, companies(name), employees(full_name)")
     .order("assigned_date", { ascending: false });
 
   return (
@@ -40,6 +40,11 @@ export default async function ChecklistsPage() {
                       {checklist.site}
                       {employeeName && ` · ${employeeName}`}
                     </div>
+                    {checklist.special_note && (
+                      <div className="mt-1">
+                        <Badge tone="info">Specific Task</Badge>
+                      </div>
+                    )}
                   </div>
                   <Badge tone={checklist.status === "submitted" ? "success" : "warning"}>
                     {checklist.status === "submitted" ? "Submitted" : "Pending Review"}

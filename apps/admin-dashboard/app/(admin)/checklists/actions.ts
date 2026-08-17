@@ -6,6 +6,7 @@ import { createClient } from "@macro/shared/supabase/server";
 import { uploadImageToImageKit } from "@macro/shared/imagekit";
 import { todayInBusinessTimezone } from "@macro/shared/datetime";
 import type { ChecklistArea } from "@macro/shared/types";
+import { parseVisitSchedule } from "../companies/scheduleForm";
 
 export interface ChecklistFormState {
   error?: string;
@@ -50,25 +51,39 @@ export async function createTemplateAction(
   formData: FormData
 ): Promise<ChecklistFormState> {
   const companyId = String(formData.get("companyId") ?? "");
-  const site = String(formData.get("site") ?? "").trim();
-  const areasRaw = String(formData.get("areasJson") ?? "[]");
+  const siteId = String(formData.get("siteId") ?? "").trim();
+  const dayAreasRaw = String(formData.get("dayAreasJson") ?? "{}");
   const templateId = String(formData.get("templateId") ?? "");
+  const specialNote = String(formData.get("specialNote") ?? "").trim() || null;
 
-  if (!companyId || !site) return { error: "Company and site are required." };
+  if (!companyId || !siteId) return { error: "Company and site are required." };
 
-  let draft: DraftArea[];
+  let dayDraft: Record<string, DraftArea[]>;
   try {
-    draft = JSON.parse(areasRaw);
+    dayDraft = JSON.parse(dayAreasRaw);
   } catch {
     return { error: "Invalid template data." };
   }
-  const areas = buildAreas(draft);
-  if (areas.length === 0) return { error: "Add at least one main area with a name." };
+  const dayAreas: Record<string, ChecklistArea[]> = {};
+  for (const [day, dayDraftAreas] of Object.entries(dayDraft)) {
+    const built = buildAreas(dayDraftAreas);
+    if (built.length > 0) dayAreas[day] = built;
+  }
+  if (Object.keys(dayAreas).length === 0) {
+    return { error: "Select a day and add at least one main area with a name." };
+  }
+
+  const schedule = parseVisitSchedule(formData);
 
   const supabase = await createClient();
   const { error } = templateId
-    ? await supabase.from("checklist_templates").update({ company_id: companyId, site, areas }).eq("id", templateId)
-    : await supabase.from("checklist_templates").insert({ company_id: companyId, site, areas });
+    ? await supabase
+        .from("checklist_templates")
+        .update({ company_id: companyId, site_id: siteId, areas: [], day_areas: dayAreas, special_note: specialNote, ...schedule })
+        .eq("id", templateId)
+    : await supabase
+        .from("checklist_templates")
+        .insert({ company_id: companyId, site_id: siteId, areas: [], day_areas: dayAreas, special_note: specialNote, ...schedule });
 
   if (error) return { error: error.message };
 
@@ -85,13 +100,31 @@ export async function deleteTemplateAction(formData: FormData): Promise<void> {
   revalidatePath("/checklists");
 }
 
+/** Stops a checklist immediately — strips today-and-future dates from visit_dates, so generate_due_checklists() has nothing left to fire on. Past dates (and the checklists already generated from them) are left untouched. */
+export async function endTemplateAction(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const supabase = await createClient();
+  const { data: template } = await supabase.from("checklist_templates").select("visit_dates").eq("id", id).maybeSingle();
+  if (!template) return;
+
+  const today = todayInBusinessTimezone();
+  const pastDates = ((template.visit_dates as string[] | null) ?? []).filter((d) => d < today);
+
+  await supabase.from("checklist_templates").update({ visit_dates: pastDates }).eq("id", id);
+  revalidatePath("/checklists");
+  revalidatePath("/companies");
+}
+
 /**
- * Standing assignment (no date) — links an employee to a template. From
- * then on, the daily `checklists` instance for subsequent days is
+ * Standing assignment — links an employee to a template. From then on, the
+ * `checklists` instance for each of the template's listed visit_dates is
  * auto-created by the scheduled generate_due_checklists() function right
- * after midnight on each of the company's visit_days. But an admin
- * assigning someone expects it to show up for the employee right away, not
- * wait for that schedule — so this also sends today's instance immediately.
+ * after midnight on that date. But an admin assigning someone expects it to
+ * show up for the employee right away, not wait for that schedule — so this
+ * also sends today's instance immediately if today is one of the picked
+ * dates.
  */
 export async function createAssignmentAction(
   _prev: ChecklistFormState,
@@ -121,12 +154,17 @@ export async function createAssignmentAction(
 
   const { data: template } = await supabase
     .from("checklist_templates")
-    .select("site, areas")
+    .select("site_id, areas, day_areas, visit_dates, special_note, sites(name)")
     .eq("id", templateId)
     .maybeSingle();
 
   if (template) {
     const today = todayInBusinessTimezone();
+    const isScheduledToday = ((template.visit_dates as string[] | null) ?? []).includes(today);
+    const dayAreas = (template.day_areas as Record<string, ChecklistArea[]> | null) ?? {};
+    const todayDow = new Date(`${today}T00:00:00`).getDay();
+    const areasForToday = dayAreas[String(todayDow)] ?? template.areas;
+
     const { data: existing } = await supabase
       .from("checklists")
       .select("employee_id")
@@ -135,17 +173,20 @@ export async function createAssignmentAction(
       .in("employee_id", employeeIds);
 
     const alreadySent = new Set((existing ?? []).map((c) => c.employee_id));
-    const toSend = employeeIds.filter((id) => !alreadySent.has(id));
+    const toSend = isScheduledToday ? employeeIds.filter((id) => !alreadySent.has(id)) : [];
 
     if (toSend.length > 0) {
+      const siteName = (template.sites as { name?: string } | null)?.name ?? "";
       await supabase.from("checklists").insert(
         toSend.map((employee_id) => ({
           template_id: templateId,
           company_id: companyId,
-          site: template.site,
+          site: siteName,
+          site_id: template.site_id,
           employee_id,
           assigned_date: today,
-          areas: template.areas,
+          areas: areasForToday,
+          special_note: template.special_note,
           status: "pending",
           admin_note: adminNote,
         }))

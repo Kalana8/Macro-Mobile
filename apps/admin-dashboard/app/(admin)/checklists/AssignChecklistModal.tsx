@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
 import { CheckboxSquare, FieldLabel, PrimaryButton, Select, TextArea } from "@/components/ui";
 import type { ChecklistTemplate } from "@macro/shared/types";
+import { scheduleSummary } from "../companies/siteSchedule";
 import { createAssignmentAction, type ChecklistFormState } from "./actions";
 
 function SubmitButton() {
@@ -19,7 +20,7 @@ export function AssignChecklistModal({
   onClose,
 }: {
   companies: { id: string; name: string }[];
-  templates: ChecklistTemplate[];
+  templates: (ChecklistTemplate & { site: string })[];
   employees: { id: string; full_name: string; companyIds: string[] }[];
   onClose: () => void;
 }) {
@@ -43,6 +44,10 @@ export function AssignChecklistModal({
   const selectedTemplate = companyTemplates.find((t) => t.id === templateId) ?? companyTemplates[0];
   const companyEmployees = useMemo(() => employees.filter((e) => e.companyIds.includes(companyId)), [employees, companyId]);
 
+  function templateSiteLabel(t: ChecklistTemplate & { site: string }): string {
+    return `${t.site} — ${scheduleSummary(t)}`;
+  }
+
   useEffect(() => {
     if (state.success) onClose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,8 +64,8 @@ export function AssignChecklistModal({
         {selectedEmployees.map((id) => <input key={id} type="hidden" name="employeeIds" value={id} />)}
 
         <p className="-mt-1 text-[12.5px] text-text-muted">
-          No date to pick — the checklist is sent automatically to each employee on the company&apos;s visit days,
-          at its visit time (set on the company itself).
+          No date to pick here — the checklist is sent automatically to each employee on the specific dates set
+          when it was created.
         </p>
 
         <div>
@@ -71,9 +76,9 @@ export function AssignChecklistModal({
         </div>
         <div>
           <FieldLabel>Site (from template)</FieldLabel>
-          <Select value={selectedTemplate?.site ?? ""} onChange={(e) => setTemplateId(companyTemplates.find((t) => t.site === e.target.value)?.id ?? "")}>
+          <Select value={selectedTemplate?.id ?? ""} onChange={(e) => setTemplateId(e.target.value)}>
             {companyTemplates.length === 0 && <option value="">No templates for this company</option>}
-            {companyTemplates.map((t) => <option key={t.id} value={t.site}>{t.site}</option>)}
+            {companyTemplates.map((t) => <option key={t.id} value={t.id}>{templateSiteLabel(t)}</option>)}
           </Select>
         </div>
         <div>

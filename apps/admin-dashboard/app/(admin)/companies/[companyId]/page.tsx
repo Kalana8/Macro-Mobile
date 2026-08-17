@@ -20,7 +20,7 @@ export default async function CompanyDetailPage({
   const [{ data: memberships }, { data: allEmployees }, { data: templates }, { data: sites }] = await Promise.all([
     supabase.from("employee_companies").select("employee_id").eq("company_id", companyId),
     supabase.from("employees").select("id, full_name, job_role, status"),
-    supabase.from("checklist_templates").select("*").eq("company_id", companyId),
+    supabase.from("checklist_templates").select("*, sites(name)").eq("company_id", companyId),
     supabase.from("sites").select("*").eq("company_id", companyId).order("name"),
   ]);
 
@@ -28,6 +28,11 @@ export default async function CompanyDetailPage({
   const employees = (allEmployees ?? []).filter((e) => memberIds.has(e.id));
   const candidates = (allEmployees ?? []).filter((e) => !memberIds.has(e.id));
   const employeeOptions = employees.map((e) => ({ id: e.id, full_name: e.full_name, companyIds: [companyId] }));
+
+  const templateRows = (templates ?? []).map((t) => ({
+    ...(t as unknown as ChecklistTemplate),
+    site: (t.sites as { name?: string } | null)?.name ?? "—",
+  }));
 
   return (
     <div>
@@ -44,8 +49,8 @@ export default async function CompanyDetailPage({
       <CompanyChecklists
         companyId={company.id}
         companyName={company.name}
-        templates={(templates ?? []) as unknown as ChecklistTemplate[]}
-        sites={((sites ?? []) as Site[]).map((s) => ({ id: s.id, name: s.name, company_id: s.company_id }))}
+        templates={templateRows}
+        sites={(sites ?? []) as Site[]}
         employees={employeeOptions}
       />
     </div>

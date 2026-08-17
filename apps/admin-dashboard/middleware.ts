@@ -5,6 +5,12 @@ import type { RolePermissions } from "@macro/shared/types";
 
 const PUBLIC_PATHS = ["/login"];
 
+// Public checklist share links (/shared/checklists/[id]) — unlike /login,
+// these must stay reachable even when the visitor IS logged in (an admin
+// opening their own share link shouldn't get bounced back to /dashboard by
+// the isPublic redirect below), so they're checked separately.
+const ALWAYS_PUBLIC_PREFIXES = ["/shared/"];
+
 const AREA_ROUTES: [keyof RolePermissions["dashboard"], string][] = [
   ["dashboard", "/dashboard"],
   ["companies", "/companies"],
@@ -37,6 +43,11 @@ export async function middleware(request: NextRequest) {
   }
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isAlwaysPublic = ALWAYS_PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+
+  if (isAlwaysPublic) {
+    return response;
+  }
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

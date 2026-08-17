@@ -1,6 +1,6 @@
 import { createClient } from "@macro/shared/supabase/server";
 import { PageHeader } from "@/components/ui";
-import type { Checklist, ChecklistTemplate } from "@macro/shared/types";
+import type { Checklist, ChecklistTemplate, Site } from "@macro/shared/types";
 import { ChecklistsTabs } from "./ChecklistsTabs";
 
 export default async function ChecklistsPage() {
@@ -20,13 +20,13 @@ export default async function ChecklistsPage() {
       .select("*, companies(name), employees(full_name)")
       .order("assigned_date", { ascending: false })
       .limit(80),
-    supabase.from("checklist_templates").select("*, companies(name)").order("created_at", { ascending: false }),
+    supabase.from("checklist_templates").select("*, companies(name), sites(name)").order("created_at", { ascending: false }),
     supabase
       .from("checklist_assignments")
-      .select("id, template_id, admin_note, companies(name), employees(full_name), checklist_templates(site)")
+      .select("id, template_id, admin_note, companies(name), employees(full_name), checklist_templates(sites(name))")
       .order("created_at", { ascending: false }),
     supabase.from("companies").select("id, name").order("name"),
-    supabase.from("sites").select("id, name, company_id").order("name"),
+    supabase.from("sites").select("*").order("name"),
     supabase.from("employees").select("id, full_name").order("full_name"),
     supabase.from("employee_companies").select("employee_id, company_id"),
   ]);
@@ -52,6 +52,7 @@ export default async function ChecklistsPage() {
   const templateRows = (templates ?? []).map((t) => ({
     ...(t as unknown as ChecklistTemplate),
     companyName: (t.companies as { name?: string } | null)?.name ?? "—",
+    site: (t.sites as { name?: string } | null)?.name ?? "—",
   }));
 
   const assignmentRows = (assignments ?? []).map((a) => ({
@@ -60,7 +61,10 @@ export default async function ChecklistsPage() {
     adminNote: a.admin_note,
     companyName: (a.companies as { name?: string } | null)?.name ?? "—",
     employeeName: (a.employees as { full_name?: string } | null)?.full_name ?? "—",
-    site: (a.checklist_templates as { site?: string } | null)?.site ?? "—",
+    site:
+      (
+        a.checklist_templates as { sites?: { name?: string } | null } | null
+      )?.sites?.name ?? "—",
   }));
 
   return (
@@ -71,7 +75,7 @@ export default async function ChecklistsPage() {
         templates={templateRows}
         assignments={assignmentRows}
         companies={companies ?? []}
-        sites={sites ?? []}
+        sites={(sites ?? []) as Site[]}
         employees={employeeOptions}
       />
     </div>

@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { EmptyState, IconChip, PlusIcon, PrimaryButton, Table } from "@/components/ui";
+import { Badge, EmptyState, IconChip, PlusIcon, PrimaryButton, Table } from "@/components/ui";
 import { DeleteButton } from "@/components/DeleteButton";
-import type { Checklist, ChecklistTemplate } from "@macro/shared/types";
+import { todayInBusinessTimezone } from "@macro/shared/datetime";
+import type { Checklist, ChecklistTemplate, Site } from "@macro/shared/types";
+import { scheduleSummary } from "../companies/siteSchedule";
 import { deleteAssignmentAction, deleteTemplateAction } from "./actions";
 import { CreateTemplateModal } from "./CreateTemplateModal";
 import { TemplateDetailModal } from "./TemplateDetailModal";
 import { AssignChecklistModal } from "./AssignChecklistModal";
 import { ChecklistDetailModal } from "./ChecklistDetailModal";
+import { EndTemplateButton } from "./EndTemplateButton";
 
 interface JoinedChecklist extends Checklist {
   companyName: string;
@@ -16,6 +19,7 @@ interface JoinedChecklist extends Checklist {
 }
 interface JoinedTemplate extends ChecklistTemplate {
   companyName: string;
+  site: string;
 }
 
 const TABS = ["submitted", "create", "assign"] as const;
@@ -25,11 +29,6 @@ const TAB_LABEL: Record<(typeof TABS)[number], string> = {
   assign: "Assign Checklist",
 };
 
-interface Site {
-  id: string;
-  name: string;
-  company_id: string;
-}
 interface AssignmentRow {
   id: string;
   templateId: string;
@@ -119,13 +118,23 @@ export function ChecklistsTabs({
           {templates.length === 0 ? (
             <EmptyState title="No checklist templates yet" />
           ) : (
-            <Table head={["Company", "Site", "Subtasks", "Actions"]}>
+            <Table head={["Company", "Site", "Schedule", "Subtasks", "Actions"]}>
               {templates.map((t) => {
                 const subtasks = t.areas.reduce((n, a) => n + a.subtasks.length, 0);
+                // Defensive against rows fetched before visit_dates existed
+                // on this table (mid-migration).
+                const visitDates = t.visit_dates ?? [];
+                const ended = visitDates.length > 0 && !visitDates.some((d) => d >= todayInBusinessTimezone());
                 return (
                   <tr key={t.id} className="border-b border-border last:border-0">
                     <td className="cursor-pointer px-5 py-3.5 font-semibold text-text-dark" onClick={() => setTemplateDetail(t)}>{t.companyName}</td>
                     <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => setTemplateDetail(t)}>{t.site}</td>
+                    <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => setTemplateDetail(t)}>
+                      <div className="flex items-center gap-1.5">
+                        {scheduleSummary(t)}
+                        {ended && <Badge tone="neutral">Ended</Badge>}
+                      </div>
+                    </td>
                     <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => setTemplateDetail(t)}>{subtasks}</td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
@@ -134,6 +143,12 @@ export function ChecklistsTabs({
                             <path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
                           </svg>
                         </IconChip>
+                        {!ended && (
+                          <EndTemplateButton
+                            templateId={t.id}
+                            confirmText="Stop this checklist from repeating? It will no longer be sent from tomorrow on."
+                          />
+                        )}
                         <DeleteButton action={deleteTemplateAction} confirmText="Delete this template?" hiddenFields={{ id: t.id }} />
                       </div>
                     </td>
@@ -155,7 +170,7 @@ export function ChecklistsTabs({
           </div>
 
           <div className="mb-2 text-xs font-bold text-text-muted">
-            RECURRING ASSIGNMENTS — sent automatically on each company&apos;s visit days/time
+            STANDING ASSIGNMENTS — sent automatically on each template&apos;s own listed dates
           </div>
           {assignments.length === 0 ? (
             <div className="mb-6 rounded-[16px] border border-dashed border-border p-6 text-center text-sm text-text-muted">

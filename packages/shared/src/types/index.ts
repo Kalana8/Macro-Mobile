@@ -9,19 +9,12 @@ export type CommStatus = "open" | "closed";
 export type EmployeeStatus = "active" | "on_leave" | "inactive";
 export type CompanyStatus = "active" | "inactive";
 
-export type VisitFrequency = "weekly" | "fortnightly" | "custom";
-
 export interface Company {
   id: string;
   name: string;
   location: string | null;
   logo: string | null;
   status: CompanyStatus;
-  visit_frequency: VisitFrequency;
-  visit_days: number[]; // 0=Sun..6=Sat — used by weekly & fortnightly
-  visit_time: string | null; // "HH:MM"
-  visit_start_date: string | null; // "YYYY-MM-DD" — fortnightly anchor, or custom range start
-  visit_end_date: string | null; // "YYYY-MM-DD" — custom range end
   created_at: string;
 }
 
@@ -134,8 +127,22 @@ export interface ChecklistArea {
 export interface ChecklistTemplate {
   id: string;
   company_id: string;
-  site: string;
+  site_id: string;
+  // Legacy fallback content — day_areas is the source of truth now; this is
+  // only read if a selected day somehow has no entry there.
   areas: ChecklistArea[];
+  // Content keyed by day-of-week string ("0"=Sun..."6"=Sat) — every picked
+  // date in visit_dates that falls on a given weekday automatically reuses
+  // that weekday's entry here.
+  day_areas: Record<string, ChecklistArea[]>;
+  // One-off instruction sent alongside the checklist — separate from each
+  // area's own note; shown to the employee as a highlighted "Specific Task"
+  // callout.
+  special_note: string | null;
+  // Exact calendar dates this checklist is scheduled on, picked individually
+  // from the 4-week grid. "End Now" strips today-and-future dates, leaving
+  // past dates untouched.
+  visit_dates: string[]; // "YYYY-MM-DD"
   created_at: string;
 }
 
@@ -144,9 +151,11 @@ export interface Checklist {
   template_id: string;
   company_id: string;
   site: string;
+  site_id: string | null;
   employee_id: string;
   assigned_date: string;
   areas: ChecklistArea[];
+  special_note: string | null;
   status: ChecklistStatus;
   notes: string | null;
   admin_note: string | null;

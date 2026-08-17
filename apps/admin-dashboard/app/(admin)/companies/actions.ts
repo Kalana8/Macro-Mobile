@@ -22,26 +22,6 @@ export async function uploadCompanyLogoAction(formData: FormData): Promise<{ url
   }
 }
 
-function parseVisitDays(formData: FormData): number[] {
-  return formData
-    .getAll("visitDays")
-    .map((v) => Number(v))
-    .filter((n) => !Number.isNaN(n));
-}
-
-function parseVisitSchedule(formData: FormData) {
-  const visitFrequency = String(formData.get("visitFrequency") ?? "weekly");
-  const visitStartDate = String(formData.get("visitStartDate") ?? "") || null;
-  const visitEndDate = String(formData.get("visitEndDate") ?? "") || null;
-
-  return {
-    visit_frequency: visitFrequency,
-    visit_days: visitFrequency === "custom" ? [] : parseVisitDays(formData),
-    visit_start_date: visitStartDate,
-    visit_end_date: visitEndDate,
-  };
-}
-
 /** Case-insensitive exact-name check, surfaced by the "Check Name" button before Add Company is submitted. */
 export async function checkCompanyNameAction(name: string): Promise<{ exists: boolean }> {
   const trimmed = name.trim();
@@ -79,13 +59,7 @@ export async function createCompanyAction(
   const supabase = await createClient();
   const { data: company, error } = await supabase
     .from("companies")
-    .insert({
-      name,
-      location,
-      logo,
-      status,
-      ...parseVisitSchedule(formData),
-    })
+    .insert({ name, location, logo, status })
     .select("id")
     .single();
 
@@ -120,7 +94,7 @@ export async function updateCompanyAction(
   const supabase = await createClient();
   const { error } = await supabase
     .from("companies")
-    .update({ name, location, logo, status, ...parseVisitSchedule(formData) })
+    .update({ name, location, logo, status })
     .eq("id", id);
 
   if (error) return { error: error.message };

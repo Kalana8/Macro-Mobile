@@ -1,5 +1,6 @@
 import { createClient } from "@macro/shared/supabase/server";
 import { PageHeader } from "@/components/ui";
+import type { Site } from "@macro/shared/types";
 import { CompaniesTable, type CompanyEmployeeRow } from "./CompaniesTable";
 
 export default async function CompaniesPage() {
@@ -12,12 +13,12 @@ export default async function CompaniesPage() {
         .select("company_id, employees(id, full_name, job_role, status)"),
       supabase.from("checklists").select("employee_id, status"),
       supabase.from("employees").select("id, full_name").order("full_name"),
-      supabase.from("sites").select("company_id, name").order("name"),
+      supabase.from("sites").select("*").order("name"),
     ]);
 
-  const siteNamesByCompany: Record<string, string[]> = {};
-  for (const s of sites ?? []) {
-    (siteNamesByCompany[s.company_id] ??= []).push(s.name);
+  const sitesByCompany: Record<string, Site[]> = {};
+  for (const s of (sites ?? []) as Site[]) {
+    (sitesByCompany[s.company_id] ??= []).push(s);
   }
 
   const checklistSummaryByEmployee = new Map<string, { total: number; submitted: number }>();
@@ -61,7 +62,7 @@ export default async function CompaniesPage() {
           employeeCounts={employeeCounts}
           companyEmployees={companyEmployees}
           allEmployees={allEmployees ?? []}
-          siteNamesByCompany={siteNamesByCompany}
+          sitesByCompany={sitesByCompany}
         />
       )}
     </div>

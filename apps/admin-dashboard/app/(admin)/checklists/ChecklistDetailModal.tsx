@@ -1,8 +1,10 @@
 "use client";
 
+import { useRef } from "react";
 import { Modal } from "@/components/Modal";
-import { Badge } from "@/components/ui";
 import type { Checklist } from "@macro/shared/types";
+import { ChecklistDocument } from "./ChecklistDocument";
+import { ChecklistShareBar } from "./ChecklistShareBar";
 
 export function ChecklistDetailModal({
   checklist,
@@ -15,70 +17,38 @@ export function ChecklistDetailModal({
   employeeName: string;
   onClose: () => void;
 }) {
+  // PDF/Image capture happens off a dedicated, fixed-width copy of the
+  // document rather than the one visible in the modal — the modal itself is
+  // only ~460px wide, which squeezes the responsive image grid down to tiny
+  // cramped thumbnails and wraps text awkwardly once captured. This hidden
+  // copy renders at a proper document width regardless of the modal's size.
+  const captureRef = useRef<HTMLDivElement>(null);
   const areaNames = checklist.areas.map((a) => a.main_area).join(", ") || "Checklist";
-  const submitted = checklist.status === "submitted";
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/shared/checklists/${checklist.id}` : "";
 
   return (
     <Modal title={areaNames} onClose={onClose}>
-      <div className="mb-1 text-xs text-text-muted">{checklist.assigned_date} · {companyName}</div>
-      <div className="mb-5 flex items-center justify-between text-sm text-text-muted">
-        <span>{employeeName} · {checklist.site}</span>
-        <Badge tone={submitted ? "success" : "warning"}>{submitted ? "Submitted" : "Pending Review"}</Badge>
+      <ChecklistShareBar targetRef={captureRef} checklist={checklist} shareUrl={shareUrl} />
+
+      <div className="overflow-hidden rounded-2xl border border-border">
+        <ChecklistDocument checklist={checklist} companyName={companyName} employeeName={employeeName} />
       </div>
 
-      {checklist.areas.map((area, i) => (
-        <div key={i} className="mb-4">
-          <div className="mb-2 text-[13.5px] font-bold text-text-dark">{area.main_area}</div>
-          <div className="flex flex-col gap-2">
-            {area.subtasks.map((task) => (
-              <div key={task.id} className="flex items-center gap-2.5">
-                <span
-                  className={`h-[18px] w-[18px] shrink-0 rounded-[5px] border-2 ${
-                    task.done ? "border-primary bg-primary" : "border-border bg-white"
-                  }`}
-                />
-                <span className="text-[13.5px] text-text-dark">{task.text}</span>
-              </div>
-            ))}
-          </div>
-          {area.images.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {area.images.map((url) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={url} src={url} alt="Reference" className="h-14 w-14 rounded-lg object-cover" />
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-
-      {checklist.admin_note && (
-        <>
-          <div className="mb-1.5 text-xs font-bold text-text-muted">ADMIN NOTE</div>
-          <div className="mb-4 rounded-xl bg-bg px-3.5 py-3 text-sm text-text-dark">{checklist.admin_note}</div>
-        </>
-      )}
-
-      <div className="mb-2 text-xs font-bold text-text-muted">SUBMITTED NOTES</div>
-      {checklist.notes ? (
-        <div className="mb-5 rounded-xl bg-bg px-4 py-3.5 text-[13.5px] leading-relaxed text-text-dark">{checklist.notes}</div>
-      ) : (
-        <div className="mb-5 rounded-xl bg-bg px-4 py-3.5 text-sm italic text-text-muted">No notes submitted yet.</div>
-      )}
-
-      <div className="mb-2 text-xs font-bold text-text-muted">SUBMITTED IMAGES</div>
-      <div className="mb-4 flex flex-wrap gap-2.5">
-        {checklist.images.length === 0 ? (
-          <div className="text-sm italic text-text-muted">No images submitted yet.</div>
-        ) : (
-          checklist.images.map((url) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={url} src={url} alt="Submitted" className="h-[72px] w-[72px] rounded-xl object-cover" />
-          ))
-        )}
+      <div className="fixed left-[-10000px] top-0 w-[900px]" aria-hidden="true">
+        <ChecklistDocument
+          ref={captureRef}
+          checklist={checklist}
+          companyName={companyName}
+          employeeName={employeeName}
+          imageGridClassName="grid grid-cols-4 gap-2.5"
+        />
       </div>
 
-      <button type="button" onClick={onClose} className="w-full rounded-[12px] bg-bg py-3 text-sm font-bold text-text-dark">
+      <button
+        type="button"
+        onClick={onClose}
+        className="mt-4 w-full rounded-[12px] bg-bg py-3 text-sm font-bold text-text-dark"
+      >
         Close
       </button>
     </Modal>

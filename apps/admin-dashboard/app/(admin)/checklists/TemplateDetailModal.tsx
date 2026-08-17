@@ -2,13 +2,14 @@
 
 import { Modal } from "@/components/Modal";
 import type { ChecklistTemplate } from "@macro/shared/types";
+import { scheduleSummary } from "../companies/siteSchedule";
 
 export function TemplateDetailModal({
   template,
   companyName,
   onClose,
 }: {
-  template: ChecklistTemplate;
+  template: ChecklistTemplate & { site: string };
   companyName: string;
   onClose: () => void;
 }) {
@@ -16,7 +17,9 @@ export function TemplateDetailModal({
 
   return (
     <Modal title={companyName} onClose={onClose}>
-      <div className="mb-5 text-sm text-text-muted">{template.site} · {subtaskCount} subtasks</div>
+      <div className="mb-5 text-sm text-text-muted">
+        {template.site} · {subtaskCount} subtasks · {scheduleSummary(template)}
+      </div>
       {template.areas.map((area, i) => (
         <div key={i} className="mb-4">
           <div className="mb-2 text-[13.5px] font-bold text-text-dark">{area.main_area}</div>

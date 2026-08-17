@@ -72,6 +72,13 @@ export default async function ChecklistDetailPage({
           </Badge>
         </div>
 
+        {checklist.special_note && (
+          <Card className="border-2 border-primary bg-primary/5">
+            <div className="text-xs font-bold uppercase tracking-wide text-primary">Specific Task</div>
+            <div className="mt-1 text-sm text-text-dark">{checklist.special_note}</div>
+          </Card>
+        )}
+
         {checklist.admin_note && (
           <Card>
             <div className="text-xs font-semibold uppercase tracking-wide text-text-muted">Admin Note</div>
