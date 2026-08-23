@@ -173,6 +173,84 @@ export interface ChecklistAssignment {
   created_at: string;
 }
 
+// ---- Weekly Action Report ----
+export type WeeklyReportStatus = "draft" | "in_progress" | "completed" | "pdf_generated" | "sent";
+export type ReportShareChannel = "whatsapp" | "email";
+export type ReportShareStatus = "sent" | "failed";
+
+export interface WeeklyReport {
+  id: string;
+  report_number: string;
+  title: string;
+  week_start: string;
+  week_ending: string;
+  company_id: string;
+  site_id: string | null;
+  location: string;
+  auditor_id: string | null;
+  supervisor_id: string | null;
+  report_date: string;
+  status: WeeklyReportStatus;
+  created_by: string;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportSection {
+  id: string;
+  report_id: string;
+  sort_order: number;
+  title: string;
+  area_location: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportPhoto {
+  id: string;
+  section_id: string;
+  original_url: string;
+  sort_order: number;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
+export interface PhotoAnnotation {
+  id: string;
+  photo_id: string;
+  // Fabric.js canvas.toJSON() output — the source of truth for re-editing.
+  shapes_json: Record<string, unknown>;
+  annotated_image_url: string | null;
+  updated_by: string | null;
+  updated_at: string;
+}
+
+export interface ReportPdf {
+  id: string;
+  report_id: string;
+  version: number;
+  file_url: string;
+  generated_by: string | null;
+  generated_at: string;
+}
+
+export interface ReportShare {
+  id: string;
+  report_id: string;
+  pdf_id: string | null;
+  channel: ReportShareChannel;
+  recipient: string;
+  cc: string | null;
+  subject: string | null;
+  message: string | null;
+  status: ReportShareStatus;
+  error_message: string | null;
+  sent_by: string | null;
+  sent_at: string;
+}
+
 export interface Communication {
   id: string;
   company_id: string;
@@ -200,6 +278,14 @@ export interface DashboardPermissions {
   checklists: { view: boolean; create: boolean; assign: boolean; delete: boolean };
   communication: { view: boolean; respond: boolean };
   roles: { view: boolean; manage: boolean };
+  weeklyReports: {
+    view: boolean;
+    create: boolean;
+    edit: boolean;
+    delete: boolean;
+    generatePdf: boolean;
+    share: boolean;
+  };
 }
 
 export interface AppPermissions {

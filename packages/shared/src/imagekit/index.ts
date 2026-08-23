@@ -22,9 +22,10 @@ function getClient(): ImageKit {
 /** Uploads a single file under `folder` and returns its public CDN URL. */
 export async function uploadImageToImageKit(file: File, folder: string): Promise<string> {
   const buffer = Buffer.from(await file.arrayBuffer());
+  const fileName = file.name || `image-${Date.now()}`;
   const response = await getClient().files.upload({
-    file: await toFile(buffer, file.name || `image-${Date.now()}`),
-    fileName: file.name || `image-${Date.now()}`,
+    file: await toFile(buffer, fileName),
+    fileName,
     folder,
   });
   if (!response.url) throw new Error("ImageKit upload succeeded but returned no URL.");

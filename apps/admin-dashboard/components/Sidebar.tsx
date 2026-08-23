@@ -72,6 +72,14 @@ function NavIcon({ name }: { name: string }) {
           <path d="M4 5h16v11H8l-4 4V5Z" />
         </svg>
       );
+    case "weeklyReports":
+      return (
+        <svg {...common}>
+          <rect x="4" y="2.5" width="16" height="19" rx="2" />
+          <path d="M8 7h8M8 11h8M8 15h5" />
+          <path d="m8.5 18.5 1.5 1.5 3-3" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -84,6 +92,7 @@ const NAV_ITEMS = [
   { href: "/attendance", label: "Attendance", icon: "attendance", area: "attendance" as const },
   { href: "/audits", label: "Audits", icon: "audits", area: "audits" as const },
   { href: "/checklists", label: "Checklists", icon: "checklists", area: "checklists" as const },
+  { href: "/weekly-reports", label: "Weekly Action Report", icon: "weeklyReports", area: "weeklyReports" as const },
   { href: "/communication", label: "Communication", icon: "communication", area: "communication" as const },
   { href: "/roles-access", label: "Roles & Access", icon: "roles", area: "roles" as const },
 ];

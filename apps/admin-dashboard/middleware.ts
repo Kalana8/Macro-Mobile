@@ -20,6 +20,7 @@ const AREA_ROUTES: [keyof RolePermissions["dashboard"], string][] = [
   ["checklists", "/checklists"],
   ["communication", "/communication"],
   ["roles", "/roles-access"],
+  ["weeklyReports", "/weekly-reports"],
 ];
 
 function firstAvailableRoute(permissions: RolePermissions): string {

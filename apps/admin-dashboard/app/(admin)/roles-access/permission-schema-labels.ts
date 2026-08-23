@@ -62,6 +62,18 @@ export const DASHBOARD_SCHEMA = [
       { key: "manage", label: "Create/edit roles" },
     ],
   },
+  {
+    key: "weeklyReports",
+    label: "Weekly Action Report",
+    functions: [
+      { key: "view", label: "View" },
+      { key: "create", label: "Create" },
+      { key: "edit", label: "Edit" },
+      { key: "delete", label: "Delete" },
+      { key: "generatePdf", label: "Generate PDF" },
+      { key: "share", label: "Share (WhatsApp/Email)" },
+    ],
+  },
 ] as const;
 
 export const APP_SCHEMA = [

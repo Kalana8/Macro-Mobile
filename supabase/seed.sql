@@ -17,7 +17,8 @@ insert into roles (name, is_system, is_admin, permissions) values
       "audits": { "view": true, "createEdit": true, "delete": true, "enterMarks": true, "sendResults": true },
       "checklists": { "view": true, "create": true, "assign": true, "delete": true },
       "communication": { "view": true, "respond": true },
-      "roles": { "view": true, "manage": true }
+      "roles": { "view": true, "manage": true },
+      "weeklyReports": { "view": true, "create": true, "edit": true, "delete": true, "generatePdf": true, "share": true }
     },
     "app": {
       "home": { "view": false },
@@ -42,7 +43,8 @@ insert into roles (name, is_system, is_admin, permissions) values
       "audits": { "view": true, "createEdit": false, "delete": false, "enterMarks": false, "sendResults": false },
       "checklists": { "view": true, "create": false, "assign": false, "delete": false },
       "communication": { "view": true, "respond": true },
-      "roles": { "view": false, "manage": false }
+      "roles": { "view": false, "manage": false },
+      "weeklyReports": { "view": true, "create": true, "edit": true, "delete": false, "generatePdf": true, "share": true }
     },
     "app": {
       "home": { "view": true },
@@ -67,7 +69,8 @@ insert into roles (name, is_system, is_admin, permissions) values
       "audits": { "view": false, "createEdit": false, "delete": false, "enterMarks": false, "sendResults": false },
       "checklists": { "view": false, "create": false, "assign": false, "delete": false },
       "communication": { "view": false, "respond": false },
-      "roles": { "view": false, "manage": false }
+      "roles": { "view": false, "manage": false },
+      "weeklyReports": { "view": false, "create": false, "edit": false, "delete": false, "generatePdf": false, "share": false }
     },
     "app": {
       "home": { "view": true },
@@ -76,6 +79,32 @@ insert into roles (name, is_system, is_admin, permissions) values
       "audits": { "view": true },
       "communication": { "view": true, "send": true },
       "profile": { "view": true, "changePassword": true }
+    }
+  }'::jsonb
+),
+(
+  'Auditor',
+  false,
+  false,
+  '{
+    "dashboard": {
+      "dashboard": { "view": false },
+      "companies": { "view": false, "create": false, "edit": false, "delete": false, "assignEmployees": false },
+      "employees": { "view": false, "create": false, "assignAccessRole": false },
+      "attendance": { "view": false },
+      "audits": { "view": true, "createEdit": true, "delete": false, "enterMarks": false, "sendResults": false },
+      "checklists": { "view": false, "create": false, "assign": false, "delete": false },
+      "communication": { "view": false, "respond": false },
+      "roles": { "view": false, "manage": false },
+      "weeklyReports": { "view": true, "create": true, "edit": true, "delete": false, "generatePdf": true, "share": true }
+    },
+    "app": {
+      "home": { "view": false },
+      "attendance": { "clockInOut": false, "viewHistory": false },
+      "checklists": { "view": false, "submit": false },
+      "audits": { "view": false },
+      "communication": { "view": false, "send": false },
+      "profile": { "view": false, "changePassword": false }
     }
   }'::jsonb
 );

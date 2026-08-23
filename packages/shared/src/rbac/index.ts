@@ -15,6 +15,7 @@ export const EMPTY_PERMISSIONS: RolePermissions = {
     checklists: { view: false, create: false, assign: false, delete: false },
     communication: { view: false, respond: false },
     roles: { view: false, manage: false },
+    weeklyReports: { view: false, create: false, edit: false, delete: false, generatePdf: false, share: false },
   },
   app: {
     home: { view: false },
@@ -36,6 +37,7 @@ export const FULL_PERMISSIONS: RolePermissions = {
     checklists: { view: true, create: true, assign: true, delete: true },
     communication: { view: true, respond: true },
     roles: { view: true, manage: true },
+    weeklyReports: { view: true, create: true, edit: true, delete: true, generatePdf: true, share: true },
   },
   app: {
     home: { view: true },
