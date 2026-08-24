@@ -245,28 +245,33 @@ export function ReportEditor({
         <HistoryPanel report={report} pdfs={pdfs} shares={shares} employeeNameById={employeeNameById} />
       </div>
 
-      {/* Sticky action bar — always-visible primary actions per the field-speed UX requirement. */}
+      {/* Sticky action bar — always-visible primary actions per the field-speed
+          UX requirement. Up to six buttons is too many to wrap gracefully on
+          a phone (it'd grow tall enough to cover page content unpredictably),
+          so on mobile it scrolls horizontally in one fixed-height row instead;
+          md: switches to the desktop wrap-and-right-align layout. */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white px-4 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] md:left-60 md:px-8">
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {saveMessage && <span className="mr-auto text-xs font-semibold text-olive-text">{saveMessage}</span>}
-          <button type="button" onClick={handleAddSection} className="rounded-[11px] border border-border px-4 py-2.5 text-sm font-bold text-text-dark">
+        {saveMessage && <div className="mb-1.5 text-xs font-semibold text-olive-text md:hidden">{saveMessage}</div>}
+        <div className="flex items-center gap-2 overflow-x-auto md:flex-wrap md:justify-end md:overflow-visible">
+          {saveMessage && <span className="mr-auto hidden text-xs font-semibold text-olive-text md:inline">{saveMessage}</span>}
+          <button type="button" onClick={handleAddSection} className="shrink-0 rounded-[11px] border border-border px-4 py-2.5 text-sm font-bold text-text-dark">
             + Add Section
           </button>
           {report.status === "in_progress" && (
-            <button type="button" onClick={handleMarkCompleted} className="rounded-[11px] border border-border px-4 py-2.5 text-sm font-bold text-text-dark">
+            <button type="button" onClick={handleMarkCompleted} className="shrink-0 rounded-[11px] border border-border px-4 py-2.5 text-sm font-bold text-text-dark">
               Mark Completed
             </button>
           )}
-          <button type="button" onClick={handleSaveDraft} disabled={saving} className="rounded-[11px] border border-border px-4 py-2.5 text-sm font-bold text-text-dark disabled:opacity-50">
+          <button type="button" onClick={handleSaveDraft} disabled={saving} className="shrink-0 rounded-[11px] border border-border px-4 py-2.5 text-sm font-bold text-text-dark disabled:opacity-50">
             {saving ? "Saving…" : "Save Draft"}
           </button>
-          <button type="button" onClick={() => setShowPreview(true)} className="rounded-[11px] bg-primary px-4 py-2.5 text-sm font-bold text-white">
+          <button type="button" onClick={() => setShowPreview(true)} className="shrink-0 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-bold text-white">
             Preview Report
           </button>
-          <button type="button" onClick={() => setShowPreview(true)} className="rounded-[11px] bg-orange px-4 py-2.5 text-sm font-bold text-white">
+          <button type="button" onClick={() => setShowPreview(true)} className="shrink-0 rounded-[11px] bg-orange px-4 py-2.5 text-sm font-bold text-white">
             Generate PDF
           </button>
-          <button type="button" onClick={() => setShowShare(true)} className="rounded-[11px] bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white">
+          <button type="button" onClick={() => setShowShare(true)} className="shrink-0 rounded-[11px] bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white">
             Share
           </button>
         </div>

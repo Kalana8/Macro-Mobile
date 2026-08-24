@@ -22,21 +22,22 @@ export async function getCurrentAdmin(): Promise<CurrentAdmin | null> {
 
   if (!user) return null;
 
-  const { data: employee } = await supabase
+  // One joined query instead of two sequential round-trips — this runs on
+  // every admin page navigation (via the (admin) layout), so halving its
+  // latency has a broad, felt effect on the whole dashboard.
+  const { data: row } = await supabase
     .from("employees")
-    .select("*")
+    .select("*, roles(*)")
     .eq("id", user.id)
     .maybeSingle();
 
-  let role: Role | null = null;
-  if (employee) {
-    const { data: roleRow } = await supabase
-      .from("roles")
-      .select("*")
-      .eq("id", employee.access_role_id)
-      .maybeSingle();
-    role = roleRow ?? null;
-  }
+  if (!row) return { authUserId: user.id, employee: null, role: null };
 
-  return { authUserId: user.id, employee: employee ?? null, role };
+  // The untyped Supabase client can't tell this embed is a to-one
+  // relationship (employees.access_role_id -> roles.id), so it may come
+  // back as an array or a single object depending on inference — handle
+  // both rather than assuming one.
+  const { roles, ...employee } = row as unknown as Employee & { roles: Role | Role[] | null };
+  const role = Array.isArray(roles) ? (roles[0] ?? null) : roles;
+  return { authUserId: user.id, employee: employee as Employee, role };
 }

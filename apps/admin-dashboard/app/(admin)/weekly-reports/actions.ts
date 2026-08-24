@@ -320,136 +320,38 @@ export async function generatePdfAction(formData: FormData) {
 }
 
 // ---------------------------------------------------------------------------
-// Sharing — WhatsApp (Meta Cloud API) and Email (Resend). Credentials are
-// server env vars only, never referenced from a client component.
+// Sharing — opens the user's own WhatsApp/email client (wa.me / mailto:),
+// the same pattern already used for Checklists, rather than a Business
+// WhatsApp API/email-provider integration. This just records what was
+// shared for the report's history — the actual send happens client-side.
 // ---------------------------------------------------------------------------
 
-function whatsappConfig() {
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  if (!accessToken || !phoneNumberId) {
-    throw new Error("Business WhatsApp isn't configured — set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID.");
-  }
-  return { accessToken, phoneNumberId };
-}
-
-function resendConfig() {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL;
-  if (!apiKey || !from) {
-    throw new Error("Email sending isn't configured — set RESEND_API_KEY and RESEND_FROM_EMAIL.");
-  }
-  return { apiKey, from };
-}
-
-async function logShare(params: {
+export async function logReportShareAction(params: {
   reportId: string;
   pdfId: string | null;
   channel: "whatsapp" | "email";
   recipient: string;
-  cc?: string | null;
-  subject?: string | null;
-  message?: string | null;
-  status: "sent" | "failed";
-  errorMessage?: string | null;
-  sentBy: string;
-}) {
+  cc?: string;
+  subject?: string;
+  message?: string;
+}): Promise<ActionResult> {
+  const employeeId = await requireEmployeeId();
   const supabase = await createClient();
-  await supabase.from("report_shares").insert({
+  const { error } = await supabase.from("report_shares").insert({
     report_id: params.reportId,
     pdf_id: params.pdfId,
     channel: params.channel,
     recipient: params.recipient,
-    cc: params.cc ?? null,
-    subject: params.subject ?? null,
-    message: params.message ?? null,
-    status: params.status,
-    error_message: params.errorMessage ?? null,
-    sent_by: params.sentBy,
+    cc: params.cc || null,
+    subject: params.subject || null,
+    message: params.message || null,
+    status: "sent",
+    sent_by: employeeId,
   });
-  if (params.status === "sent") {
-    await supabase.from("weekly_reports").update({ status: "sent" }).eq("id", params.reportId);
-  }
-}
+  if (error) return { error: error.message };
 
-export async function sendWhatsAppAction(
-  reportId: string,
-  pdfId: string,
-  pdfUrl: string,
-  recipientPhone: string,
-  message: string
-): Promise<ActionResult> {
-  const employeeId = await requireEmployeeId();
-  try {
-    const { accessToken, phoneNumberId } = whatsappConfig();
-    const res = await fetch(`https://graph.facebook.com/v22.0/${phoneNumberId}/messages`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to: recipientPhone,
-        type: "document",
-        document: { link: pdfUrl, filename: "Weekly-Action-Report.pdf", caption: message || undefined },
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`WhatsApp send failed (${res.status}): ${body.slice(0, 300)}`);
-    }
-    await logShare({ reportId, pdfId, channel: "whatsapp", recipient: recipientPhone, message, status: "sent", sentBy: employeeId });
-    revalidatePath(`/weekly-reports/${reportId}`);
-    return { success: true };
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "WhatsApp send failed.";
-    await logShare({ reportId, pdfId, channel: "whatsapp", recipient: recipientPhone, message, status: "failed", errorMessage, sentBy: employeeId });
-    revalidatePath(`/weekly-reports/${reportId}`);
-    return { error: errorMessage };
-  }
-}
-
-export async function sendEmailAction(
-  reportId: string,
-  pdfId: string,
-  pdfUrl: string,
-  to: string,
-  cc: string,
-  subject: string,
-  message: string
-): Promise<ActionResult> {
-  const employeeId = await requireEmployeeId();
-  try {
-    const { apiKey, from } = resendConfig();
-
-    const pdfRes = await fetch(pdfUrl);
-    if (!pdfRes.ok) throw new Error("Couldn't fetch the generated PDF to attach.");
-    const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
-
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        cc: cc ? [cc] : undefined,
-        subject,
-        html: message
-          .split("\n")
-          .map((line) => `<p>${line}</p>`)
-          .join(""),
-        attachments: [{ filename: "Weekly-Action-Report.pdf", content: pdfBuffer.toString("base64") }],
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Email send failed (${res.status}): ${body.slice(0, 300)}`);
-    }
-    await logShare({ reportId, pdfId, channel: "email", recipient: to, cc, subject, message, status: "sent", sentBy: employeeId });
-    revalidatePath(`/weekly-reports/${reportId}`);
-    return { success: true };
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Email send failed.";
-    await logShare({ reportId, pdfId, channel: "email", recipient: to, cc, subject, message, status: "failed", errorMessage, sentBy: employeeId });
-    revalidatePath(`/weekly-reports/${reportId}`);
-    return { error: errorMessage };
-  }
+  await supabase.from("weekly_reports").update({ status: "sent" }).eq("id", params.reportId);
+  revalidatePath(`/weekly-reports/${params.reportId}`);
+  revalidatePath("/weekly-reports");
+  return { success: true };
 }

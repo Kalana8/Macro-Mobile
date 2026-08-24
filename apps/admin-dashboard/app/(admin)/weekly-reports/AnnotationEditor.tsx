@@ -47,6 +47,11 @@ export function AnnotationEditor({
   const [tool, setTool] = useState<Tool>("select");
   const [color, setColor] = useState(COLORS[2].value); // Red default — most common "flag this" color
   const [strokeWidth, setStrokeWidth] = useState(4);
+  // null = nothing selected, so the Rotation control is hidden.
+  const [selectedAngle, setSelectedAngle] = useState<number | null>(null);
+  // The underlying PHOTO's own rotation — separate from selectedAngle,
+  // which is whatever shape is currently selected.
+  const [photoAngle, setPhotoAngle] = useState(0);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -101,12 +106,27 @@ export function AnnotationEditor({
           await canvas.loadFromJSON(annotation!.shapes_json);
           canvas.renderAll();
         } else {
-          img.set({ left: 0, top: 0, scaleX: scale, scaleY: scale, selectable: false, evented: false });
+          // Centered, not top-left, so the Rotate Photo buttons can spin it
+          // in place around its own middle without having to recompute a
+          // corner offset.
+          img.set({
+            left: canvasWidth / 2,
+            top: canvasHeight / 2,
+            originX: "center",
+            originY: "center",
+            scaleX: scale,
+            scaleY: scale,
+            selectable: false,
+            evented: false,
+          });
           canvas.add(img);
           canvas.sendObjectToBack(img);
         }
 
         pushHistory(canvas);
+
+        const initialBg = canvas.getObjects().find((o: { selectable: boolean }) => !o.selectable) as { angle?: number } | undefined;
+        setPhotoAngle(initialBg?.angle || 0);
 
         canvas.on("object:added", () => pushHistory(canvas));
         canvas.on("object:modified", () => pushHistory(canvas));
@@ -136,6 +156,14 @@ export function AnnotationEditor({
             setError(`Drawing failed: ${err instanceof Error ? err.message : String(err)}`);
           }
         });
+
+        // Keeps the Rotation slider in sync with whatever's currently
+        // selected, so it always reflects and can adjust that shape's angle.
+        const syncSelectedAngle = () => setSelectedAngle(canvas.getActiveObject()?.angle ?? null);
+        canvas.on("selection:created", syncSelectedAngle);
+        canvas.on("selection:updated", syncSelectedAngle);
+        canvas.on("selection:cleared", () => setSelectedAngle(null));
+        canvas.on("object:rotating", syncSelectedAngle);
 
         if (!cancelled) setReady(true);
       } catch (err) {
@@ -186,12 +214,37 @@ export function AnnotationEditor({
   const toolStateRef = useRef({ tool, color, strokeWidth });
   toolStateRef.current = { tool, color, strokeWidth };
 
+  // Built fresh (not incrementally updated) on every drag frame — simpler
+  // and more reliable than trying to keep a Fabric Group's line+head in
+  // sync, since grouping re-parents children into the group's own local
+  // coordinate space and fights absolute-coordinate updates during a drag.
+  function buildArrowPath(x1: number, y1: number, x2: number, y2: number, color: string, strokeWidth: number) {
+    const { Path } = fabricModuleRef.current;
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const headLength = 8 + strokeWidth * 3;
+    const headAngle = Math.PI / 7; // ~25.7°, a natural-looking arrowhead spread
+    const hx1 = x2 - headLength * Math.cos(angle - headAngle);
+    const hy1 = y2 - headLength * Math.sin(angle - headAngle);
+    const hx2 = x2 - headLength * Math.cos(angle + headAngle);
+    const hy2 = y2 - headLength * Math.sin(angle + headAngle);
+    const d = `M ${x1} ${y1} L ${x2} ${y2} M ${hx1} ${hy1} L ${x2} ${y2} L ${hx2} ${hy2} Z`;
+    return new Path(d, {
+      stroke: color,
+      strokeWidth,
+      fill: color,
+      strokeLineJoin: "round",
+      strokeLineCap: "round",
+      selectable: false,
+      evented: false,
+    });
+  }
+
   function startDraw(canvas: any, opt: { e: MouseEvent | TouchEvent }) { // eslint-disable-line @typescript-eslint/no-explicit-any
     const { tool: activeTool, color: activeColor, strokeWidth: activeStroke } = toolStateRef.current;
     if (activeTool === "select") return;
     const pointer = canvas.getPointer(opt.e);
     if (!pointer) return;
-    const { Rect, Circle, Line, Triangle, Group } = fabricModuleRef.current;
+    const { Rect, Circle, Line } = fabricModuleRef.current;
     const common = { stroke: activeColor, strokeWidth: activeStroke, fill: "transparent", selectable: false, evented: false };
 
     let shape: unknown;
@@ -202,9 +255,7 @@ export function AnnotationEditor({
     } else if (activeTool === "line") {
       shape = new Line([pointer.x, pointer.y, pointer.x, pointer.y], { stroke: activeColor, strokeWidth: activeStroke, selectable: false, evented: false });
     } else {
-      const head = new Triangle({ width: activeStroke * 4, height: activeStroke * 4, fill: activeColor, left: pointer.x, top: pointer.y, originX: "center", originY: "center" });
-      const line = new Line([pointer.x, pointer.y, pointer.x, pointer.y], { stroke: activeColor, strokeWidth: activeStroke });
-      shape = new Group([line, head], { selectable: false, evented: false });
+      shape = buildArrowPath(pointer.x, pointer.y, pointer.x, pointer.y, activeColor, activeStroke);
     }
 
     canvas.add(shape);
@@ -216,7 +267,7 @@ export function AnnotationEditor({
     if (!drawing) return;
     const p = canvas.getPointer(opt.e);
     if (!p) return;
-    const { tool: activeTool } = toolStateRef.current;
+    const { tool: activeTool, color: activeColor, strokeWidth: activeStroke } = toolStateRef.current;
     const { shape, startX, startY } = drawing as { shape: any; startX: number; startY: number }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     if (activeTool === "rect") {
@@ -227,11 +278,18 @@ export function AnnotationEditor({
     } else if (activeTool === "line") {
       shape.set({ x2: p.x, y2: p.y });
     } else if (activeTool === "arrow") {
-      const [line, head] = shape.getObjects();
-      line.set({ x2: p.x, y2: p.y });
-      const angle = (Math.atan2(p.y - startY, p.x - startX) * 180) / Math.PI + 90;
-      head.set({ left: p.x, top: p.y, angle });
-      shape.dirty = true;
+      // remove+add fires object:removed/object:added, which would otherwise
+      // push a new undo-history entry on every mousemove of the drag —
+      // suppressed here the same way history-restore already is, so only
+      // endDraw's explicit pushHistory captures the finished arrow.
+      const h = historyRef.current;
+      const wasRestoring = h.restoring;
+      h.restoring = true;
+      canvas.remove(shape);
+      const newPath = buildArrowPath(startX, startY, p.x, p.y, activeColor, activeStroke);
+      canvas.add(newPath);
+      h.restoring = wasRestoring;
+      drawingRef.current = { shape: newPath, startX, startY };
     }
     canvas.requestRenderAll();
   }
@@ -250,16 +308,59 @@ export function AnnotationEditor({
     const canvas = fabricRef.current;
     const active = canvas?.getActiveObject?.();
     if (active) {
-      if (active.type === "group") {
-        active.getObjects().forEach((o: { set: (p: object) => void; type: string }) => {
-          o.set(o.type === "triangle" ? { fill: patch.stroke } : patch);
-        });
-      } else {
-        active.set(patch);
+      const finalPatch = { ...patch };
+      // The arrow head is drawn filled, not just stroked — keep fill in
+      // sync with stroke so a color change doesn't leave a two-tone arrow.
+      if ("stroke" in finalPatch && active.fill && active.fill !== "transparent") {
+        finalPatch.fill = finalPatch.stroke;
       }
+      active.set(finalPatch);
       canvas.requestRenderAll();
       pushHistory(canvas);
     }
+  }
+
+  /** Axis-aligned bounding box of a width×height rectangle rotated by angleDeg. */
+  function rotatedBoundingSize(width: number, height: number, angleDeg: number) {
+    const rad = (angleDeg * Math.PI) / 180;
+    const cos = Math.abs(Math.cos(rad));
+    const sin = Math.abs(Math.sin(rad));
+    return { width: width * cos + height * sin, height: width * sin + height * cos };
+  }
+
+  /**
+   * Rotates the underlying PHOTO itself (not a drawn shape) to any angle,
+   * not just 90° steps — for a phone photo that came in sideways, or one
+   * that just needs a slight tilt correction. Resizes the canvas to the
+   * photo's new rotated bounding box so it isn't left cropped or with dead
+   * space around it. Existing drawn shapes keep their canvas-coordinate
+   * positions, so rotate the photo before annotating it where possible —
+   * shapes added first won't follow the photo around.
+   */
+  function applyPhotoRotation(angleDeg: number) {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const bg = canvas.getObjects().find((o: { selectable: boolean }) => !o.selectable) as
+      | { width: number; height: number; scaleX: number; scaleY: number; set: (p: object) => void; setCoords: () => void }
+      | undefined;
+    if (!bg) return;
+
+    const naturalWidth = bg.width * bg.scaleX;
+    const naturalHeight = bg.height * bg.scaleY;
+    const { width: newCanvasWidth, height: newCanvasHeight } = rotatedBoundingSize(naturalWidth, naturalHeight, angleDeg);
+
+    bg.set({
+      angle: angleDeg,
+      originX: "center",
+      originY: "center",
+      left: newCanvasWidth / 2,
+      top: newCanvasHeight / 2,
+    });
+    bg.setCoords();
+    canvas.setDimensions({ width: newCanvasWidth, height: newCanvasHeight });
+    canvas.requestRenderAll();
+    setPhotoAngle(angleDeg);
+    pushHistory(canvas);
   }
 
   function deleteSelected() {
@@ -365,6 +466,39 @@ export function AnnotationEditor({
           </div>
 
           <div className="mt-1 flex items-center gap-1.5 md:mt-3 md:flex-col md:items-stretch">
+            <div className="hidden text-[10px] font-bold uppercase tracking-wide text-white/50 md:block">
+              Photo Rotation {Math.round(photoAngle)}°
+            </div>
+            <div className="flex w-full items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => applyPhotoRotation((((photoAngle - 90) % 360) + 360) % 360)}
+                title="Rotate photo left 90°"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white/10 text-base font-bold text-white"
+              >
+                ↺
+              </button>
+              <input
+                type="range"
+                min={0}
+                max={359}
+                value={Math.round(photoAngle)}
+                onChange={(e) => applyPhotoRotation(Number(e.target.value))}
+                title="Rotate photo to any angle"
+                className="w-24 md:w-full"
+              />
+              <button
+                type="button"
+                onClick={() => applyPhotoRotation((photoAngle + 90) % 360)}
+                title="Rotate photo right 90°"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white/10 text-base font-bold text-white"
+              >
+                ↻
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-1 flex items-center gap-1.5 md:mt-3 md:flex-col md:items-stretch">
             <div className="hidden text-[10px] font-bold uppercase tracking-wide text-white/50 md:block">Color</div>
             <div className="flex gap-1.5">
               {COLORS.map((c) => (
@@ -399,6 +533,26 @@ export function AnnotationEditor({
               className="w-24 md:w-full"
             />
           </div>
+
+          {selectedAngle !== null && (
+            <div className="mt-1 flex flex-1 items-center gap-2 md:mt-3 md:flex-none md:flex-col md:items-stretch">
+              <div className="hidden text-[10px] font-bold uppercase tracking-wide text-white/50 md:block">
+                Rotation {Math.round(selectedAngle)}°
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={359}
+                value={Math.round(selectedAngle)}
+                onChange={(e) => {
+                  const deg = Number(e.target.value);
+                  setSelectedAngle(deg);
+                  applyToSelection({ angle: deg });
+                }}
+                className="w-24 md:w-full"
+              />
+            </div>
+          )}
         </div>
 
         <div ref={containerRef} className="relative flex flex-1 items-center justify-center overflow-auto p-4">

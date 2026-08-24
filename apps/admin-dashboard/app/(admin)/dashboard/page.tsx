@@ -158,7 +158,7 @@ export default async function DashboardPage({
     <div>
       <PageHeader title="Dashboard" subtitle="Overview across all companies" />
 
-      <div className="grid grid-cols-[1.3fr_1fr] gap-5">
+      <div className="flex flex-col gap-5">
         <Card>
           <div className="mb-4 flex items-center justify-between">
             <div className="text-sm font-bold text-text-dark">Attendance</div>
@@ -216,18 +216,18 @@ export default async function DashboardPage({
             <div className="text-xs text-text-muted">No employees yet.</div>
           ) : (
             employeeChecklistRows.map((row, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg bg-bg px-3.5 py-2.5">
-                <div>
-                  <div className="text-[13px] font-semibold text-text-dark">{row.name}</div>
-                  <div className="text-[11.5px] text-text-muted">{row.company}</div>
+              <div key={i} className="flex items-center justify-between gap-3 rounded-lg bg-bg px-3.5 py-2.5">
+                <div className="min-w-0">
+                  <div className="truncate text-[13px] font-semibold text-text-dark">{row.name}</div>
+                  <div className="truncate text-[11.5px] text-text-muted">{row.company}</div>
                 </div>
-                <div className="text-xs font-semibold text-text-muted">{row.summary}</div>
+                <div className="shrink-0 text-xs font-semibold text-text-muted">{row.summary}</div>
               </div>
             ))
           )}
         </div>
-        <div className="overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="bg-bg">
                 {["Employee", "Company", "Site", "Clock In", "Clock Out", "Checklist"].map((h) => (
@@ -276,13 +276,13 @@ export default async function DashboardPage({
               <Link
                 key={c.id}
                 href="/communication"
-                className="flex items-center justify-between rounded-lg bg-bg px-3.5 py-2.5"
+                className="flex items-center justify-between gap-3 rounded-lg bg-bg px-3.5 py-2.5"
               >
-                <div>
-                  <div className="text-[13px] font-semibold text-text-dark">{c.title}</div>
-                  <div className="text-[11.5px] text-text-muted">{c.companyName} · {c.employeeNames}</div>
+                <div className="min-w-0">
+                  <div className="truncate text-[13px] font-semibold text-text-dark">{c.title}</div>
+                  <div className="truncate text-[11.5px] text-text-muted">{c.companyName} · {c.employeeNames}</div>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex shrink-0 items-center gap-1.5">
                   <Badge tone={PRIORITY_TONE[c.priority]}>{c.priority}</Badge>
                   <Badge tone={c.status === "open" ? "info" : "neutral"}>{c.status}</Badge>
                 </div>
