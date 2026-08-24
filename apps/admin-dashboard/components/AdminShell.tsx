@@ -29,7 +29,7 @@ export function AdminShell({
             <path d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <Image src="/favicon-icon.png" alt="MACRO" width={28} height={28} className="h-7 w-7" />
+        <Image src="/favicon-icon.png" alt="MACRO" width={40} height={40} className="h-10 w-10" />
         <div className="h-9 w-9" />
       </div>
 

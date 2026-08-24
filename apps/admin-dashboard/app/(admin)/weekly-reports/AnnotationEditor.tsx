@@ -47,10 +47,8 @@ export function AnnotationEditor({
   const [tool, setTool] = useState<Tool>("select");
   const [color, setColor] = useState(COLORS[2].value); // Red default — most common "flag this" color
   const [strokeWidth, setStrokeWidth] = useState(4);
-  // null = nothing selected, so the Rotation control is hidden.
-  const [selectedAngle, setSelectedAngle] = useState<number | null>(null);
-  // The underlying PHOTO's own rotation — separate from selectedAngle,
-  // which is whatever shape is currently selected.
+  // 0/90/180/270 — the PHOTO's own rotation, in 90° steps only. Shapes are
+  // never rotated with it (or at all) — rotation applies to the photo only.
   const [photoAngle, setPhotoAngle] = useState(0);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -100,33 +98,40 @@ export function AnnotationEditor({
           selection: true,
         });
         fabricRef.current = canvas;
+        // Fabric marks its canvas elements draggable="true" internally; left
+        // alone, that lets the browser's own native drag-and-drop kick in
+        // when dragging a shape, producing a ghost drag of the WHOLE canvas
+        // (photo included) on top of Fabric's own object move — looking like
+        // "the image moves too" whenever a shape is dragged.
+        canvas.upperCanvasEl?.setAttribute("draggable", "false");
+        canvas.lowerCanvasEl?.setAttribute("draggable", "false");
+
+        // The photo is always added the same way — the freshly loaded,
+        // already-decoded `img` from above — rather than ever letting
+        // Fabric reconstruct it from saved JSON. Re-decoding a saved
+        // "Image" object is async and happens after the canvas already
+        // exists, which is exactly the kind of gap that's previously let
+        // the upper/lower canvas layers or the canvas and its content end
+        // up mismatched; adding the object we already have avoids that
+        // gap entirely, and it's always the same photo.original_url anyway.
+        img.set({ left: 0, top: 0, scaleX: scale, scaleY: scale, selectable: false, evented: false });
+        canvas.add(img);
+        canvas.sendObjectToBack(img);
 
         const hasExisting = annotation?.shapes_json && Object.keys(annotation.shapes_json).length > 0;
         if (hasExisting) {
-          await canvas.loadFromJSON(annotation!.shapes_json);
-          canvas.renderAll();
-        } else {
-          // Centered, not top-left, so the Rotate Photo buttons can spin it
-          // in place around its own middle without having to recompute a
-          // corner offset.
-          img.set({
-            left: canvasWidth / 2,
-            top: canvasHeight / 2,
-            originX: "center",
-            originY: "center",
-            scaleX: scale,
-            scaleY: scale,
-            selectable: false,
-            evented: false,
-          });
-          canvas.add(img);
-          canvas.sendObjectToBack(img);
+          const savedObjects = ((annotation!.shapes_json as { objects?: unknown[] }).objects ?? []).filter(
+            (o) => (o as { type?: string }).type !== "Image"
+          );
+          if (savedObjects.length > 0) {
+            const { util } = fabricModuleRef.current;
+            const shapes = await util.enlivenObjects(savedObjects);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            shapes.forEach((s: any) => canvas.add(s));
+          }
         }
 
         pushHistory(canvas);
-
-        const initialBg = canvas.getObjects().find((o: { selectable: boolean }) => !o.selectable) as { angle?: number } | undefined;
-        setPhotoAngle(initialBg?.angle || 0);
 
         canvas.on("object:added", () => pushHistory(canvas));
         canvas.on("object:modified", () => pushHistory(canvas));
@@ -156,14 +161,6 @@ export function AnnotationEditor({
             setError(`Drawing failed: ${err instanceof Error ? err.message : String(err)}`);
           }
         });
-
-        // Keeps the Rotation slider in sync with whatever's currently
-        // selected, so it always reflects and can adjust that shape's angle.
-        const syncSelectedAngle = () => setSelectedAngle(canvas.getActiveObject()?.angle ?? null);
-        canvas.on("selection:created", syncSelectedAngle);
-        canvas.on("selection:updated", syncSelectedAngle);
-        canvas.on("selection:cleared", () => setSelectedAngle(null));
-        canvas.on("object:rotating", syncSelectedAngle);
 
         if (!cancelled) setReady(true);
       } catch (err) {
@@ -329,15 +326,12 @@ export function AnnotationEditor({
   }
 
   /**
-   * Rotates the underlying PHOTO itself (not a drawn shape) to any angle,
-   * not just 90° steps — for a phone photo that came in sideways, or one
-   * that just needs a slight tilt correction. Resizes the canvas to the
-   * photo's new rotated bounding box so it isn't left cropped or with dead
-   * space around it. Existing drawn shapes keep their canvas-coordinate
-   * positions, so rotate the photo before annotating it where possible —
-   * shapes added first won't follow the photo around.
+   * Rotates the PHOTO only, to any angle (0–359°, not just 90° steps) —
+   * never the drawn shapes, which always stay exactly where they are in
+   * canvas coordinates. Resizes the canvas to the photo's new rotated
+   * bounding box so it isn't left cropped or with dead space around it.
    */
-  function applyPhotoRotation(angleDeg: number) {
+  function setPhotoRotation(angleDeg: number) {
     const canvas = fabricRef.current;
     if (!canvas) return;
     const bg = canvas.getObjects().find((o: { selectable: boolean }) => !o.selectable) as
@@ -466,39 +460,6 @@ export function AnnotationEditor({
           </div>
 
           <div className="mt-1 flex items-center gap-1.5 md:mt-3 md:flex-col md:items-stretch">
-            <div className="hidden text-[10px] font-bold uppercase tracking-wide text-white/50 md:block">
-              Photo Rotation {Math.round(photoAngle)}°
-            </div>
-            <div className="flex w-full items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => applyPhotoRotation((((photoAngle - 90) % 360) + 360) % 360)}
-                title="Rotate photo left 90°"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white/10 text-base font-bold text-white"
-              >
-                ↺
-              </button>
-              <input
-                type="range"
-                min={0}
-                max={359}
-                value={Math.round(photoAngle)}
-                onChange={(e) => applyPhotoRotation(Number(e.target.value))}
-                title="Rotate photo to any angle"
-                className="w-24 md:w-full"
-              />
-              <button
-                type="button"
-                onClick={() => applyPhotoRotation((photoAngle + 90) % 360)}
-                title="Rotate photo right 90°"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white/10 text-base font-bold text-white"
-              >
-                ↻
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-1 flex items-center gap-1.5 md:mt-3 md:flex-col md:items-stretch">
             <div className="hidden text-[10px] font-bold uppercase tracking-wide text-white/50 md:block">Color</div>
             <div className="flex gap-1.5">
               {COLORS.map((c) => (
@@ -534,25 +495,38 @@ export function AnnotationEditor({
             />
           </div>
 
-          {selectedAngle !== null && (
-            <div className="mt-1 flex flex-1 items-center gap-2 md:mt-3 md:flex-none md:flex-col md:items-stretch">
-              <div className="hidden text-[10px] font-bold uppercase tracking-wide text-white/50 md:block">
-                Rotation {Math.round(selectedAngle)}°
-              </div>
+          <div className="mt-1 flex items-center gap-1.5 md:mt-3 md:flex-col md:items-stretch">
+            <div className="hidden text-[10px] font-bold uppercase tracking-wide text-white/50 md:block">
+              Photo Rotation {Math.round(photoAngle)}°
+            </div>
+            <div className="flex w-full items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setPhotoRotation((((photoAngle - 90) % 360) + 360) % 360)}
+                title="Rotate photo left 90°"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white/10 text-base font-bold text-white"
+              >
+                ↺
+              </button>
               <input
                 type="range"
                 min={0}
                 max={359}
-                value={Math.round(selectedAngle)}
-                onChange={(e) => {
-                  const deg = Number(e.target.value);
-                  setSelectedAngle(deg);
-                  applyToSelection({ angle: deg });
-                }}
+                value={Math.round(photoAngle)}
+                onChange={(e) => setPhotoRotation(Number(e.target.value))}
+                title="Rotate photo to any angle"
                 className="w-24 md:w-full"
               />
+              <button
+                type="button"
+                onClick={() => setPhotoRotation((photoAngle + 90) % 360)}
+                title="Rotate photo right 90°"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white/10 text-base font-bold text-white"
+              >
+                ↻
+              </button>
             </div>
-          )}
+          </div>
         </div>
 
         <div ref={containerRef} className="relative flex flex-1 items-center justify-center overflow-auto p-4">
