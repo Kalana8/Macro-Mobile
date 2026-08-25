@@ -49,7 +49,7 @@ export function NewReportModal({
           <FieldLabel>Report Title</FieldLabel>
           <TextInput name="title" placeholder="e.g. Warehouse Weekly Action Report" />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <FieldLabel>Week Starting</FieldLabel>
             <TextInput type="date" name="weekStart" required defaultValue={weekStartDefault} />
@@ -77,7 +77,7 @@ export function NewReportModal({
           <FieldLabel>Location</FieldLabel>
           <TextInput name="location" placeholder="e.g. Building B, Loading Dock" />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <FieldLabel>Auditor</FieldLabel>
             <Select name="auditorId" defaultValue="">
