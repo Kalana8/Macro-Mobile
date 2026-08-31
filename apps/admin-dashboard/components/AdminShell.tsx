@@ -18,7 +18,7 @@ export function AdminShell({
 
   return (
     <div className="flex min-h-screen bg-page-bg">
-      <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-border bg-white px-4 py-3 md:hidden">
+      <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-border bg-white px-4 py-2.5 md:hidden">
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
@@ -29,7 +29,7 @@ export function AdminShell({
             <path d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <Image src="/favicon-icon.png" alt="MACRO" width={40} height={40} className="h-10 w-10" />
+        <Image src="/uploads/footer.webp" alt="MACRO" width={140} height={52} className="h-11 w-auto" />
         <div className="h-9 w-9" />
       </div>
 
@@ -47,7 +47,7 @@ export function AdminShell({
         onCloseMobile={() => setMobileOpen(false)}
       />
 
-      <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-8 pt-20 md:px-10 md:py-8">{children}</main>
+      <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-8 pt-24 md:px-10 md:py-8">{children}</main>
     </div>
   );
 }

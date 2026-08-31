@@ -164,30 +164,55 @@ export function WeeklyReportsTable({
       {filtered.length === 0 ? (
         <EmptyState title="No reports match" hint="Try clearing filters, or create a new report." />
       ) : (
-        <Table head={["Report ID", "Week", "Site / Company", "Auditor", "Supervisor", "Sections", "Status", "Updated", "Actions"]}>
-          {filtered.map((r) => (
-            <tr key={r.id} className="border-b border-border last:border-0">
-              <td className="cursor-pointer px-5 py-3.5 font-semibold text-text-dark" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
-                {r.report_number}
-                <div className="text-[11px] font-normal text-text-muted">{r.title || "Untitled"}</div>
-              </td>
-              <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
-                {formatDate(r.week_start, { month: "short", day: "numeric" })} – {formatDate(r.week_ending, { month: "short", day: "numeric" })}
-              </td>
-              <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
-                {r.siteName ? `${r.siteName} · ` : ""}{r.companyName}
-              </td>
-              <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>{r.auditorName}</td>
-              <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>{r.supervisorName}</td>
-              <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>{r.sectionCount}</td>
-              <td className="cursor-pointer px-5 py-3.5" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
-                <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
-              </td>
-              <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
-                {formatDate(r.updated_at, { month: "short", day: "numeric" })}
-              </td>
-              <td className="px-5 py-3.5">
-                <div className="flex items-center gap-2">
+        <>
+          {/* Mobile: stacked cards — no fixed-width columns, so nothing needs
+              to scroll horizontally to be reached. md: switches to the full
+              table, which has more room to show every column at once. */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {filtered.map((r) => (
+              <div key={r.id} className="rounded-[14px] border border-border bg-white p-4">
+                <button
+                  type="button"
+                  onClick={() => router.push(`/weekly-reports/${r.id}`)}
+                  className="flex w-full items-start justify-between gap-2 text-left"
+                >
+                  <div className="min-w-0">
+                    <div className="font-semibold text-text-dark">{r.report_number}</div>
+                    <div className="truncate text-xs text-text-muted">{r.title || "Untitled"}</div>
+                  </div>
+                  <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+                </button>
+
+                <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                  <div className="min-w-0">
+                    <div className="font-bold uppercase tracking-wide text-text-muted">Week</div>
+                    <div className="truncate text-text-dark">
+                      {formatDate(r.week_start, { month: "short", day: "numeric" })} – {formatDate(r.week_ending, { month: "short", day: "numeric" })}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold uppercase tracking-wide text-text-muted">Sections</div>
+                    <div className="text-text-dark">{r.sectionCount}</div>
+                  </div>
+                  <div className="col-span-2 min-w-0">
+                    <div className="font-bold uppercase tracking-wide text-text-muted">Site / Company</div>
+                    <div className="truncate text-text-dark">{r.siteName ? `${r.siteName} · ` : ""}{r.companyName}</div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold uppercase tracking-wide text-text-muted">Auditor</div>
+                    <div className="truncate text-text-dark">{r.auditorName}</div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold uppercase tracking-wide text-text-muted">Supervisor</div>
+                    <div className="truncate text-text-dark">{r.supervisorName}</div>
+                  </div>
+                  <div className="col-span-2 min-w-0">
+                    <div className="font-bold uppercase tracking-wide text-text-muted">Updated</div>
+                    <div className="text-text-dark">{formatDate(r.updated_at, { month: "short", day: "numeric" })}</div>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
                   <IconChip onClick={() => router.push(`/weekly-reports/${r.id}`)} aria-label="View / Edit" title="View / Edit">
                     <OpenIcon />
                   </IconChip>
@@ -199,10 +224,52 @@ export function WeeklyReportsTable({
                   </IconChip>
                   <DeleteButton action={deleteReportAction} confirmText="Delete this report? This can't be undone." hiddenFields={{ id: r.id }} />
                 </div>
-              </td>
-            </tr>
-          ))}
-        </Table>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block">
+            <Table head={["Report ID", "Week", "Site / Company", "Auditor", "Supervisor", "Sections", "Status", "Updated", "Actions"]}>
+              {filtered.map((r) => (
+                <tr key={r.id} className="border-b border-border last:border-0">
+                  <td className="cursor-pointer px-5 py-3.5 font-semibold text-text-dark" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
+                    {r.report_number}
+                    <div className="text-[11px] font-normal text-text-muted">{r.title || "Untitled"}</div>
+                  </td>
+                  <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
+                    {formatDate(r.week_start, { month: "short", day: "numeric" })} – {formatDate(r.week_ending, { month: "short", day: "numeric" })}
+                  </td>
+                  <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
+                    {r.siteName ? `${r.siteName} · ` : ""}{r.companyName}
+                  </td>
+                  <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>{r.auditorName}</td>
+                  <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>{r.supervisorName}</td>
+                  <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>{r.sectionCount}</td>
+                  <td className="cursor-pointer px-5 py-3.5" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
+                    <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+                  </td>
+                  <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
+                    {formatDate(r.updated_at, { month: "short", day: "numeric" })}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <IconChip onClick={() => router.push(`/weekly-reports/${r.id}`)} aria-label="View / Edit" title="View / Edit">
+                        <OpenIcon />
+                      </IconChip>
+                      <IconChip onClick={() => router.push(`/weekly-reports/${r.id}?action=pdf`)} aria-label="Generate PDF" title="Generate PDF">
+                        <PdfIcon />
+                      </IconChip>
+                      <IconChip onClick={() => router.push(`/weekly-reports/${r.id}?action=share`)} aria-label="Share" title="Share">
+                        <ShareIcon />
+                      </IconChip>
+                      <DeleteButton action={deleteReportAction} confirmText="Delete this report? This can't be undone." hiddenFields={{ id: r.id }} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </Table>
+          </div>
+        </>
       )}
 
       {showNew && (
