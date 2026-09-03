@@ -66,6 +66,44 @@ function LocationLink({ lat, lng, address }: { lat: number | null; lng: number |
   );
 }
 
+/** Combines the location link with a Verified/Mismatch badge + distance — the "🔴 Location Mismatch" indicator surfaced for admins per the geofence validation spec. */
+function LocationCell({
+  lat,
+  lng,
+  address,
+  distance,
+  verified,
+  radius,
+  label,
+}: {
+  lat: number | null;
+  lng: number | null;
+  address: string | null;
+  distance: number | null;
+  verified: boolean;
+  radius: number | null;
+  label: "Clock-In" | "Clock-Out";
+}) {
+  if (lat == null || lng == null) return <span className="text-text-muted">—</span>;
+  return (
+    <div className="flex flex-col gap-1">
+      <LocationLink lat={lat} lng={lng} address={address} />
+      {verified ? (
+        <Badge tone="success">Verified</Badge>
+      ) : (
+        <div className="flex flex-col gap-0.5">
+          <Badge tone="error">🔴 {label} Location Mismatch</Badge>
+          {distance != null && (
+            <span className="text-[10.5px] font-semibold text-error">
+              Distance: {Math.round(distance)}m{radius != null && ` · Allowed: ${radius}m`}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default async function EmployeeAttendancePage({
   params,
   searchParams,
@@ -103,7 +141,7 @@ export default async function EmployeeAttendancePage({
   const baseQuery = supabase
     .from("attendance")
     .select(
-      "id, date, clock_in_at, clock_out_at, total_break_minutes, geo_verified, clock_in_lat, clock_in_lng, clock_in_address, clock_out_lat, clock_out_lng, clock_out_address, clock_out_geo_verified, status, companies(name), sites(name)"
+      "id, date, clock_in_at, clock_out_at, total_break_minutes, geo_verified, clock_in_lat, clock_in_lng, clock_in_address, clock_in_distance, clock_out_lat, clock_out_lng, clock_out_address, clock_out_distance, clock_out_geo_verified, status, companies(name), sites(name, allowed_radius)"
     )
     .eq("employee_id", employeeId);
 
@@ -198,18 +236,37 @@ export default async function EmployeeAttendancePage({
             "Status",
           ]}
         >
-          {records?.map((r) => (
+          {records?.map((r) => {
+            const siteRow = Array.isArray(r.sites) ? r.sites[0] : r.sites;
+            const radius = (siteRow as { allowed_radius?: number } | null)?.allowed_radius ?? null;
+            return (
             <tr key={r.id} className="border-b border-border last:border-0">
               <td className="px-5 py-3.5 text-text-muted">{(r.companies as { name?: string } | null)?.name ?? "—"}</td>
-              <td className="px-5 py-3.5 text-text-muted">{(r.sites as { name?: string } | null)?.name ?? "—"}</td>
+              <td className="px-5 py-3.5 text-text-muted">{(siteRow as { name?: string } | null)?.name ?? "—"}</td>
               {tab === "weekly" && <td className="px-5 py-3.5 text-text-muted">{r.date}</td>}
               <td className="px-5 py-3.5 text-text-muted">{timeOf(r.clock_in_at)}</td>
               <td className="px-5 py-3.5">
-                <LocationLink lat={r.clock_in_lat} lng={r.clock_in_lng} address={r.clock_in_address} />
+                <LocationCell
+                  lat={r.clock_in_lat}
+                  lng={r.clock_in_lng}
+                  address={r.clock_in_address}
+                  distance={r.clock_in_distance}
+                  verified={r.geo_verified}
+                  radius={radius}
+                  label="Clock-In"
+                />
               </td>
               <td className="px-5 py-3.5 text-text-muted">{timeOf(r.clock_out_at)}</td>
               <td className="px-5 py-3.5">
-                <LocationLink lat={r.clock_out_lat} lng={r.clock_out_lng} address={r.clock_out_address} />
+                <LocationCell
+                  lat={r.clock_out_lat}
+                  lng={r.clock_out_lng}
+                  address={r.clock_out_address}
+                  distance={r.clock_out_distance}
+                  verified={r.clock_out_geo_verified}
+                  radius={radius}
+                  label="Clock-Out"
+                />
               </td>
               <td className="px-5 py-3.5 text-text-muted">{breakOf(r.total_break_minutes)}</td>
               <td className="px-5 py-3.5 text-text-muted">{hoursOf(r.clock_in_at, r.clock_out_at, r.total_break_minutes)}</td>
@@ -219,7 +276,8 @@ export default async function EmployeeAttendancePage({
                 </Badge>
               </td>
             </tr>
-          ))}
+            );
+          })}
         </Table>
       )}
     </div>

@@ -2,16 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@macro/shared/supabase/server";
-import { withinGeofence, reverseGeocodeShortName } from "@macro/shared/geo";
+import { haversineDistanceMeters, reverseGeocodeShortName } from "@macro/shared/geo";
 
 export interface AttendanceActionState {
   error?: string;
+  /** Set when clock in/out succeeded but outside the site's geofence — the action still completes (the shift/timer starts or ends normally), but the UI shows a red warning alongside it rather than silently accepting it. */
+  locationMismatch?: { distanceM: number; radiusM: number };
 }
 
 /**
- * Clock in — records the geofence result (Architecture Document §8/§9)
- * alongside the clock-in rather than blocking on it: a mismatch is marked
- * on the attendance row for the admin to see, not rejected or logged out.
+ * Clock in — always completes (the shift starts either way), but the
+ * geofence is re-checked server-side against the site's own allowed_radius
+ * regardless of what the client's earlier site-selection check found, and a
+ * mismatch is both recorded on the row (for the admin dashboard) and
+ * returned here (for an immediate red warning) rather than silently passing.
  */
 export async function clockInAction(
   _prev: AttendanceActionState,
@@ -34,13 +38,14 @@ export async function clockInAction(
 
   const { data: site, error: siteError } = await supabase
     .from("sites")
-    .select("id, company_id, lat, lng")
+    .select("id, company_id, lat, lng, allowed_radius")
     .eq("id", siteId)
     .maybeSingle();
 
   if (siteError || !site) return { error: "Site not found." };
 
-  const geoVerified = withinGeofence(lat, lng, site.lat, site.lng);
+  const distanceM = haversineDistanceMeters(lat, lng, site.lat, site.lng);
+  const geoVerified = distanceM <= site.allowed_radius;
   const address = await reverseGeocodeShortName(lat, lng);
 
   const { error: insertError } = await supabase.from("attendance").insert({
@@ -52,18 +57,20 @@ export async function clockInAction(
     clock_in_lat: lat,
     clock_in_lng: lng,
     clock_in_address: address,
+    clock_in_distance: distanceM,
     status: "clocked_in",
   });
 
   if (insertError) return { error: insertError.message };
 
   revalidatePath("/attendance");
-  return {};
+  return geoVerified ? {} : { locationMismatch: { distanceM, radiusM: site.allowed_radius } };
 }
 
 /**
- * Clock out — same as Clock In, records the geofence result rather than
- * blocking on it.
+ * Clock out — an entirely independent geofence check, never assuming that
+ * being inside the geofence at Clock In means still inside it now. Same as
+ * Clock In: always completes, a mismatch just surfaces as a red warning.
  */
 export async function clockOutAction(
   _prev: AttendanceActionState,
@@ -81,14 +88,17 @@ export async function clockOutAction(
   const supabase = await createClient();
   const { data: record, error: fetchError } = await supabase
     .from("attendance")
-    .select("site_id, sites(lat, lng)")
+    .select("site_id, sites(lat, lng, allowed_radius)")
     .eq("id", attendanceId)
     .maybeSingle();
 
   if (fetchError || !record) return { error: "Active attendance record not found." };
 
   const site = Array.isArray(record.sites) ? record.sites[0] : record.sites;
-  const geoVerified = site ? withinGeofence(lat, lng, site.lat, site.lng) : false;
+  if (!site) return { error: "Site not found." };
+
+  const distanceM = haversineDistanceMeters(lat, lng, site.lat, site.lng);
+  const geoVerified = distanceM <= site.allowed_radius;
   const address = await reverseGeocodeShortName(lat, lng);
 
   const { error } = await supabase
@@ -98,6 +108,7 @@ export async function clockOutAction(
       clock_out_lat: lat,
       clock_out_lng: lng,
       clock_out_address: address,
+      clock_out_distance: distanceM,
       clock_out_geo_verified: geoVerified,
       status: "complete",
     })
@@ -106,7 +117,7 @@ export async function clockOutAction(
   if (error) return { error: error.message };
 
   revalidatePath("/attendance");
-  return {};
+  return geoVerified ? {} : { locationMismatch: { distanceM, radiusM: site.allowed_radius } };
 }
 
 export async function breakStartAction(

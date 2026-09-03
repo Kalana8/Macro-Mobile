@@ -81,16 +81,19 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // One joined query instead of two sequential round-trips — this runs on
+  // every navigation across the whole app.
   const { data: employee } = await supabase
     .from("employees")
-    .select("access_role_id")
+    .select("access_role_id, roles(permissions)")
     .eq("id", user.id)
     .maybeSingle();
 
-  const { data: role } = employee
-    ? await supabase.from("roles").select("permissions").eq("id", employee.access_role_id).maybeSingle()
-    : { data: null };
-  const permissions = role?.permissions as RolePermissions | undefined;
+  // The untyped Supabase client can't tell this embed is a to-one
+  // relationship, so it may come back as an array or a single object
+  // depending on inference — handle both rather than assuming one.
+  const rolesEmbed = employee?.roles as unknown as { permissions: RolePermissions } | { permissions: RolePermissions }[] | null;
+  const permissions = Array.isArray(rolesEmbed) ? rolesEmbed[0]?.permissions : rolesEmbed?.permissions;
 
   if (isPublic) {
     // Logged in and hitting /login — send them to whichever app area their

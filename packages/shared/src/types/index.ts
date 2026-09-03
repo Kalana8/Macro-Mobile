@@ -26,6 +26,8 @@ export interface Site {
   lat: number;
   lng: number;
   status: "open" | "closed";
+  /** Geofence radius, in meters, for site-login/clock-in/clock-out location checks. Defaults to 20. */
+  allowed_radius: number;
   created_at: string;
 }
 
@@ -69,8 +71,12 @@ export interface Attendance {
   geo_verified: boolean;
   clock_in_lat: number | null;
   clock_in_lng: number | null;
+  clock_in_address: string | null;
+  clock_in_distance: number | null;
   clock_out_lat: number | null;
   clock_out_lng: number | null;
+  clock_out_address: string | null;
+  clock_out_distance: number | null;
   clock_out_geo_verified: boolean;
   status: "clocked_in" | "on_break" | "complete";
   created_at: string;

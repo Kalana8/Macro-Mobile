@@ -36,6 +36,11 @@ export function withinGeofence(
   return haversineDistanceMeters(userLat, userLng, siteLat, siteLng) <= radiusM;
 }
 
+/** "8 m" / "146 m" — rounded to the nearest whole meter for display. */
+export function formatDistanceMeters(distanceM: number): string {
+  return `${Math.round(distanceM)} m`;
+}
+
 export interface GeolocationResult {
   lat: number;
   lng: number;

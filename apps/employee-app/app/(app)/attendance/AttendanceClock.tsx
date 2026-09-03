@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
-import { getCurrentPosition } from "@macro/shared/geo";
+import { getCurrentPosition, formatDistanceMeters } from "@macro/shared/geo";
 import { formatDate } from "@macro/shared/datetime";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
@@ -202,6 +202,7 @@ export function AttendanceClock({
   }
 
   const statusLabel = isOnBreak ? "On Break" : isClockedIn ? "Clocked In" : "Clocked Out";
+  const locationMismatch = clockInState.locationMismatch || clockOutState.locationMismatch;
   const error = clockInState.error || clockOutState.error || breakStartState.error || breakEndState.error || geoError;
 
   return (
@@ -232,7 +233,24 @@ export function AttendanceClock({
           </div>
         )}
 
-        {error && <div className="mt-3 rounded-lg bg-white/15 px-3 py-2 text-xs">{error}</div>}
+        {(error || locationMismatch) && (
+          <div
+            className={`mt-3 rounded-lg px-3 py-2 text-xs ${
+              locationMismatch ? "border border-red-300 bg-red-500/90 font-semibold text-white" : "bg-white/15"
+            }`}
+          >
+            {locationMismatch ? (
+              <>
+                <div className="mb-0.5">🔴 Outside authorised location</div>
+                <div>
+                  Recorded {formatDistanceMeters(locationMismatch.distanceM)} from the site — outside the {locationMismatch.radiusM}m authorised radius.
+                </div>
+              </>
+            ) : (
+              error
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">

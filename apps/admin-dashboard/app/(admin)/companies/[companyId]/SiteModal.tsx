@@ -50,8 +50,20 @@ export function SiteModal({
           initialAddress={site?.address ?? ""}
           initialLat={site?.lat}
           initialLng={site?.lng}
-          helpText="Type an address (auto-located) or stand at the site and use your current location. Used for the 20m geofenced login/clock-in."
+          helpText="Type an address (auto-located) or stand at the site and use your current location. Used for the geofenced site login/clock-in/clock-out below."
         />
+
+        <div>
+          <FieldLabel>Geofence Radius (meters)</FieldLabel>
+          <TextInput
+            type="number"
+            name="allowedRadius"
+            min={1}
+            step={1}
+            required
+            defaultValue={site?.allowed_radius ?? 20}
+          />
+        </div>
 
         <div>
           <FieldLabel>Status</FieldLabel>
