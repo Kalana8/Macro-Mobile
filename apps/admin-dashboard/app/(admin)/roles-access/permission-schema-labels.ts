@@ -74,6 +74,16 @@ export const DASHBOARD_SCHEMA = [
       { key: "share", label: "Share (WhatsApp/Email)" },
     ],
   },
+  {
+    key: "inductions",
+    label: "Induction Links",
+    functions: [
+      { key: "view", label: "View" },
+      { key: "create", label: "Create invitations" },
+      { key: "manage", label: "Extend/regenerate/revoke" },
+      { key: "approve", label: "Approve/reject submissions" },
+    ],
+  },
 ] as const;
 
 export const APP_SCHEMA = [

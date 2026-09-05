@@ -257,6 +257,64 @@ export interface ReportShare {
   sent_at: string;
 }
 
+// ---- Employee Site Induction ----
+export type InductionTokenStatus = "active" | "expired" | "revoked" | "completed";
+export type InductionSubmissionStatus = "draft" | "pending_approval" | "approved" | "rejected";
+export type InductionCertificateStatus = "pending" | "active" | "expired" | "revoked";
+
+export interface InductionToken {
+  id: string;
+  employee_id: string;
+  site_id: string;
+  token_hash: string;
+  status: InductionTokenStatus;
+  created_by: string | null;
+  created_at: string;
+  expires_at: string;
+  used_at: string | null;
+  last_accessed_at: string | null;
+}
+
+export interface InductionTokenHistory {
+  id: string;
+  token_id: string;
+  action: "created" | "extended" | "regenerated" | "revoked";
+  old_expires_at: string | null;
+  new_expires_at: string | null;
+  performed_by: string | null;
+  performed_at: string;
+  note: string | null;
+}
+
+export interface InductionSubmission {
+  id: string;
+  token_id: string;
+  employee_id: string;
+  site_id: string;
+  acknowledgements: Record<string, boolean>;
+  signature_name: string | null;
+  status: InductionSubmissionStatus;
+  submitted_at: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InductionCertificate {
+  id: string;
+  submission_id: string;
+  employee_id: string;
+  site_id: string;
+  certificate_number: string;
+  file_url: string | null;
+  status: InductionCertificateStatus;
+  issued_at: string;
+  expires_at: string;
+  created_at: string;
+}
+
 export interface Communication {
   id: string;
   company_id: string;
@@ -292,6 +350,7 @@ export interface DashboardPermissions {
     generatePdf: boolean;
     share: boolean;
   };
+  inductions: { view: boolean; create: boolean; manage: boolean; approve: boolean };
 }
 
 export interface AppPermissions {

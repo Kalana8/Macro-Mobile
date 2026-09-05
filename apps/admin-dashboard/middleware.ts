@@ -5,11 +5,14 @@ import type { RolePermissions } from "@macro/shared/types";
 
 const PUBLIC_PATHS = ["/login"];
 
-// Public checklist share links (/shared/checklists/[id]) — unlike /login,
-// these must stay reachable even when the visitor IS logged in (an admin
-// opening their own share link shouldn't get bounced back to /dashboard by
-// the isPublic redirect below), so they're checked separately.
-const ALWAYS_PUBLIC_PREFIXES = ["/shared/"];
+// Public checklist share links (/shared/checklists/[id]) and induction
+// invitation links (/induction/[token]) — unlike /login, these must stay
+// reachable even when the visitor IS logged in (an admin opening their own
+// share/invite link shouldn't get bounced back to /dashboard by the
+// isPublic redirect below), so they're checked separately. The induction
+// token itself (not a database id) is the only thing gating access to that
+// route — see app/induction/[token]/page.tsx.
+const ALWAYS_PUBLIC_PREFIXES = ["/shared/", "/induction/"];
 
 const AREA_ROUTES: [keyof RolePermissions["dashboard"], string][] = [
   ["dashboard", "/dashboard"],
@@ -21,6 +24,7 @@ const AREA_ROUTES: [keyof RolePermissions["dashboard"], string][] = [
   ["communication", "/communication"],
   ["roles", "/roles-access"],
   ["weeklyReports", "/weekly-reports"],
+  ["inductions", "/inductions"],
 ];
 
 function firstAvailableRoute(permissions: RolePermissions): string {

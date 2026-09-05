@@ -80,6 +80,16 @@ function NavIcon({ name }: { name: string }) {
           <path d="m8.5 18.5 1.5 1.5 3-3" />
         </svg>
       );
+    case "inductions":
+      return (
+        <svg {...common}>
+          <path d="M9 12h6M9 16h4" />
+          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+          <path d="M14 3v5h5" />
+          <circle cx="17.5" cy="17.5" r="3.5" />
+          <path d="m19.5 19.5 1.5 1.5" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -93,6 +103,7 @@ const NAV_ITEMS = [
   { href: "/audits", label: "Audits", icon: "audits", area: "audits" as const },
   { href: "/checklists", label: "Checklists", icon: "checklists", area: "checklists" as const },
   { href: "/weekly-reports", label: "Weekly Action Report", icon: "weeklyReports", area: "weeklyReports" as const },
+  { href: "/inductions", label: "Induction Links", icon: "inductions", area: "inductions" as const },
   { href: "/communication", label: "Communication", icon: "communication", area: "communication" as const },
   { href: "/roles-access", label: "Roles & Access", icon: "roles", area: "roles" as const },
 ];

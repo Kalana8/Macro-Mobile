@@ -16,6 +16,7 @@ export const EMPTY_PERMISSIONS: RolePermissions = {
     communication: { view: false, respond: false },
     roles: { view: false, manage: false },
     weeklyReports: { view: false, create: false, edit: false, delete: false, generatePdf: false, share: false },
+    inductions: { view: false, create: false, manage: false, approve: false },
   },
   app: {
     home: { view: false },
@@ -38,6 +39,7 @@ export const FULL_PERMISSIONS: RolePermissions = {
     communication: { view: true, respond: true },
     roles: { view: true, manage: true },
     weeklyReports: { view: true, create: true, edit: true, delete: true, generatePdf: true, share: true },
+    inductions: { view: true, create: true, manage: true, approve: true },
   },
   app: {
     home: { view: true },
