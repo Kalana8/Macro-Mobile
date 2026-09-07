@@ -4,7 +4,10 @@ import { createServiceRoleClient } from "@macro/shared/supabase/server";
 import { formatDate, formatTime } from "@macro/shared/datetime";
 import { hashToken } from "@/lib/inductionToken";
 import { toOne } from "@/lib/embed";
+import type { InductionFormSection } from "@macro/shared/types";
 import { InductionForm } from "./InductionForm";
+import { CertificateScreen } from "./CertificateScreen";
+import type { InductionCertificateInfo } from "./actions";
 
 export const metadata: Metadata = {
   title: "Site Induction",
@@ -89,6 +92,36 @@ export default async function InductionLinkPage({ params }: { params: Promise<{ 
   }
 
   if (token.status === "completed") {
+    const { data: submission } = await supabase
+      .from("induction_submissions")
+      .select("id")
+      .eq("token_id", token.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const [{ data: certificate }, { data: template }] = await Promise.all([
+      submission
+        ? supabase.from("induction_certificates").select("*").eq("submission_id", submission.id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      token.template_id ? supabase.from("induction_templates").select("name").eq("id", token.template_id).maybeSingle() : Promise.resolve({ data: null }),
+    ]);
+
+    if (certificate) {
+      const info: InductionCertificateInfo = {
+        certificateNumber: certificate.certificate_number,
+        employeeName: employee?.full_name ?? "N/A",
+        siteName: siteName ?? "N/A",
+        companyName: companyName ?? "N/A",
+        assignmentName: template?.name ?? "Site Induction",
+        issuedAt: certificate.issued_at,
+        expiresAt: certificate.expires_at,
+        fileUrl: certificate.file_url,
+      };
+      const expired = new Date() > new Date(certificate.expires_at) || certificate.status === "expired";
+      return <CertificateScreen employeeName={info.employeeName} certificate={info} justSubmitted={false} expired={expired} />;
+    }
+
     return (
       <MessagePage
         emoji="✅"
@@ -107,20 +140,35 @@ export default async function InductionLinkPage({ params }: { params: Promise<{ 
     return <ExpiredPage siteName={siteName} companyName={companyName} expiresAt={token.expires_at} hasDraft={Boolean(draft)} />;
   }
 
-  const { data: submission } = await supabase
-    .from("induction_submissions")
-    .select("*")
-    .eq("token_id", token.id)
-    .maybeSingle();
+  const [{ data: submission }, { data: template }] = await Promise.all([
+    supabase.from("induction_submissions").select("*").eq("token_id", token.id).maybeSingle(),
+    token.template_id
+      ? supabase.from("induction_templates").select("name, description, sections").eq("id", token.template_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const sections = (template?.sections as InductionFormSection[] | null) ?? [];
+
+  if (sections.length === 0) {
+    return (
+      <MessagePage
+        emoji="⚠️"
+        title="Induction Not Configured"
+        message="This invitation isn't linked to a valid induction assignment. Please contact your administrator."
+      />
+    );
+  }
 
   return (
     <InductionForm
       rawToken={rawToken}
-      employeeName={employee?.full_name ?? "—"}
-      siteName={siteName ?? "—"}
-      companyName={companyName ?? "—"}
+      employeeName={employee?.full_name ?? ""}
+      siteName={siteName ?? ""}
+      companyName={companyName ?? ""}
       expiresAt={token.expires_at}
-      initialAcknowledgements={(submission?.acknowledgements as Record<string, boolean> | null) ?? {}}
+      assignmentTitle={template?.name ?? "Site Safety Induction"}
+      assignmentDescription={template?.description ?? ""}
+      sections={sections}
+      initialAnswers={(submission?.answers as Record<string, string | string[] | { fileUrl: string; fileName: string }> | null) ?? {}}
       initialSignatureName={submission?.signature_name ?? ""}
     />
   );

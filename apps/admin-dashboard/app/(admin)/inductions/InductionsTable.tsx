@@ -69,13 +69,17 @@ export function InductionsTable({
   rows,
   employees,
   sites,
+  templates,
+  initialTemplateId,
 }: {
   rows: InductionRow[];
   employees: { id: string; full_name: string }[];
   sites: { id: string; name: string; company_id: string }[];
+  templates: { id: string; name: string }[];
+  initialTemplateId?: string;
 }) {
   const router = useRouter();
-  const [showNew, setShowNew] = useState(false);
+  const [showNew, setShowNew] = useState(Boolean(initialTemplateId));
   const [extendingId, setExtendingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<(typeof STATUS_FILTERS)[number]>("all");
@@ -242,7 +246,15 @@ export function InductionsTable({
         </>
       )}
 
-      {showNew && <CreateInductionModal employees={employees} sites={sites} onClose={() => setShowNew(false)} />}
+      {showNew && (
+        <CreateInductionModal
+          employees={employees}
+          sites={sites}
+          templates={templates}
+          defaultTemplateId={initialTemplateId}
+          onClose={() => setShowNew(false)}
+        />
+      )}
       {extendingRow && (
         <ExtendModal tokenId={extendingRow.id} currentExpiresAt={extendingRow.expires_at} onClose={() => setExtendingId(null)} />
       )}

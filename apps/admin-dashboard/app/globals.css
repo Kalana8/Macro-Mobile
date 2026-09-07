@@ -38,9 +38,16 @@ body {
   box-sizing: border-box;
 }
 
-a {
-  color: var(--color-primary);
-  text-decoration: none;
+/* In @layer base so utility classes (e.g. text-white on a colored button
+   link) always win — an unlayered rule here would beat Tailwind's utility
+   layer regardless of specificity, silently making "text-white" no-op on
+   anchors and (worst case) rendering text invisible against a matching
+   background. */
+@layer base {
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
 }
 
 input::placeholder,

@@ -27,10 +27,12 @@ export interface CreateInductionResult extends ActionResult {
 export async function createInductionAction(_prev: CreateInductionResult, formData: FormData): Promise<CreateInductionResult> {
   const employeeId = String(formData.get("employeeId") ?? "");
   const siteId = String(formData.get("siteId") ?? "");
+  const templateId = String(formData.get("templateId") ?? "") || null;
   const expiryOption = String(formData.get("expiryOption") ?? "7d");
   const customExpiresAt = String(formData.get("customExpiresAt") ?? "");
 
   if (!employeeId || !siteId) return { error: "Select an employee and a site." };
+  if (!templateId) return { error: "Select an induction template — create one first if none exist yet." };
 
   const now = new Date();
   let expiresAt: Date;
@@ -62,6 +64,7 @@ export async function createInductionAction(_prev: CreateInductionResult, formDa
     .insert({
       employee_id: employeeId,
       site_id: siteId,
+      template_id: templateId,
       token_hash: hashToken(rawToken),
       expires_at: expiresAt.toISOString(),
       created_by: performedBy,
@@ -152,7 +155,7 @@ export async function regenerateInductionAction(_prev: CreateInductionResult, fo
   const supabase = await createClient();
   const { data: existing, error: fetchError } = await supabase
     .from("induction_tokens")
-    .select("id, employee_id, site_id, expires_at")
+    .select("id, employee_id, site_id, template_id, expires_at")
     .eq("id", tokenId)
     .maybeSingle();
   if (fetchError || !existing) return { error: "Invitation not found." };
@@ -180,6 +183,7 @@ export async function regenerateInductionAction(_prev: CreateInductionResult, fo
     .insert({
       employee_id: existing.employee_id,
       site_id: existing.site_id,
+      template_id: existing.template_id,
       token_hash: hashToken(rawToken),
       expires_at: expiresAt.toISOString(),
       created_by: performedBy,
@@ -245,6 +249,7 @@ export async function approveSubmissionAction(formData: FormData): Promise<void>
     .eq("submission_id", submissionId);
 
   revalidatePath("/inductions");
+  revalidatePath("/inductions/submissions");
 }
 
 export async function rejectSubmissionAction(formData: FormData): Promise<void> {
@@ -266,4 +271,44 @@ export async function rejectSubmissionAction(formData: FormData): Promise<void> 
     .eq("submission_id", submissionId);
 
   revalidatePath("/inductions");
+  revalidatePath("/inductions/submissions");
+}
+
+/** Explicit admin override — marks a submission/certificate expired ahead of the automatic date-based check, e.g. a site policy change that invalidates an otherwise still-valid certificate early. */
+export async function markSubmissionExpiredAction(formData: FormData): Promise<void> {
+  const submissionId = String(formData.get("submissionId") ?? "");
+  if (!submissionId) return;
+
+  const performedBy = await requireEmployeeId();
+  const supabase = await createClient();
+
+  await supabase
+    .from("induction_submissions")
+    .update({ status: "expired", reviewed_by: performedBy, reviewed_at: new Date().toISOString() })
+    .eq("id", submissionId);
+
+  await supabase.from("induction_certificates").update({ status: "expired" }).eq("submission_id", submissionId);
+
+  revalidatePath("/inductions");
+  revalidatePath("/inductions/submissions");
+}
+
+/** Requests a fresh submission from the employee — clears the completed submission's answers status back to nothing usable and revokes the token so a brand-new invitation is needed; used when an admin needs the employee to redo an induction (e.g. content changed materially). */
+export async function requestResubmissionAction(formData: FormData): Promise<void> {
+  const tokenId = String(formData.get("tokenId") ?? "");
+  if (!tokenId) return;
+
+  const performedBy = await requireEmployeeId();
+  const supabase = await createClient();
+
+  await supabase.from("induction_tokens").update({ status: "revoked" }).eq("id", tokenId);
+  await supabase.from("induction_token_history").insert({
+    token_id: tokenId,
+    action: "revoked",
+    performed_by: performedBy,
+    note: "Resubmission requested by admin — employee must complete a new invitation.",
+  });
+
+  revalidatePath("/inductions");
+  revalidatePath("/inductions/submissions");
 }

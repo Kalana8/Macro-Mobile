@@ -24,10 +24,14 @@ function SubmitButton() {
 export function CreateInductionModal({
   employees,
   sites,
+  templates,
+  defaultTemplateId,
   onClose,
 }: {
   employees: { id: string; full_name: string }[];
   sites: { id: string; name: string; company_id: string }[];
+  templates: { id: string; name: string }[];
+  defaultTemplateId?: string;
   onClose: () => void;
 }) {
   const [state, formAction] = useActionState<CreateInductionResult, FormData>(createInductionAction, {});
@@ -83,6 +87,13 @@ export function CreateInductionModal({
           <Select name="siteId" required defaultValue="">
             <option value="" disabled>Select site</option>
             {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </Select>
+        </div>
+        <div>
+          <FieldLabel>Induction Template</FieldLabel>
+          <Select name="templateId" required defaultValue={defaultTemplateId ?? templates[0]?.id ?? ""}>
+            {templates.length === 0 && <option value="" disabled>No templates yet — create one first</option>}
+            {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </Select>
         </div>
         <div>

@@ -3,14 +3,11 @@
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Image from "next/image";
+import { QuestionInput } from "@/components/QuestionInput";
+import type { InductionAnswerValue, InductionFormSection } from "@macro/shared/types";
 import { saveDraftAction, submitInductionAction, type InductionFormState } from "./actions";
-
-const ACK_ITEMS = [
-  { key: "siteRules", label: "I have read and understood the site safety rules." },
-  { key: "ppe", label: "I understand the PPE (Personal Protective Equipment) requirements for this site." },
-  { key: "emergency", label: "I understand the emergency procedures and evacuation points for this site." },
-  { key: "hazards", label: "I have been made aware of the known hazards present on this site." },
-] as const;
+import { InductionIntro } from "./InductionIntro";
+import { CertificateScreen } from "./CertificateScreen";
 
 function countdownLabel(msRemaining: number): string {
   if (msRemaining <= 0) return "Expired";
@@ -26,10 +23,17 @@ function countdownLabel(msRemaining: number): string {
   return hours > 0 ? `${days} days ${hours} hours` : `${days} days`;
 }
 
-function SubmitButton({ label, pendingLabel, className }: { label: string; pendingLabel: string; className: string }) {
+function isEmptyAnswer(value: InductionAnswerValue): boolean {
+  if (value === null || value === undefined) return true;
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === "string") return value.trim() === "";
+  return false;
+}
+
+function SubmitButton({ label, pendingLabel, className, onClick }: { label: string; pendingLabel: string; className: string; onClick?: () => void }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className={className}>
+    <button type="submit" disabled={pending} onClick={onClick} className={className}>
       {pending ? pendingLabel : label}
     </button>
   );
@@ -41,7 +45,10 @@ export function InductionForm({
   siteName,
   companyName,
   expiresAt,
-  initialAcknowledgements,
+  assignmentTitle,
+  assignmentDescription,
+  sections,
+  initialAnswers,
   initialSignatureName,
 }: {
   rawToken: string;
@@ -49,12 +56,19 @@ export function InductionForm({
   siteName: string;
   companyName: string;
   expiresAt: string;
-  initialAcknowledgements: Record<string, boolean>;
+  assignmentTitle: string;
+  assignmentDescription: string;
+  sections: InductionFormSection[];
+  initialAnswers: Record<string, InductionAnswerValue>;
   initialSignatureName: string;
 }) {
-  const [acks, setAcks] = useState<Record<string, boolean>>(initialAcknowledgements);
+  const [answers, setAnswers] = useState<Record<string, InductionAnswerValue>>(initialAnswers);
   const [signatureName, setSignatureName] = useState(initialSignatureName);
   const [now, setNow] = useState(() => Date.now());
+  const [triedSubmit, setTriedSubmit] = useState(false);
+  // A draft already in progress (e.g. reopening the link) skips straight to
+  // the form — the intro screen is only for a first-time, unstarted visit.
+  const [started, setStarted] = useState(() => Object.values(initialAnswers).some((v) => v !== null && v !== undefined && v !== ""));
 
   const [draftState, draftAction] = useActionState<InductionFormState, FormData>(saveDraftAction, {});
   const [submitState, submitAction] = useActionState<InductionFormState, FormData>(submitInductionAction, {});
@@ -71,17 +85,12 @@ export function InductionForm({
   // through; it would just get the real "expired" error back from the server.
   const urgent = msRemaining < 3600_000;
 
-  if (submitState.success) {
-    return (
-      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 p-6 text-center">
-        <Image src="/uploads/footer.webp" alt="Macro Property Services" width={140} height={52} className="h-11 w-auto" />
-        <div className="text-4xl">✅</div>
-        <h1 className="text-xl font-extrabold text-text-dark">Induction Submitted</h1>
-        <p className="text-sm text-text-muted">
-          Thank you, {employeeName}. Your site induction has been submitted and is now awaiting administrator approval. You&apos;ll be notified once it&apos;s approved.
-        </p>
-      </div>
-    );
+  function setAnswer(id: string, value: InductionAnswerValue) {
+    setAnswers((prev) => ({ ...prev, [id]: value }));
+  }
+
+  if (submitState.success && submitState.certificate) {
+    return <CertificateScreen employeeName={employeeName} certificate={submitState.certificate} justSubmitted expired={false} />;
   }
 
   if (submitState.expired || draftState.expired) {
@@ -94,63 +103,81 @@ export function InductionForm({
     );
   }
 
+  if (!started) {
+    return (
+      <InductionIntro
+        assignmentTitle={assignmentTitle}
+        assignmentDescription={assignmentDescription}
+        sections={sections}
+        onStart={() => setStarted(true)}
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-lg p-5 pb-28">
       <div className="flex flex-col items-center gap-2 py-4 text-center">
         <Image src="/uploads/footer.webp" alt="Macro Property Services" width={140} height={52} className="h-11 w-auto" />
-        <h1 className="mt-1 text-lg font-extrabold text-text-dark">Site Safety Induction</h1>
+        <h1 className="mt-1 text-lg font-extrabold text-text-dark">{assignmentTitle}</h1>
+        {assignmentDescription && <p className="text-xs text-text-muted">{assignmentDescription}</p>}
       </div>
 
       <div className={`mb-4 rounded-xl px-3.5 py-2.5 text-center text-xs font-semibold ${urgent ? "bg-error/10 text-error" : "bg-bg text-text-muted"}`}>
         Invitation expires in {countdownLabel(msRemaining)}
       </div>
 
-      <div className="mb-4 rounded-xl border border-border bg-white p-4">
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div>
-            <div className="font-bold uppercase tracking-wide text-text-muted">Employee</div>
-            <div className="text-sm text-text-dark">{employeeName}</div>
-          </div>
-          <div>
-            <div className="font-bold uppercase tracking-wide text-text-muted">Site</div>
-            <div className="text-sm text-text-dark">{siteName}</div>
-          </div>
-          <div className="col-span-2">
-            <div className="font-bold uppercase tracking-wide text-text-muted">Company</div>
-            <div className="text-sm text-text-dark">{companyName}</div>
+      {(employeeName || siteName || companyName) && (
+        <div className="mb-4 rounded-xl border border-border bg-white p-4">
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            {employeeName && (
+              <div>
+                <div className="font-bold uppercase tracking-wide text-text-muted">Employee</div>
+                <div className="text-sm text-text-dark">{employeeName}</div>
+              </div>
+            )}
+            {siteName && (
+              <div>
+                <div className="font-bold uppercase tracking-wide text-text-muted">Site</div>
+                <div className="text-sm text-text-dark">{siteName}</div>
+              </div>
+            )}
+            {companyName && (
+              <div className="col-span-2">
+                <div className="font-bold uppercase tracking-wide text-text-muted">Company</div>
+                <div className="text-sm text-text-dark">{companyName}</div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-white p-4 text-sm leading-relaxed text-text-dark">
-        <p>
-          Welcome to {siteName}. Before you begin work at this site, please read and acknowledge the following site
-          safety information. This induction covers the site&apos;s safety rules, required PPE, emergency procedures,
-          and known hazards.
-        </p>
-        <p className="text-text-muted">
-          Please read each item carefully and check the box to confirm you understand it. You must acknowledge every
-          item before you can submit this induction.
-        </p>
-      </div>
-
-      <form action={draftAction} id="induction-form" className="flex flex-col gap-3">
+      <form action={draftAction} id="induction-form" encType="multipart/form-data" className="flex flex-col gap-3">
         <input type="hidden" name="rawToken" value={rawToken} />
 
-        <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-white p-4">
-          {ACK_ITEMS.map((item) => (
-            <label key={item.key} className="flex items-start gap-2.5 text-sm text-text-dark">
-              <input
-                type="checkbox"
-                name={item.key}
-                checked={Boolean(acks[item.key])}
-                onChange={(e) => setAcks((prev) => ({ ...prev, [item.key]: e.target.checked }))}
-                className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
-              />
-              <span>{item.label}</span>
-            </label>
-          ))}
-        </div>
+        {sections.map((section) => (
+          <div key={section.id} className="rounded-xl border border-border bg-white p-4">
+            <div className="mb-3">
+              <div className="text-[15px] font-bold text-text-dark">{section.title}</div>
+              {section.description && <div className="mt-0.5 text-xs text-text-muted">{section.description}</div>}
+            </div>
+            <div className="flex flex-col gap-4">
+              {section.questions.map((q) => {
+                const invalid = triedSubmit && q.required && isEmptyAnswer(answers[q.id] ?? null);
+                return (
+                  <div key={q.id}>
+                    <label className="mb-1.5 block text-sm font-semibold text-text-dark">
+                      {q.title}
+                      {q.required && <span className="ml-1 text-error">*</span>}
+                    </label>
+                    {q.description && <p className="mb-1.5 text-xs text-text-muted">{q.description}</p>}
+                    <QuestionInput question={q} value={answers[q.id] ?? null} onChange={(v) => setAnswer(q.id, v)} invalid={invalid} />
+                    {invalid && <p className="mt-1 text-[11.5px] text-error">This question is required.</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
 
         <div className="rounded-xl border border-border bg-white p-4">
           <label className="text-xs font-bold uppercase tracking-wide text-text-muted">Signature — type your full name to sign</label>
@@ -177,7 +204,12 @@ export function InductionForm({
             pendingLabel="Saving…"
             className="flex-1 rounded-xl border border-border py-3 text-sm font-bold text-text-dark"
           />
-          <button type="submit" formAction={submitAction} className="flex-[2] rounded-xl bg-primary py-3 text-sm font-bold text-white">
+          <button
+            type="submit"
+            formAction={submitAction}
+            onClick={() => setTriedSubmit(true)}
+            className="flex-[2] rounded-xl bg-primary py-3 text-sm font-bold text-white"
+          >
             Submit Induction
           </button>
         </div>

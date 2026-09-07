@@ -2,13 +2,19 @@ import { createClient } from "@macro/shared/supabase/server";
 import { PageHeader } from "@/components/ui";
 import { toOne } from "@/lib/embed";
 import type { InductionCertificate, InductionSubmission, InductionToken } from "@macro/shared/types";
+import { InductionTabs } from "./InductionTabs";
 import { InductionsTable } from "./InductionsTable";
 import type { InductionRow } from "./types";
 
-export default async function InductionsPage() {
+export default async function InductionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ newFromTemplate?: string }>;
+}) {
+  const { newFromTemplate } = await searchParams;
   const supabase = await createClient();
 
-  const [{ data: tokens, error }, { data: employees }, { data: sites }, { data: submissions }, { data: certificates }] =
+  const [{ data: tokens, error }, { data: employees }, { data: sites }, { data: submissions }, { data: certificates }, { data: templates }] =
     await Promise.all([
       supabase
         .from("induction_tokens")
@@ -18,6 +24,7 @@ export default async function InductionsPage() {
       supabase.from("sites").select("id, name, company_id").order("name"),
       supabase.from("induction_submissions").select("*").order("created_at", { ascending: false }),
       supabase.from("induction_certificates").select("*"),
+      supabase.from("induction_templates").select("id, name").eq("status", "published").order("name"),
     ]);
 
   const submissionByToken = new Map<string, InductionSubmission>();
@@ -47,6 +54,7 @@ export default async function InductionsPage() {
   return (
     <div>
       <PageHeader title="Induction Links" subtitle="Site induction invitations, expiration, and approval" />
+      <InductionTabs active="invitations" />
 
       {error && (
         <div className="mb-4 rounded-lg bg-error/10 px-3 py-2 text-sm text-error">
@@ -59,6 +67,8 @@ export default async function InductionsPage() {
           rows={rows}
           employees={employees ?? []}
           sites={sites ?? []}
+          templates={templates ?? []}
+          initialTemplateId={newFromTemplate}
         />
       )}
     </div>

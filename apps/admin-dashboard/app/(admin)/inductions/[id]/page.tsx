@@ -4,8 +4,16 @@ import { createClient } from "@macro/shared/supabase/server";
 import { Badge, Card, PageHeader } from "@/components/ui";
 import { toOne } from "@/lib/embed";
 import { formatDate, formatTime } from "@macro/shared/datetime";
-import type { InductionCertificate, InductionSubmission, InductionToken, InductionTokenHistory } from "@macro/shared/types";
-import { approveSubmissionAction } from "../actions";
+import type {
+  InductionAnswerValue,
+  InductionCertificate,
+  InductionFormSection,
+  InductionSubmission,
+  InductionSubmissionStatus,
+  InductionToken,
+  InductionTokenHistory,
+} from "@macro/shared/types";
+import { approveSubmissionAction, markSubmissionExpiredAction, requestResubmissionAction } from "../actions";
 import { effectiveStatus } from "../types";
 import { RejectButton } from "./RejectButton";
 
@@ -14,14 +22,43 @@ function fullDate(iso: string | null): string {
   return `${formatDate(iso, { day: "2-digit", month: "long", year: "numeric" })}, ${formatTime(iso, { hour: "numeric", minute: "2-digit" })}`;
 }
 
+function AnswerValue({ value }: { value: InductionAnswerValue }) {
+  if (value === null || value === undefined || (Array.isArray(value) && value.length === 0) || value === "") {
+    return <span className="text-text-muted">No answer</span>;
+  }
+  if (Array.isArray(value)) {
+    return <span className="text-text-dark">{value.join(", ")}</span>;
+  }
+  if (typeof value === "object" && "fileUrl" in value) {
+    return value.fileUrl ? (
+      <a href={value.fileUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline">
+        {value.fileName || "View file"}
+      </a>
+    ) : (
+      <span className="text-text-muted">{value.fileName} (not uploaded)</span>
+    );
+  }
+  return <span className="text-text-dark">{String(value)}</span>;
+}
+
 const STATUS_TONE = { active: "info", expiring_soon: "warning", expired: "error", completed: "success", revoked: "neutral" } as const;
 const STATUS_LABEL = { active: "Active", expiring_soon: "Expiring Soon", expired: "Expired", completed: "Completed", revoked: "Revoked" } as const;
 
-const ACK_LABELS: Record<string, string> = {
-  siteRules: "I have read and understood the site safety rules.",
-  ppe: "I understand the PPE requirements for this site.",
-  emergency: "I understand the emergency procedures for this site.",
-  hazards: "I have been made aware of the known site hazards.",
+const SUB_STATUS_TONE: Record<InductionSubmissionStatus, "info" | "success" | "warning" | "error" | "neutral"> = {
+  draft: "neutral",
+  completed: "success",
+  pending_approval: "warning",
+  approved: "success",
+  rejected: "error",
+  expired: "error",
+};
+const SUB_STATUS_LABEL: Record<InductionSubmissionStatus, string> = {
+  draft: "Draft",
+  completed: "Completed",
+  pending_approval: "Pending Approval",
+  approved: "Approved",
+  rejected: "Rejected",
+  expired: "Expired",
 };
 
 export default async function InductionDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,7 +67,7 @@ export default async function InductionDetailPage({ params }: { params: Promise<
 
   const { data: token } = await supabase
     .from("induction_tokens")
-    .select("*, employees!induction_tokens_employee_id_fkey(full_name), sites(name, companies(name))")
+    .select("*, employees!induction_tokens_employee_id_fkey(full_name, job_role, username), sites(name, companies(name))")
     .eq("id", id)
     .maybeSingle();
 
@@ -41,20 +78,30 @@ export default async function InductionDetailPage({ params }: { params: Promise<
     supabase.from("induction_submissions").select("*").eq("token_id", id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
 
-  const certificate = submission
-    ? (await supabase.from("induction_certificates").select("*").eq("submission_id", submission.id).maybeSingle()).data
-    : null;
+  const [{ data: certificate }, { data: template }] = await Promise.all([
+    submission
+      ? supabase.from("induction_certificates").select("*").eq("submission_id", submission.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    token.template_id
+      ? supabase.from("induction_templates").select("name, sections").eq("id", token.template_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const questions = ((template?.sections as InductionFormSection[] | null) ?? []).flatMap((s) => s.questions);
+  const questionById = new Map(questions.map((q) => [q.id, q]));
 
-  const employee = toOne(token.employees as { full_name?: string } | { full_name?: string }[] | null);
+  const employee = toOne(token.employees as { full_name?: string; job_role?: string; username?: string } | { full_name?: string; job_role?: string; username?: string }[] | null);
   const site = toOne(token.sites as { name?: string; companies?: unknown } | { name?: string; companies?: unknown }[] | null);
   const company = toOne(site?.companies as { name?: string } | { name?: string }[] | null | undefined);
   const eStatus = effectiveStatus(token as unknown as InductionToken);
   const sub = submission as InductionSubmission | null;
   const cert = certificate as InductionCertificate | null;
+  const certExpired = cert ? new Date() > new Date(cert.expires_at) || cert.status === "expired" : false;
+
+  const canReview = sub && (sub.status === "completed" || sub.status === "pending_approval");
 
   return (
     <div>
-      <PageHeader title={employee?.full_name ?? "—"} subtitle={`Induction invitation for ${site?.name ?? "—"}`} />
+      <PageHeader title={employee?.full_name ?? "—"} subtitle={`${template?.name ?? "Site Induction"} — ${site?.name ?? "—"}`} />
       <Link href="/inductions" className="mb-4 inline-block text-sm font-semibold text-primary">
         ← All Inductions
       </Link>
@@ -62,25 +109,25 @@ export default async function InductionDetailPage({ params }: { params: Promise<
       <div className="flex flex-col gap-4">
         <Card>
           <div className="mb-3 flex items-center justify-between">
-            <div className="text-sm font-bold text-text-dark">Invitation Link</div>
+            <div className="text-sm font-bold text-text-dark">Employee & Invitation</div>
             <Badge tone={STATUS_TONE[eStatus]}>{STATUS_LABEL[eStatus]}</Badge>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Position</div>
+              <div className="text-sm text-text-dark">{employee?.job_role || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Email</div>
+              <div className="text-sm text-text-dark">{employee?.username || "—"}</div>
+            </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Company / Site</div>
               <div className="text-sm text-text-dark">{company?.name ?? "—"} · {site?.name ?? "—"}</div>
             </div>
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Link Created</div>
-              <div className="text-sm text-text-dark">{fullDate(token.created_at)}</div>
-            </div>
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Expires</div>
+              <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Link Expires</div>
               <div className="text-sm text-text-dark">{fullDate(token.expires_at)}</div>
-            </div>
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Last Accessed</div>
-              <div className="text-sm text-text-dark">{fullDate(token.last_accessed_at)}</div>
             </div>
           </div>
         </Card>
@@ -88,19 +135,25 @@ export default async function InductionDetailPage({ params }: { params: Promise<
         {sub && (
           <Card>
             <div className="mb-3 flex items-center justify-between">
-              <div className="text-sm font-bold text-text-dark">Induction Submission</div>
-              <Badge tone={sub.status === "approved" ? "success" : sub.status === "rejected" ? "error" : sub.status === "pending_approval" ? "warning" : "neutral"}>
-                {sub.status === "pending_approval" ? "Pending Approval" : sub.status[0].toUpperCase() + sub.status.slice(1)}
-              </Badge>
+              <div className="text-sm font-bold text-text-dark">Submitted Answers</div>
+              <Badge tone={SUB_STATUS_TONE[sub.status]}>{SUB_STATUS_LABEL[sub.status]}</Badge>
             </div>
             <div className="mb-3 text-xs text-text-muted">Submitted {fullDate(sub.submitted_at)}</div>
-            <div className="flex flex-col gap-1.5">
-              {Object.entries(sub.acknowledgements ?? {}).map(([key, checked]) => (
-                <div key={key} className="flex items-center gap-2 text-[13px]">
-                  <span className={checked ? "text-olive-text" : "text-text-muted"}>{checked ? "✓" : "○"}</span>
-                  <span className={checked ? "text-text-dark" : "text-text-muted"}>{ACK_LABELS[key] ?? key}</span>
-                </div>
-              ))}
+            <div className="flex flex-col gap-3">
+              {Object.entries(sub.answers ?? {}).map(([key, value]) => {
+                const question = questionById.get(key);
+                return (
+                  <div key={key} className="rounded-lg bg-bg px-3.5 py-2.5">
+                    <div className="text-[12.5px] font-semibold text-text-dark">
+                      <span className="text-text-muted">Question:</span> {question?.title ?? key}
+                    </div>
+                    <div className="mt-1 text-sm">
+                      <span className="font-semibold text-text-muted">Answer: </span>
+                      <AnswerValue value={value} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             {sub.signature_name && (
               <div className="mt-3 rounded-lg bg-bg px-3.5 py-2.5">
@@ -114,36 +167,55 @@ export default async function InductionDetailPage({ params }: { params: Promise<
               </div>
             )}
 
-            {sub.status === "pending_approval" && (
-              <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
-                <form action={approveSubmissionAction}>
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
+              {canReview && (
+                <>
+                  <form action={approveSubmissionAction}>
+                    <input type="hidden" name="submissionId" value={sub.id} />
+                    <button type="submit" className="rounded-[11px] bg-olive-text px-4 py-2.5 text-sm font-bold text-white">
+                      Approve
+                    </button>
+                  </form>
+                  <RejectButton submissionId={sub.id} />
+                </>
+              )}
+              {sub.status !== "expired" && (
+                <form action={markSubmissionExpiredAction}>
                   <input type="hidden" name="submissionId" value={sub.id} />
-                  <button type="submit" className="rounded-[11px] bg-olive-text px-4 py-2.5 text-sm font-bold text-white">
-                    Approve
+                  <button type="submit" className="rounded-[11px] border border-border px-4 py-2.5 text-sm font-bold text-text-dark">
+                    Mark as Expired
                   </button>
                 </form>
-                <RejectButton submissionId={sub.id} />
-              </div>
-            )}
+              )}
+              <form action={requestResubmissionAction}>
+                <input type="hidden" name="tokenId" value={token.id} />
+                <button type="submit" className="rounded-[11px] border border-border px-4 py-2.5 text-sm font-bold text-text-dark">
+                  Request New Submission
+                </button>
+              </form>
+            </div>
           </Card>
         )}
 
         {cert && (
           <Card>
-            <div className="mb-3 text-sm font-bold text-text-dark">Certificate</div>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm font-bold text-text-dark">Certificate</div>
+              <Badge tone={certExpired ? "error" : cert.status === "revoked" ? "neutral" : cert.status === "active" ? "success" : "warning"}>
+                {certExpired ? "Expired" : cert.status[0].toUpperCase() + cert.status.slice(1)}
+              </Badge>
+            </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Certificate No.</div>
                 <div className="text-sm text-text-dark">{cert.certificate_number}</div>
               </div>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Status</div>
-                <Badge tone={cert.status === "active" ? "success" : cert.status === "expired" ? "error" : cert.status === "revoked" ? "neutral" : "warning"}>
-                  {cert.status[0].toUpperCase() + cert.status.slice(1)}
-                </Badge>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Induction</div>
+                <div className="text-sm text-text-dark">{template?.name ?? "—"}</div>
               </div>
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Issued</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Completed</div>
                 <div className="text-sm text-text-dark">{fullDate(cert.issued_at)}</div>
               </div>
               <div>
@@ -152,9 +224,14 @@ export default async function InductionDetailPage({ params }: { params: Promise<
               </div>
             </div>
             {cert.file_url && (
-              <a href={cert.file_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-sm font-semibold text-primary">
-                Download Certificate PDF →
-              </a>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <a href={cert.file_url} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-primary">
+                  View Certificate →
+                </a>
+                <a href={cert.file_url} download={`${cert.certificate_number}.pdf`} className="text-sm font-semibold text-primary">
+                  Download Certificate →
+                </a>
+              </div>
             )}
           </Card>
         )}

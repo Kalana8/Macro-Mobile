@@ -259,13 +259,14 @@ export interface ReportShare {
 
 // ---- Employee Site Induction ----
 export type InductionTokenStatus = "active" | "expired" | "revoked" | "completed";
-export type InductionSubmissionStatus = "draft" | "pending_approval" | "approved" | "rejected";
+export type InductionSubmissionStatus = "draft" | "completed" | "pending_approval" | "approved" | "rejected" | "expired";
 export type InductionCertificateStatus = "pending" | "active" | "expired" | "revoked";
 
 export interface InductionToken {
   id: string;
   employee_id: string;
   site_id: string;
+  template_id: string | null;
   token_hash: string;
   status: InductionTokenStatus;
   created_by: string | null;
@@ -274,6 +275,63 @@ export interface InductionToken {
   used_at: string | null;
   last_accessed_at: string | null;
 }
+
+// Google Forms–style dynamic question builder — an induction/assignment is
+// Sections, each holding Questions of any of these types. New question
+// types can be added here without a database migration, since the whole
+// section/question tree is stored as one jsonb column.
+export type InductionQuestionType =
+  | "short_answer"
+  | "paragraph"
+  | "multiple_choice"
+  | "checkboxes"
+  | "dropdown"
+  | "yes_no"
+  | "true_false"
+  | "date"
+  | "time"
+  | "file_upload"
+  | "image_upload"
+  | "video_upload";
+
+export interface InductionQuestion {
+  id: string;
+  type: InductionQuestionType;
+  title: string;
+  description?: string;
+  required: boolean;
+  /** multiple_choice / checkboxes / dropdown only. */
+  options?: string[];
+  /** file_upload only — e.g. ".pdf,.docx,.xlsx". */
+  acceptedFileTypes?: string;
+  /** file_upload / image_upload / video_upload only. */
+  maxFileSizeMb?: number;
+}
+
+export interface InductionFormSection {
+  id: string;
+  title: string;
+  description: string;
+  questions: InductionQuestion[];
+}
+
+export type InductionTemplateStatus = "draft" | "published";
+
+export interface InductionTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  status: InductionTemplateStatus;
+  cover_image_url: string | null;
+  sections: InductionFormSection[];
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** One question's answer — a plain value, a set of checked options, or an uploaded file's URL/name. */
+export type InductionAnswerValue = string | string[] | { fileUrl: string; fileName: string } | null;
 
 export interface InductionTokenHistory {
   id: string;
@@ -291,7 +349,7 @@ export interface InductionSubmission {
   token_id: string;
   employee_id: string;
   site_id: string;
-  acknowledgements: Record<string, boolean>;
+  answers: Record<string, InductionAnswerValue>;
   signature_name: string | null;
   status: InductionSubmissionStatus;
   submitted_at: string | null;

@@ -12,7 +12,7 @@ const PUBLIC_PATHS = ["/login"];
 // isPublic redirect below), so they're checked separately. The induction
 // token itself (not a database id) is the only thing gating access to that
 // route — see app/induction/[token]/page.tsx.
-const ALWAYS_PUBLIC_PREFIXES = ["/shared/", "/induction/"];
+const ALWAYS_PUBLIC_PREFIXES = ["/shared/", "/induction/", "/certificate/"];
 
 const AREA_ROUTES: [keyof RolePermissions["dashboard"], string][] = [
   ["dashboard", "/dashboard"],
