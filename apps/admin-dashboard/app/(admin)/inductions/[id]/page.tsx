@@ -6,12 +6,14 @@ import { toOne } from "@/lib/embed";
 import { formatDate, formatTime } from "@macro/shared/datetime";
 import type {
   InductionAnswerValue,
+  InductionAttempt,
   InductionCertificate,
   InductionFormSection,
   InductionSubmission,
   InductionSubmissionStatus,
   InductionToken,
   InductionTokenHistory,
+  InductionTrainingSlide,
 } from "@macro/shared/types";
 import { approveSubmissionAction, markSubmissionExpiredAction, requestResubmissionAction } from "../actions";
 import { effectiveStatus } from "../types";
@@ -47,6 +49,7 @@ const STATUS_LABEL = { active: "Active", expiring_soon: "Expiring Soon", expired
 const SUB_STATUS_TONE: Record<InductionSubmissionStatus, "info" | "success" | "warning" | "error" | "neutral"> = {
   draft: "neutral",
   completed: "success",
+  failed: "error",
   pending_approval: "warning",
   approved: "success",
   rejected: "error",
@@ -54,7 +57,8 @@ const SUB_STATUS_TONE: Record<InductionSubmissionStatus, "info" | "success" | "w
 };
 const SUB_STATUS_LABEL: Record<InductionSubmissionStatus, string> = {
   draft: "Draft",
-  completed: "Completed",
+  completed: "Passed",
+  failed: "Failed",
   pending_approval: "Pending Approval",
   approved: "Approved",
   rejected: "Rejected",
@@ -82,12 +86,11 @@ export default async function InductionDetailPage({ params }: { params: Promise<
     submission
       ? supabase.from("induction_certificates").select("*").eq("submission_id", submission.id).maybeSingle()
       : Promise.resolve({ data: null }),
-    token.template_id
-      ? supabase.from("induction_templates").select("name, sections").eq("id", token.template_id).maybeSingle()
-      : Promise.resolve({ data: null }),
+    token.template_id ? supabase.from("induction_templates").select("*").eq("id", token.template_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   const questions = ((template?.sections as InductionFormSection[] | null) ?? []).flatMap((s) => s.questions);
   const questionById = new Map(questions.map((q) => [q.id, q]));
+  const trainingSlides = (template?.training_slides as InductionTrainingSlide[] | null) ?? [];
 
   const employee = toOne(token.employees as { full_name?: string; job_role?: string; username?: string } | { full_name?: string; job_role?: string; username?: string }[] | null);
   const site = toOne(token.sites as { name?: string; companies?: unknown } | { name?: string; companies?: unknown }[] | null);
@@ -97,7 +100,18 @@ export default async function InductionDetailPage({ params }: { params: Promise<
   const cert = certificate as InductionCertificate | null;
   const certExpired = cert ? new Date() > new Date(cert.expires_at) || cert.status === "expired" : false;
 
-  const canReview = sub && (sub.status === "completed" || sub.status === "pending_approval");
+  const canReview = sub && (sub.status === "completed" || sub.status === "failed" || sub.status === "pending_approval");
+
+  const attempts: InductionAttempt[] = sub?.attempts ?? [];
+  const latestAttempt = attempts[attempts.length - 1] ?? null;
+  const bestScore = attempts.length > 0 ? Math.max(...attempts.map((a) => a.percentage)) : null;
+  const trainingProgress = sub?.training_progress ?? {};
+  const slidesViewed = trainingSlides.filter((s) => trainingProgress[s.id]?.viewed).length;
+  const trainingStatus: "not_started" | "in_progress" | "completed" = sub?.training_completed_at
+    ? "completed"
+    : slidesViewed > 0
+      ? "in_progress"
+      : "not_started";
 
   return (
     <div>
@@ -132,35 +146,98 @@ export default async function InductionDetailPage({ params }: { params: Promise<
           </div>
         </Card>
 
+        {trainingSlides.length > 0 && (
+          <Card>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm font-bold text-text-dark">Training</div>
+              <Badge tone={trainingStatus === "completed" ? "success" : trainingStatus === "in_progress" ? "warning" : "neutral"}>
+                {trainingStatus === "completed" ? "Completed" : trainingStatus === "in_progress" ? "In Progress" : "Not Started"}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Slides Completed</div>
+                <div className="text-sm text-text-dark">
+                  {slidesViewed} / {trainingSlides.length}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Training Completed</div>
+                <div className="text-sm text-text-dark">{sub?.training_completed_at ? fullDate(sub.training_completed_at) : "—"}</div>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {sub && (
           <Card>
             <div className="mb-3 flex items-center justify-between">
-              <div className="text-sm font-bold text-text-dark">Submitted Answers</div>
+              <div className="text-sm font-bold text-text-dark">Assessment</div>
               <Badge tone={SUB_STATUS_TONE[sub.status]}>{SUB_STATUS_LABEL[sub.status]}</Badge>
             </div>
-            <div className="mb-3 text-xs text-text-muted">Submitted {fullDate(sub.submitted_at)}</div>
-            <div className="flex flex-col gap-3">
-              {Object.entries(sub.answers ?? {}).map(([key, value]) => {
-                const question = questionById.get(key);
-                return (
-                  <div key={key} className="rounded-lg bg-bg px-3.5 py-2.5">
-                    <div className="text-[12.5px] font-semibold text-text-dark">
-                      <span className="text-text-muted">Question:</span> {question?.title ?? key}
-                    </div>
-                    <div className="mt-1 text-sm">
-                      <span className="font-semibold text-text-muted">Answer: </span>
-                      <AnswerValue value={value} />
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Best Score</div>
+                <div className="text-sm text-text-dark">{bestScore !== null ? `${bestScore}%` : "—"}</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Latest Score</div>
+                <div className="text-sm text-text-dark">{latestAttempt ? `${latestAttempt.percentage}%` : "—"}</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Pass Mark</div>
+                <div className="text-sm text-text-dark">{template?.pass_mark_percent ?? 100}%</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Attempts</div>
+                <div className="text-sm text-text-dark">{attempts.length}</div>
+              </div>
             </div>
-            {sub.signature_name && (
-              <div className="mt-3 rounded-lg bg-bg px-3.5 py-2.5">
-                <div className="text-[10px] font-bold uppercase tracking-wide text-text-muted">Signed By</div>
-                <div className="text-sm font-semibold italic text-text-dark">{sub.signature_name}</div>
+
+            {attempts.length > 0 && (
+              <div className="mb-3 rounded-lg bg-bg px-3.5 py-2.5">
+                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-text-muted">Attempt History</div>
+                <div className="flex flex-col gap-1">
+                  {attempts.map((a) => (
+                    <div key={a.attemptNumber} className="flex items-center justify-between text-[12.5px]">
+                      <span className="text-text-dark">
+                        Attempt {a.attemptNumber} — {fullDate(a.submittedAt)}
+                      </span>
+                      <span className={a.passed ? "font-bold text-olive-text" : "text-error"}>
+                        {a.percentage}% — {a.passed ? "Passed" : "Failed"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
+
+            {latestAttempt && (
+              <div className="flex flex-col gap-3">
+                <div className="text-[11px] font-bold uppercase tracking-wide text-text-muted">Submitted Answers (Attempt {latestAttempt.attemptNumber})</div>
+                {Object.entries(latestAttempt.answers ?? sub.answers ?? {}).map(([key, value]) => {
+                  const question = questionById.get(key);
+                  const result = latestAttempt.results.find((r) => r.questionId === key);
+                  return (
+                    <div key={key} className="rounded-lg bg-bg px-3.5 py-2.5">
+                      <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-text-dark">
+                        {result?.correct === true && <span className="text-olive-text">✓</span>}
+                        {result?.correct === false && <span className="text-error">✗</span>}
+                        <span className="text-text-muted">Question:</span> {question?.title ?? key}
+                      </div>
+                      <div className="mt-1 text-sm">
+                        <span className="font-semibold text-text-muted">Answer: </span>
+                        <AnswerValue value={value} />
+                      </div>
+                      {result?.correct === false && question?.correctAnswers && question.correctAnswers.length > 0 && (
+                        <div className="mt-1 text-xs font-semibold text-olive-text">Correct answer: {question.correctAnswers.join(", ")}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {sub.review_note && (
               <div className="mt-3 rounded-lg bg-error/10 px-3.5 py-2.5 text-sm text-error">
                 <span className="font-bold">Rejection note: </span>{sub.review_note}

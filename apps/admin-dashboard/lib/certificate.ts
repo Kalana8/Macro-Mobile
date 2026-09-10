@@ -18,6 +18,9 @@ export async function generateCertificatePdfBuffer(params: {
   companyName: string;
   assignmentName: string;
   issuedAt: Date;
+  scorePercent: number;
+  passMarkPercent: number;
+  attemptCount: number;
   /** Encoded into a QR code so a phone camera can jump straight to the verification page — omitted (no QR) if not provided. */
   verifyUrl?: string;
 }): Promise<Buffer | null> {
@@ -91,6 +94,28 @@ export async function generateCertificatePdfBuffer(params: {
     doc.setTextColor(90, 90, 90);
     doc.text(`at ${params.siteName} — ${params.companyName}`, centerX, 155, { align: "center" });
 
+    // Assessment Result block — the certificate reflects the actual scored
+    // attempt it was generated from, never a generic "completed" claim.
+    doc.setDrawColor(...PALE_BLUE);
+    doc.setLineWidth(0.3);
+    doc.line(55, 167, pageWidth - 55, 167);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...NAVY);
+    doc.text("ASSESSMENT RESULT", centerX, 174, { align: "center" });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(30, 30, 30);
+    doc.text(`Score: ${params.scorePercent}%`, centerX - 55, 184, { align: "center" });
+    doc.text(`Pass Mark: ${params.passMarkPercent}%`, centerX, 184, { align: "center" });
+    doc.text(`Attempts: ${params.attemptCount}`, centerX + 55, 184, { align: "center" });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(92, 105, 0);
+    doc.text("STATUS: PASSED", centerX, 195, { align: "center" });
+
     const issued = params.issuedAt.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
     doc.setDrawColor(...PALE_BLUE);
     doc.setLineWidth(0.4);
@@ -122,7 +147,7 @@ export async function generateCertificatePdfBuffer(params: {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(140, 140, 140);
-    doc.text(`Certificate No. ${params.certificateNumber} · Status: Completed`, centerX, 268, { align: "center" });
+    doc.text(`Certificate No. ${params.certificateNumber}`, centerX, 268, { align: "center" });
 
     return Buffer.from(doc.output("arraybuffer"));
   } catch {

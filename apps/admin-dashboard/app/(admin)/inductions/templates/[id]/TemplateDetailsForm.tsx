@@ -4,8 +4,10 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Image from "next/image";
 import { Badge, Card, FieldLabel, PrimaryButton, Select, TextArea, TextInput } from "@/components/ui";
-import type { InductionTemplate } from "@macro/shared/types";
+import { INDUCTION_TYPE_LABEL, type InductionTemplate, type InductionType } from "@macro/shared/types";
 import { updateTemplateDetailsAction, type TemplateFormState } from "../actions";
+
+const INDUCTION_TYPES = Object.keys(INDUCTION_TYPE_LABEL) as InductionType[];
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -16,6 +18,7 @@ export function TemplateDetailsForm({ template }: { template: InductionTemplate 
   const [state, formAction] = useActionState<TemplateFormState, FormData>(updateTemplateDetailsAction, {});
   const [coverPreview, setCoverPreview] = useState<string | null>(template.cover_image_url);
   const [removeCover, setRemoveCover] = useState(false);
+  const [isMandatory, setIsMandatory] = useState(template.is_mandatory);
 
   return (
     <Card>
@@ -35,16 +38,32 @@ export function TemplateDetailsForm({ template }: { template: InductionTemplate 
             <TextInput name="category" defaultValue={template.category} placeholder="e.g. General Induction, WHS" />
           </div>
         </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <FieldLabel>Induction Type</FieldLabel>
+            <Select name="inductionType" defaultValue={template.induction_type}>
+              {INDUCTION_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {INDUCTION_TYPE_LABEL[t]}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <FieldLabel>Status</FieldLabel>
+            <Select name="status" defaultValue={template.status}>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </Select>
+          </div>
+        </div>
+        <label className="flex items-center gap-2 text-sm font-semibold text-text-dark">
+          <input type="checkbox" name="isMandatory" checked={isMandatory} onChange={(e) => setIsMandatory(e.target.checked)} className="h-4 w-4" />
+          Mandatory — employees must complete this before starting work
+        </label>
         <div>
           <FieldLabel>Description / Instructions</FieldLabel>
           <TextArea name="description" rows={2} defaultValue={template.description} />
-        </div>
-        <div>
-          <FieldLabel>Status</FieldLabel>
-          <Select name="status" defaultValue={template.status}>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </Select>
         </div>
         <div>
           <FieldLabel>Cover Image (optional)</FieldLabel>

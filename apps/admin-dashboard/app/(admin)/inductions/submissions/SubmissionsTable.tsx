@@ -4,23 +4,25 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, EmptyState, IconChip, Select, Table, TextInput } from "@/components/ui";
 import { formatDate } from "@macro/shared/datetime";
+import { INDUCTION_TYPE_LABEL } from "@macro/shared/types";
 import { effectiveSubmissionStatus, expiryBucket, type EffectiveSubmissionStatus, type ExpiryFilter, type SubmissionRow } from "./types";
 
 const STATUS_TONE: Record<EffectiveSubmissionStatus, "info" | "success" | "warning" | "error" | "neutral"> = {
-  completed: "success",
-  pending_approval: "warning",
-  approved: "success",
-  rejected: "error",
+  not_started: "neutral",
+  in_progress: "warning",
+  failed: "error",
+  passed: "success",
   expired: "error",
 };
 const STATUS_LABEL: Record<EffectiveSubmissionStatus, string> = {
-  completed: "Completed",
-  pending_approval: "Pending Approval",
-  approved: "Approved",
-  rejected: "Rejected",
+  not_started: "Not Started",
+  in_progress: "In Progress",
+  failed: "Failed",
+  passed: "Passed",
   expired: "Expired",
 };
-const STATUS_FILTERS: (EffectiveSubmissionStatus | "all")[] = ["all", "completed", "pending_approval", "approved", "rejected", "expired"];
+const STATUS_FILTERS: (EffectiveSubmissionStatus | "all")[] = ["all", "not_started", "in_progress", "failed", "passed", "expired"];
+const TRAINING_LABEL = { not_started: "Not Started", in_progress: "In Progress", completed: "Completed" } as const;
 const EXPIRY_FILTERS: ExpiryFilter[] = ["all", "valid", "expiring_soon", "expired"];
 const EXPIRY_LABEL: Record<ExpiryFilter, string> = { all: "Any expiry", valid: "Valid", expiring_soon: "Expiring within 30 days", expired: "Expired" };
 
@@ -34,6 +36,15 @@ function ViewIcon() {
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" /><circle cx="12" cy="12" r="3" />
     </svg>
+  );
+}
+
+function ScoreCell({ row }: { row: SubmissionRow }) {
+  if (row.latestScore === null) return <span className="text-text-muted">—</span>;
+  return (
+    <span>
+      {row.latestScore}%{row.bestScore !== null && row.bestScore !== row.latestScore && <span className="text-text-muted"> (best {row.bestScore}%)</span>}
+    </span>
   );
 }
 
@@ -61,7 +72,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
   }, [rows, search, status, expiry, fromDate, toDate]);
 
   const counts = useMemo(() => {
-    const c: Record<EffectiveSubmissionStatus, number> = { completed: 0, pending_approval: 0, approved: 0, rejected: 0, expired: 0 };
+    const c: Record<EffectiveSubmissionStatus, number> = { not_started: 0, in_progress: 0, failed: 0, passed: 0, expired: 0 };
     for (const r of rows) c[effectiveSubmissionStatus(r)] += 1;
     return c;
   }, [rows]);
@@ -69,7 +80,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
   return (
     <div>
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {(["completed", "pending_approval", "approved", "rejected", "expired"] as const).map((s) => (
+        {(["not_started", "in_progress", "failed", "passed", "expired"] as const).map((s) => (
           <div key={s} className="rounded-[14px] border border-border bg-white p-4">
             <div className="text-2xl font-extrabold text-text-dark">{counts[s]}</div>
             <div className="text-xs font-semibold text-text-muted">{STATUS_LABEL[s]}</div>
@@ -116,11 +127,23 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
                   <button type="button" onClick={() => router.push(`/inductions/${r.tokenId}`)} className="flex w-full items-start justify-between gap-2 text-left">
                     <div className="min-w-0">
                       <div className="truncate font-semibold text-text-dark">{r.employeeName}</div>
-                      <div className="truncate text-xs text-text-muted">{r.assignmentName} · {r.siteName}</div>
+                      <div className="truncate text-xs text-text-muted">
+                        {INDUCTION_TYPE_LABEL[r.inductionType]} · {r.assignmentName} · {r.siteName}
+                      </div>
                     </div>
                     <Badge tone={STATUS_TONE[eStatus]}>{STATUS_LABEL[eStatus]}</Badge>
                   </button>
                   <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                    <div>
+                      <div className="font-bold uppercase tracking-wide text-text-muted">Training</div>
+                      <div className="text-text-dark">{TRAINING_LABEL[r.trainingStatus]}</div>
+                    </div>
+                    <div>
+                      <div className="font-bold uppercase tracking-wide text-text-muted">Score</div>
+                      <div className="text-text-dark">
+                        <ScoreCell row={r} /> · {r.attemptsCount} attempt{r.attemptsCount === 1 ? "" : "s"}
+                      </div>
+                    </div>
                     <div>
                       <div className="font-bold uppercase tracking-wide text-text-muted">Submitted</div>
                       <div className="text-text-dark">{fullDate(r.submittedAt)}</div>
@@ -141,7 +164,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
           </div>
 
           <div className="hidden md:block">
-            <Table head={["Employee", "Company", "Induction", "Site", "Submitted", "Expires", "Status", "Actions"]}>
+            <Table head={["Employee", "Company", "Induction", "Type", "Site", "Training", "Score", "Attempts", "Status", "Actions"]}>
               {filtered.map((r) => {
                 const eStatus = effectiveSubmissionStatus(r);
                 return (
@@ -151,11 +174,16 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
                     </td>
                     <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{r.companyName}</td>
                     <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{r.assignmentName}</td>
+                    <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{INDUCTION_TYPE_LABEL[r.inductionType]}</td>
                     <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{r.siteName}</td>
-                    <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{fullDate(r.submittedAt)}</td>
                     <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>
-                      {r.certificate ? fullDate(r.certificate.expires_at) : "—"}
+                      {TRAINING_LABEL[r.trainingStatus]}
+                      {r.slidesTotal > 0 && <div className="text-[11px] text-text-muted">{r.slidesViewed}/{r.slidesTotal} slides</div>}
                     </td>
+                    <td className="cursor-pointer px-5 py-3.5 text-text-dark" onClick={() => router.push(`/inductions/${r.tokenId}`)}>
+                      <ScoreCell row={r} />
+                    </td>
+                    <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{r.attemptsCount}</td>
                     <td className="cursor-pointer px-5 py-3.5" onClick={() => router.push(`/inductions/${r.tokenId}`)}>
                       <Badge tone={STATUS_TONE[eStatus]}>{STATUS_LABEL[eStatus]}</Badge>
                     </td>

@@ -4,7 +4,7 @@ import { createClient } from "@macro/shared/supabase/server";
 import { PageHeader } from "@/components/ui";
 import type { InductionTemplate } from "@macro/shared/types";
 import { TemplateDetailsForm } from "./TemplateDetailsForm";
-import { SectionsBuilder } from "./SectionsBuilder";
+import { AssignmentBuilder } from "./AssignmentBuilder";
 
 export default async function TemplateEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -29,7 +29,7 @@ export default async function TemplateEditPage({ params }: { params: Promise<{ i
 
       <div className="flex flex-col gap-4">
         <TemplateDetailsForm template={t} />
-        <SectionsBuilder templateId={t.id} templateName={t.name} templateDescription={t.description} initialSections={t.sections} />
+        <AssignmentBuilder template={t} />
       </div>
     </div>
   );

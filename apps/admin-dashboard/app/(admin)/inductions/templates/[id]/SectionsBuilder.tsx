@@ -1,12 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { QuestionInput } from "@/components/QuestionInput";
+import { useRef } from "react";
+import { QuestionInput, TRUE_FALSE_OPTIONS, YES_NO_OPTIONS } from "@/components/QuestionInput";
+import { GRADABLE_QUESTION_TYPES } from "@macro/shared/types";
 import type { InductionFormSection, InductionQuestion, InductionQuestionType } from "@macro/shared/types";
-import { updateTemplateSectionsAction } from "../actions";
-import { PreviewModal } from "./PreviewModal";
 
-function newId(prefix: string): string {
+export function newId(prefix: string): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
@@ -35,11 +34,18 @@ function isUpload(type: InductionQuestionType): boolean {
   return type === "file_upload" || type === "image_upload" || type === "video_upload";
 }
 
-function blankQuestion(): InductionQuestion {
+/** The choices a "mark the correct answer" picker should offer — the question's own options for types that have them, or the fixed pair for yes/no and true/false. */
+function gradableChoices(question: InductionQuestion): string[] {
+  if (question.type === "yes_no") return YES_NO_OPTIONS;
+  if (question.type === "true_false") return TRUE_FALSE_OPTIONS;
+  return question.options ?? [];
+}
+
+export function blankQuestion(): InductionQuestion {
   return { id: newId("q"), type: "short_answer", title: "", required: false };
 }
 
-function blankSection(): InductionFormSection {
+export function blankSection(): InductionFormSection {
   return { id: newId("section"), title: "Untitled Section", description: "", questions: [blankQuestion()] };
 }
 
@@ -85,11 +91,19 @@ function QuestionCard({
   dragHandleProps: React.HTMLAttributes<HTMLSpanElement>;
 }) {
   const options = question.options ?? [];
+  const isGradable = GRADABLE_QUESTION_TYPES.includes(question.type);
+  const correctAnswers = question.correctAnswers ?? [];
 
   function updateOption(i: number, value: string) {
+    const oldValue = options[i];
     const next = [...options];
     next[i] = value;
-    onChange({ options: next });
+    // Keep a marked-correct option's grading in sync when its text is edited.
+    const patch: Partial<InductionQuestion> = { options: next };
+    if (correctAnswers.includes(oldValue)) {
+      patch.correctAnswers = correctAnswers.map((v) => (v === oldValue ? value : v));
+    }
+    onChange(patch);
   }
 
   function addOption() {
@@ -97,7 +111,16 @@ function QuestionCard({
   }
 
   function removeOption(i: number) {
-    onChange({ options: options.filter((_, idx) => idx !== i) });
+    const removed = options[i];
+    onChange({ options: options.filter((_, idx) => idx !== i), correctAnswers: correctAnswers.filter((v) => v !== removed) });
+  }
+
+  function toggleCorrect(choice: string) {
+    if (question.type === "checkboxes") {
+      onChange({ correctAnswers: correctAnswers.includes(choice) ? correctAnswers.filter((v) => v !== choice) : [...correctAnswers, choice] });
+    } else {
+      onChange({ correctAnswers: [choice] });
+    }
   }
 
   return (
@@ -114,7 +137,7 @@ function QuestionCard({
         />
         <select
           value={question.type}
-          onChange={(e) => onChange({ type: e.target.value as InductionQuestionType })}
+          onChange={(e) => onChange({ type: e.target.value as InductionQuestionType, correctAnswers: undefined })}
           className="shrink-0 rounded-[10px] border border-border bg-bg px-2.5 py-2.5 text-[12.5px] font-semibold text-text-dark outline-none focus:border-primary"
         >
           {QUESTION_TYPES.map((t) => (
@@ -170,6 +193,48 @@ function QuestionCard({
         <QuestionInput question={question} value={null} onChange={() => {}} disabled />
       </div>
 
+      {isGradable && (
+        <div className="mb-3 ml-6 rounded-lg bg-primary/5 p-3">
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-primary">Grading</div>
+          {gradableChoices(question).length === 0 ? (
+            <p className="text-xs text-text-muted">Add options above, then mark the correct one here.</p>
+          ) : (
+            <div className="mb-2.5 flex flex-col gap-1.5">
+              {gradableChoices(question).map((choice) => (
+                <label key={choice} className="flex items-center gap-2 text-sm text-text-dark">
+                  <input
+                    type={question.type === "checkboxes" ? "checkbox" : "radio"}
+                    checked={correctAnswers.includes(choice)}
+                    onChange={() => toggleCorrect(choice)}
+                    className="h-4 w-4 accent-olive-text"
+                  />
+                  {choice}
+                </label>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-text-muted">
+              Marks
+              <input
+                type="number"
+                min={0}
+                value={question.marks ?? 1}
+                onChange={(e) => onChange({ marks: Number(e.target.value) })}
+                className="w-16 rounded-md border border-border bg-white px-2 py-1 text-sm text-text-dark outline-none focus:border-primary"
+              />
+            </label>
+          </div>
+          <textarea
+            value={question.explanation ?? ""}
+            onChange={(e) => onChange({ explanation: e.target.value })}
+            placeholder="Explanation shown after submission (optional)"
+            rows={2}
+            className="mt-2 w-full rounded-lg border border-border bg-white px-3 py-1.5 text-xs text-text-dark outline-none focus:border-primary"
+          />
+        </div>
+      )}
+
       <div className="flex items-center justify-between border-t border-border pt-3">
         <label className="flex items-center gap-2 text-[12.5px] font-semibold text-text-dark">
           <span>Required</span>
@@ -198,83 +263,55 @@ function QuestionCard({
   );
 }
 
-export function SectionsBuilder({
-  templateId,
-  templateName,
-  templateDescription,
-  initialSections,
-}: {
-  templateId: string;
-  templateName: string;
-  templateDescription: string;
-  initialSections: InductionFormSection[];
-}) {
-  const [sections, setSections] = useState<InductionFormSection[]>(initialSections.length > 0 ? initialSections : [blankSection()]);
-  const [saveState, setSaveState] = useState<"saved" | "saving" | "unsaved">("saved");
-  const [error, setError] = useState<string | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
+/** Sections/questions editor — fully controlled, no save logic of its own; the parent AssignmentBuilder owns the save/publish lifecycle for the whole assignment (training + assessment + settings together). */
+export function AssessmentEditor({ sections, onChange }: { sections: InductionFormSection[]; onChange: (sections: InductionFormSection[]) => void }) {
   const sectionDrag = useRef<number | null>(null);
   const questionDrag = useRef<{ sectionIndex: number; questionIndex: number } | null>(null);
 
-  function markUnsaved() {
-    setSaveState("unsaved");
-  }
-
   function updateSection(sectionId: string, patch: Partial<InductionFormSection>) {
-    setSections((prev) => prev.map((s) => (s.id === sectionId ? { ...s, ...patch } : s)));
-    markUnsaved();
+    onChange(sections.map((s) => (s.id === sectionId ? { ...s, ...patch } : s)));
   }
 
   function duplicateSection(sectionId: string) {
-    setSections((prev) => {
-      const idx = prev.findIndex((s) => s.id === sectionId);
-      if (idx === -1) return prev;
-      const copy: InductionFormSection = {
-        ...prev[idx],
-        id: newId("section"),
-        title: `${prev[idx].title} (Copy)`,
-        questions: prev[idx].questions.map((q) => ({ ...q, id: newId("q") })),
-      };
-      const next = [...prev];
-      next.splice(idx + 1, 0, copy);
-      return next;
-    });
-    markUnsaved();
+    const idx = sections.findIndex((s) => s.id === sectionId);
+    if (idx === -1) return;
+    const copy: InductionFormSection = {
+      ...sections[idx],
+      id: newId("section"),
+      title: `${sections[idx].title} (Copy)`,
+      questions: sections[idx].questions.map((q) => ({ ...q, id: newId("q") })),
+    };
+    const next = [...sections];
+    next.splice(idx + 1, 0, copy);
+    onChange(next);
   }
 
   function deleteSection(sectionId: string) {
-    setSections((prev) => (prev.length <= 1 ? prev : prev.filter((s) => s.id !== sectionId)));
-    markUnsaved();
+    if (sections.length <= 1) return;
+    onChange(sections.filter((s) => s.id !== sectionId));
   }
 
   function addSection() {
-    setSections((prev) => [...prev, blankSection()]);
-    markUnsaved();
+    onChange([...sections, blankSection()]);
   }
 
   function handleSectionDrop(index: number) {
     const from = sectionDrag.current;
     sectionDrag.current = null;
     if (from === null || from === index) return;
-    setSections((prev) => {
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(index, 0, moved);
-      return next;
-    });
-    markUnsaved();
+    const next = [...sections];
+    const [moved] = next.splice(from, 1);
+    next.splice(index, 0, moved);
+    onChange(next);
   }
 
   function updateQuestion(sectionId: string, questionId: string, patch: Partial<InductionQuestion>) {
-    setSections((prev) =>
-      prev.map((s) => (s.id === sectionId ? { ...s, questions: s.questions.map((q) => (q.id === questionId ? { ...q, ...patch } : q)) } : s))
-    );
-    markUnsaved();
+    onChange(sections.map((s) => (s.id === sectionId ? { ...s, questions: s.questions.map((q) => (q.id === questionId ? { ...q, ...patch } : q)) } : s)));
   }
 
   function duplicateQuestion(sectionId: string, questionId: string) {
-    setSections((prev) =>
-      prev.map((s) => {
+    onChange(
+      sections.map((s) => {
         if (s.id !== sectionId) return s;
         const idx = s.questions.findIndex((q) => q.id === questionId);
         if (idx === -1) return s;
@@ -284,89 +321,30 @@ export function SectionsBuilder({
         return { ...s, questions };
       })
     );
-    markUnsaved();
   }
 
   function deleteQuestion(sectionId: string, questionId: string) {
-    setSections((prev) =>
-      prev.map((s) => (s.id === sectionId && s.questions.length > 1 ? { ...s, questions: s.questions.filter((q) => q.id !== questionId) } : s))
-    );
-    markUnsaved();
+    onChange(sections.map((s) => (s.id === sectionId && s.questions.length > 1 ? { ...s, questions: s.questions.filter((q) => q.id !== questionId) } : s)));
   }
 
   function addQuestion(sectionId: string) {
-    setSections((prev) => prev.map((s) => (s.id === sectionId ? { ...s, questions: [...s.questions, blankQuestion()] } : s)));
-    markUnsaved();
+    onChange(sections.map((s) => (s.id === sectionId ? { ...s, questions: [...s.questions, blankQuestion()] } : s)));
   }
 
   function handleQuestionDrop(sectionIndex: number, questionIndex: number) {
     const from = questionDrag.current;
     questionDrag.current = null;
-    if (!from || from.sectionIndex !== sectionIndex || from.questionIndex === questionIndex) {
-      questionDrag.current = null;
-      return;
-    }
-    setSections((prev) => {
-      const next = [...prev];
-      const questions = [...next[sectionIndex].questions];
-      const [moved] = questions.splice(from.questionIndex, 1);
-      questions.splice(questionIndex, 0, moved);
-      next[sectionIndex] = { ...next[sectionIndex], questions };
-      return next;
-    });
-    markUnsaved();
-  }
-
-  async function save(publish?: boolean) {
-    setSaveState("saving");
-    setError(null);
-    const result = await updateTemplateSectionsAction(templateId, sections);
-    if (result.error) {
-      setError(result.error);
-      setSaveState("unsaved");
-      return;
-    }
-    if (publish) {
-      const { setTemplateStatusAction } = await import("../actions");
-      const fd = new FormData();
-      fd.set("id", templateId);
-      fd.set("status", "published");
-      await setTemplateStatusAction(fd);
-    }
-    setSaveState("saved");
+    if (!from || from.sectionIndex !== sectionIndex || from.questionIndex === questionIndex) return;
+    const next = [...sections];
+    const questions = [...next[sectionIndex].questions];
+    const [moved] = questions.splice(from.questionIndex, 1);
+    questions.splice(questionIndex, 0, moved);
+    next[sectionIndex] = { ...next[sectionIndex], questions };
+    onChange(next);
   }
 
   return (
     <div>
-      <div className="sticky top-0 z-20 mb-4 flex items-center justify-between gap-3 rounded-[14px] border border-border bg-white/95 px-4 py-3 backdrop-blur">
-        <span className={`text-xs font-semibold ${saveState === "unsaved" ? "text-orange" : saveState === "saving" ? "text-text-muted" : "text-olive-text"}`}>
-          {saveState === "saving" ? "Saving…" : saveState === "unsaved" ? "Unsaved changes" : "Saved"}
-        </span>
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setShowPreview(true)} className="rounded-[10px] border border-border px-4 py-2 text-[12.5px] font-bold text-text-dark">
-            Preview
-          </button>
-          <button
-            type="button"
-            onClick={() => save(false)}
-            disabled={saveState === "saving"}
-            className="rounded-[10px] border border-border px-4 py-2 text-[12.5px] font-bold text-text-dark disabled:opacity-50"
-          >
-            Save Draft
-          </button>
-          <button
-            type="button"
-            onClick={() => save(true)}
-            disabled={saveState === "saving"}
-            className="rounded-[10px] bg-primary px-4 py-2 text-[12.5px] font-bold text-white disabled:opacity-50"
-          >
-            Publish
-          </button>
-        </div>
-      </div>
-
-      {error && <div className="mb-4 rounded-lg bg-error/10 px-3.5 py-2.5 text-[12.5px] text-error">{error}</div>}
-
       <div className="flex flex-col gap-4">
         {sections.map((section, si) => (
           <div
@@ -446,15 +424,6 @@ export function SectionsBuilder({
       >
         + Add Section
       </button>
-
-      {showPreview && (
-        <PreviewModal
-          title={templateName}
-          description={templateDescription}
-          sections={sections}
-          onClose={() => setShowPreview(false)}
-        />
-      )}
     </div>
   );
 }

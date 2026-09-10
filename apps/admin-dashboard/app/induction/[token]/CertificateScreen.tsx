@@ -59,13 +59,13 @@ export function CertificateScreen({
       <div className={`mb-5 flex flex-col items-center gap-2 rounded-2xl p-6 text-center ${expired ? "bg-error/10 text-error" : "bg-olive/15 text-olive-text"}`}>
         <CheckIcon />
         <h1 className="text-xl font-extrabold text-text-dark">
-          {expired ? "Certificate Expired" : justSubmitted ? "Certificate Successfully Completed" : "Induction Completed"}
+          {expired ? "Certificate Expired" : justSubmitted ? "Congratulations!" : "Induction Completed"}
         </h1>
         <p className="text-sm">
           {expired
             ? "This certificate has expired. Contact your administrator if you need a new induction link."
             : justSubmitted
-              ? `Thank you, ${employeeName}. Your site induction has been submitted and your certificate is ready.`
+              ? `${employeeName}, you have successfully completed ${certificate.assignmentName} with a score of ${certificate.scorePercent}% (${certificate.attemptCount} attempt${certificate.attemptCount === 1 ? "" : "s"}). Your certificate is ready.`
               : `You've already completed this induction, ${employeeName}. Your certificate is below.`}
         </p>
       </div>
@@ -91,7 +91,28 @@ export function CertificateScreen({
               at {certificate.siteName} — {certificate.companyName}
             </p>
 
-            <div className="mx-auto mt-10 flex max-w-sm items-end justify-between gap-4 border-t border-[#AFC9DE] pt-3 text-left">
+            <div className="mx-auto mt-6 max-w-sm border-t border-[#AFC9DE] pt-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#1F4E79]/80">Assessment Result</div>
+              <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <div className="text-lg font-extrabold text-text-dark">{certificate.scorePercent}%</div>
+                  <div className="text-[9.5px] font-semibold uppercase tracking-wide text-text-muted">Score</div>
+                </div>
+                <div>
+                  <div className="text-lg font-extrabold text-text-dark">{certificate.passMarkPercent}%</div>
+                  <div className="text-[9.5px] font-semibold uppercase tracking-wide text-text-muted">Pass Mark</div>
+                </div>
+                <div>
+                  <div className="text-lg font-extrabold text-text-dark">{certificate.attemptCount}</div>
+                  <div className="text-[9.5px] font-semibold uppercase tracking-wide text-text-muted">Attempts</div>
+                </div>
+              </div>
+              <div className={`mt-2 text-center text-sm font-extrabold ${expired ? "text-error" : "text-olive-text"}`}>
+                {expired ? "EXPIRED" : "STATUS: PASSED"}
+              </div>
+            </div>
+
+            <div className="mx-auto mt-6 flex max-w-sm items-end justify-between gap-4 border-t border-[#AFC9DE] pt-3 text-left">
               <div>
                 <div className="text-sm font-bold text-text-dark">{fullDate(certificate.issuedAt)}</div>
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Date Completed</div>
@@ -102,9 +123,7 @@ export function CertificateScreen({
               </div>
             </div>
 
-            <div className="mt-6 text-[10.5px] text-text-muted">
-              Certificate No. {certificate.certificateNumber} · Status: {expired ? "Expired" : "Completed"}
-            </div>
+            <div className="mt-6 text-[10.5px] text-text-muted">Certificate No. {certificate.certificateNumber}</div>
           </div>
         </div>
       </div>

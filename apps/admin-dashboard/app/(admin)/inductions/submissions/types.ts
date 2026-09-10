@@ -1,4 +1,7 @@
-import type { InductionCertificate, InductionSubmissionStatus } from "@macro/shared/types";
+import type { InductionCertificate, InductionSubmissionStatus, InductionType } from "@macro/shared/types";
+
+export type TrainingStatus = "not_started" | "in_progress" | "completed";
+export type AssessmentStatus = "not_started" | "in_progress" | "failed" | "passed";
 
 export interface SubmissionRow {
   id: string;
@@ -7,21 +10,35 @@ export interface SubmissionRow {
   companyName: string;
   siteName: string;
   assignmentName: string;
+  inductionType: InductionType;
   submittedAt: string | null;
   status: InductionSubmissionStatus;
   certificate: InductionCertificate | null;
+  trainingStatus: TrainingStatus;
+  slidesViewed: number;
+  slidesTotal: number;
+  bestScore: number | null;
+  latestScore: number | null;
+  attemptsCount: number;
+  passMarkPercent: number;
 }
 
-/** The 5 statuses from the spec — rejected and an expired certificate both override whatever the raw submission.status says, since neither should ever read as a plain "Completed". */
-export type EffectiveSubmissionStatus = "completed" | "pending_approval" | "approved" | "rejected" | "expired";
+/** The status the spec's Submitted Forms table actually cares about — expiry overrides everything else, since an expired certificate is never treated as a valid pass. */
+export type EffectiveSubmissionStatus = "not_started" | "in_progress" | "failed" | "passed" | "expired";
+
+export function assessmentStatus(row: SubmissionRow): AssessmentStatus {
+  if (row.status === "completed" || row.status === "approved") return "passed";
+  if (row.status === "failed" || row.status === "rejected") return "failed";
+  if (row.attemptsCount > 0) return "in_progress";
+  return "not_started";
+}
 
 export function effectiveSubmissionStatus(row: SubmissionRow): EffectiveSubmissionStatus {
-  if (row.status === "rejected") return "rejected";
   const certExpired = row.certificate ? new Date() > new Date(row.certificate.expires_at) || row.certificate.status === "expired" : false;
-  if (row.status === "expired" || certExpired) return "expired";
-  if (row.status === "approved") return "approved";
-  if (row.status === "pending_approval") return "pending_approval";
-  return "completed";
+  const status = assessmentStatus(row);
+  if (status === "passed" && certExpired) return "expired";
+  if (row.status === "expired") return "expired";
+  return status;
 }
 
 export type ExpiryFilter = "all" | "valid" | "expiring_soon" | "expired";

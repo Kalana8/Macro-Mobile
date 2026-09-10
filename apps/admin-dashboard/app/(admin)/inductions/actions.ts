@@ -293,6 +293,20 @@ export async function markSubmissionExpiredAction(formData: FormData): Promise<v
   revalidatePath("/inductions/submissions");
 }
 
+/** Row-level action on the Certificates page — revoke an otherwise-valid certificate, or reactivate a mistakenly revoked one. Does not touch the underlying submission's pass/fail record. */
+export async function setCertificateStatusAction(formData: FormData): Promise<void> {
+  const certificateId = String(formData.get("certificateId") ?? "");
+  const status = String(formData.get("status") ?? "");
+  if (!certificateId || (status !== "active" && status !== "revoked" && status !== "expired")) return;
+
+  await requireEmployeeId();
+  const supabase = await createClient();
+  await supabase.from("induction_certificates").update({ status }).eq("id", certificateId);
+
+  revalidatePath("/inductions/certificates");
+  revalidatePath("/inductions/submissions");
+}
+
 /** Requests a fresh submission from the employee — clears the completed submission's answers status back to nothing usable and revokes the token so a brand-new invitation is needed; used when an admin needs the employee to redo an induction (e.g. content changed materially). */
 export async function requestResubmissionAction(formData: FormData): Promise<void> {
   const tokenId = String(formData.get("tokenId") ?? "");

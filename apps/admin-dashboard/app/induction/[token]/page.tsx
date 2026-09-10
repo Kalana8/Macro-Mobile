@@ -4,7 +4,7 @@ import { createServiceRoleClient } from "@macro/shared/supabase/server";
 import { formatDate, formatTime } from "@macro/shared/datetime";
 import { hashToken } from "@/lib/inductionToken";
 import { toOne } from "@/lib/embed";
-import type { InductionFormSection } from "@macro/shared/types";
+import type { InductionAttempt, InductionFormSection, InductionTrainingSlide } from "@macro/shared/types";
 import { InductionForm } from "./InductionForm";
 import { CertificateScreen } from "./CertificateScreen";
 import type { InductionCertificateInfo } from "./actions";
@@ -94,7 +94,7 @@ export default async function InductionLinkPage({ params }: { params: Promise<{ 
   if (token.status === "completed") {
     const { data: submission } = await supabase
       .from("induction_submissions")
-      .select("id")
+      .select("id, attempts")
       .eq("token_id", token.id)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -104,10 +104,12 @@ export default async function InductionLinkPage({ params }: { params: Promise<{ 
       submission
         ? supabase.from("induction_certificates").select("*").eq("submission_id", submission.id).maybeSingle()
         : Promise.resolve({ data: null }),
-      token.template_id ? supabase.from("induction_templates").select("name").eq("id", token.template_id).maybeSingle() : Promise.resolve({ data: null }),
+      token.template_id ? supabase.from("induction_templates").select("name, pass_mark_percent").eq("id", token.template_id).maybeSingle() : Promise.resolve({ data: null }),
     ]);
 
     if (certificate) {
+      const attempts = (submission?.attempts as InductionAttempt[] | null) ?? [];
+      const passedAttempt = [...attempts].reverse().find((a) => a.passed) ?? null;
       const info: InductionCertificateInfo = {
         certificateNumber: certificate.certificate_number,
         employeeName: employee?.full_name ?? "N/A",
@@ -117,6 +119,9 @@ export default async function InductionLinkPage({ params }: { params: Promise<{ 
         issuedAt: certificate.issued_at,
         expiresAt: certificate.expires_at,
         fileUrl: certificate.file_url,
+        scorePercent: passedAttempt?.percentage ?? 100,
+        passMarkPercent: template?.pass_mark_percent ?? 100,
+        attemptCount: passedAttempt?.attemptNumber ?? attempts.length,
       };
       const expired = new Date() > new Date(certificate.expires_at) || certificate.status === "expired";
       return <CertificateScreen employeeName={info.employeeName} certificate={info} justSubmitted={false} expired={expired} />;
@@ -142,9 +147,7 @@ export default async function InductionLinkPage({ params }: { params: Promise<{ 
 
   const [{ data: submission }, { data: template }] = await Promise.all([
     supabase.from("induction_submissions").select("*").eq("token_id", token.id).maybeSingle(),
-    token.template_id
-      ? supabase.from("induction_templates").select("name, description, sections").eq("id", token.template_id).maybeSingle()
-      : Promise.resolve({ data: null }),
+    token.template_id ? supabase.from("induction_templates").select("*").eq("id", token.template_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   const sections = (template?.sections as InductionFormSection[] | null) ?? [];
 
@@ -164,12 +167,21 @@ export default async function InductionLinkPage({ params }: { params: Promise<{ 
       employeeName={employee?.full_name ?? ""}
       siteName={siteName ?? ""}
       companyName={companyName ?? ""}
-      expiresAt={token.expires_at}
       assignmentTitle={template?.name ?? "Site Safety Induction"}
       assignmentDescription={template?.description ?? ""}
       sections={sections}
-      initialAnswers={(submission?.answers as Record<string, string | string[] | { fileUrl: string; fileName: string }> | null) ?? {}}
-      initialSignatureName={submission?.signature_name ?? ""}
+      trainingSlides={(template?.training_slides as InductionTrainingSlide[] | null) ?? []}
+      passMarkPercent={template?.pass_mark_percent ?? 100}
+      maxAttempts={template?.max_attempts ?? null}
+      retakeDelayHours={template?.retake_delay_hours ?? 0}
+      shuffleQuestions={Boolean(template?.shuffle_questions)}
+      shuffleOptions={Boolean(template?.shuffle_options)}
+      showCorrectAnswers={template?.show_correct_answers ?? true}
+      initialTrainingProgress={
+        (submission?.training_progress as Record<string, { viewed: boolean; timeSpentSeconds: number }> | null) ?? {}
+      }
+      initialTrainingCompletedAt={submission?.training_completed_at ?? null}
+      initialAttempts={(submission?.attempts as InductionAttempt[] | null) ?? []}
     />
   );
 }

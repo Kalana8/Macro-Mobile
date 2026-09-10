@@ -3,8 +3,8 @@
 import { Select, TextArea, TextInput } from "@/components/ui";
 import type { InductionAnswerValue, InductionQuestion } from "@macro/shared/types";
 
-const YES_NO_OPTIONS = ["Yes", "No"];
-const TRUE_FALSE_OPTIONS = ["True", "False"];
+export const YES_NO_OPTIONS = ["Yes", "No"];
+export const TRUE_FALSE_OPTIONS = ["True", "False"];
 
 function isFileAnswer(value: InductionAnswerValue): value is { fileUrl: string; fileName: string } {
   return typeof value === "object" && value !== null && !Array.isArray(value) && "fileUrl" in value;

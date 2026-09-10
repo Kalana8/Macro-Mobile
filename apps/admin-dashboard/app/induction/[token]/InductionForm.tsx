@@ -1,42 +1,29 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { useFormStatus } from "react-dom";
-import Image from "next/image";
-import { QuestionInput } from "@/components/QuestionInput";
-import type { InductionAnswerValue, InductionFormSection } from "@macro/shared/types";
-import { saveDraftAction, submitInductionAction, type InductionFormState } from "./actions";
+import { useCallback, useState } from "react";
+import type { InductionAttempt, InductionFormSection, InductionQuestion, InductionTrainingSlide } from "@macro/shared/types";
 import { InductionIntro } from "./InductionIntro";
+import { TrainingPlayer } from "./TrainingPlayer";
+import { AssessmentPlayer } from "./AssessmentPlayer";
+import { AssessmentResultScreen } from "./AssessmentResultScreen";
 import { CertificateScreen } from "./CertificateScreen";
+import type { AssessmentSubmitState, InductionCertificateInfo } from "./actions";
 
-function countdownLabel(msRemaining: number): string {
-  if (msRemaining <= 0) return "Expired";
-  const totalMinutes = Math.floor(msRemaining / 60_000);
-  if (totalMinutes < 60) return `${totalMinutes} minute${totalMinutes === 1 ? "" : "s"}`;
-  const totalHours = Math.floor(totalMinutes / 60);
-  if (totalHours < 24) {
-    const mins = totalMinutes % 60;
-    return mins > 0 ? `${totalHours} hours ${mins} minutes` : `${totalHours} hours`;
+type Phase = "intro" | "training" | "training_complete" | "assessment" | "result" | "certificate" | "passed_no_certificate" | "expired";
+
+function shuffle<T>(arr: T[]): T[] {
+  const next = [...arr];
+  for (let i = next.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
   }
-  const days = Math.floor(totalHours / 24);
-  const hours = totalHours % 24;
-  return hours > 0 ? `${days} days ${hours} hours` : `${days} days`;
+  return next;
 }
 
-function isEmptyAnswer(value: InductionAnswerValue): boolean {
-  if (value === null || value === undefined) return true;
-  if (Array.isArray(value)) return value.length === 0;
-  if (typeof value === "string") return value.trim() === "";
-  return false;
-}
-
-function SubmitButton({ label, pendingLabel, className, onClick }: { label: string; pendingLabel: string; className: string; onClick?: () => void }) {
-  const { pending } = useFormStatus();
-  return (
-    <button type="submit" disabled={pending} onClick={onClick} className={className}>
-      {pending ? pendingLabel : label}
-    </button>
-  );
+function prepareQuestions(questions: InductionQuestion[], shuffleQuestions: boolean, shuffleOptions: boolean): InductionQuestion[] {
+  let list = shuffleQuestions ? shuffle(questions) : questions;
+  if (shuffleOptions) list = list.map((q) => (q.options ? { ...q, options: shuffle(q.options) } : q));
+  return list;
 }
 
 export function InductionForm({
@@ -44,176 +31,176 @@ export function InductionForm({
   employeeName,
   siteName,
   companyName,
-  expiresAt,
   assignmentTitle,
   assignmentDescription,
   sections,
-  initialAnswers,
-  initialSignatureName,
+  trainingSlides,
+  passMarkPercent,
+  maxAttempts,
+  retakeDelayHours,
+  shuffleQuestions,
+  shuffleOptions,
+  showCorrectAnswers,
+  initialTrainingProgress,
+  initialTrainingCompletedAt,
+  initialAttempts,
 }: {
   rawToken: string;
   employeeName: string;
   siteName: string;
   companyName: string;
-  expiresAt: string;
   assignmentTitle: string;
   assignmentDescription: string;
   sections: InductionFormSection[];
-  initialAnswers: Record<string, InductionAnswerValue>;
-  initialSignatureName: string;
+  trainingSlides: InductionTrainingSlide[];
+  passMarkPercent: number;
+  maxAttempts: number | null;
+  retakeDelayHours: number;
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  showCorrectAnswers: boolean;
+  initialTrainingProgress: Record<string, { viewed: boolean; timeSpentSeconds: number }>;
+  initialTrainingCompletedAt: string | null;
+  initialAttempts: InductionAttempt[];
 }) {
-  const [answers, setAnswers] = useState<Record<string, InductionAnswerValue>>(initialAnswers);
-  const [signatureName, setSignatureName] = useState(initialSignatureName);
-  const [now, setNow] = useState(() => Date.now());
-  const [triedSubmit, setTriedSubmit] = useState(false);
-  // A draft already in progress (e.g. reopening the link) skips straight to
-  // the form — the intro screen is only for a first-time, unstarted visit.
-  const [started, setStarted] = useState(() => Object.values(initialAnswers).some((v) => v !== null && v !== undefined && v !== ""));
+  const allQuestions = sections.flatMap((s) => s.questions);
+  const lastAttempt = initialAttempts[initialAttempts.length - 1] ?? null;
+  const alreadyStarted = Boolean(initialTrainingCompletedAt) || initialAttempts.length > 0 || Object.keys(initialTrainingProgress).length > 0;
 
-  const [draftState, draftAction] = useActionState<InductionFormState, FormData>(saveDraftAction, {});
-  const [submitState, submitAction] = useActionState<InductionFormState, FormData>(submitInductionAction, {});
+  const [phase, setPhase] = useState<Phase>(() => {
+    if (!alreadyStarted) return "intro";
+    if (trainingSlides.length > 0 && !initialTrainingCompletedAt) return "training";
+    if (lastAttempt && !lastAttempt.passed) return "result";
+    return "assessment";
+  });
+  const [attempts, setAttempts] = useState<InductionAttempt[]>(initialAttempts);
+  const [certificate, setCertificate] = useState<InductionCertificateInfo | null>(null);
+  const [assessmentQuestions, setAssessmentQuestions] = useState<InductionQuestion[]>(() => prepareQuestions(allQuestions, shuffleQuestions, shuffleOptions));
 
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(interval);
+  const startAssessment = useCallback(() => {
+    setAssessmentQuestions(prepareQuestions(allQuestions, shuffleQuestions, shuffleOptions));
+    setPhase("assessment");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shuffleQuestions, shuffleOptions]);
+
+  const handleAssessmentResult = useCallback((state: AssessmentSubmitState) => {
+    if (state.expired) {
+      setPhase("expired");
+      return;
+    }
+    if (!state.result) return; // a plain validation error — AssessmentPlayer already shows it inline.
+    setAttempts((prev) => [...prev, state.result!.attempt]);
+    if (state.result.passed) {
+      if (state.certificate) {
+        setCertificate(state.certificate);
+        setPhase("certificate");
+      } else {
+        setPhase("passed_no_certificate");
+      }
+    } else {
+      setPhase("result");
+    }
   }, []);
 
-  const msRemaining = new Date(expiresAt).getTime() - now;
-  // This client-side countdown is only for user awareness (spec §28/§31) —
-  // the actual gate is the server re-checking expires_at on every save/submit,
-  // so a stale clock or paused tab here can never let a truly expired link
-  // through; it would just get the real "expired" error back from the server.
-  const urgent = msRemaining < 3600_000;
-
-  function setAnswer(id: string, value: InductionAnswerValue) {
-    setAnswers((prev) => ({ ...prev, [id]: value }));
-  }
-
-  if (submitState.success && submitState.certificate) {
-    return <CertificateScreen employeeName={employeeName} certificate={submitState.certificate} justSubmitted expired={false} />;
-  }
-
-  if (submitState.expired || draftState.expired) {
+  if (phase === "expired") {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 p-6 text-center">
         <div className="text-4xl">🔴</div>
         <h1 className="text-xl font-extrabold text-text-dark">Your induction link has expired</h1>
-        <p className="text-sm text-text-muted">Your progress may be saved, but you need a new valid invitation link to continue.</p>
+        <p className="text-sm text-text-muted">Your progress has been saved, but you need a new valid invitation link to continue.</p>
       </div>
     );
   }
 
-  if (!started) {
+  if (phase === "intro") {
+    return <InductionIntro assignmentTitle={assignmentTitle} assignmentDescription={assignmentDescription} sections={sections} onStart={() => setPhase(trainingSlides.length > 0 ? "training" : "assessment")} />;
+  }
+
+  if (phase === "training") {
+    const initialViewedIds = new Set(Object.entries(initialTrainingProgress).filter(([, v]) => v.viewed).map(([id]) => id));
     return (
-      <InductionIntro
+      <TrainingPlayer
+        rawToken={rawToken}
         assignmentTitle={assignmentTitle}
-        assignmentDescription={assignmentDescription}
-        sections={sections}
-        onStart={() => setStarted(true)}
+        slides={trainingSlides}
+        initialViewedIds={initialViewedIds}
+        onExpired={() => setPhase("expired")}
+        onComplete={() => setPhase("training_complete")}
       />
     );
   }
 
-  return (
-    <div className="mx-auto max-w-lg p-5 pb-28">
-      <div className="flex flex-col items-center gap-2 py-4 text-center">
-        <Image src="/uploads/footer.webp" alt="Macro Property Services" width={140} height={52} className="h-11 w-auto" />
-        <h1 className="mt-1 text-lg font-extrabold text-text-dark">{assignmentTitle}</h1>
-        {assignmentDescription && <p className="text-xs text-text-muted">{assignmentDescription}</p>}
+  if (phase === "training_complete") {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="text-4xl">✅</div>
+        <h1 className="text-xl font-extrabold text-text-dark">Training Completed</h1>
+        <p className="text-sm text-text-muted">You&apos;ve reviewed all the required training content. When you&apos;re ready, start the assessment.</p>
+        <button type="button" onClick={startAssessment} className="mt-2 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-white">
+          Start Assessment
+        </button>
       </div>
+    );
+  }
 
-      <div className={`mb-4 rounded-xl px-3.5 py-2.5 text-center text-xs font-semibold ${urgent ? "bg-error/10 text-error" : "bg-bg text-text-muted"}`}>
-        Invitation expires in {countdownLabel(msRemaining)}
+  if (phase === "assessment") {
+    return (
+      <AssessmentPlayer
+        key={attempts.length}
+        rawToken={rawToken}
+        assignmentTitle={assignmentTitle}
+        questions={assessmentQuestions}
+        attemptNumber={attempts.length + 1}
+        onResult={handleAssessmentResult}
+      />
+    );
+  }
+
+  if (phase === "result") {
+    const attempt = attempts[attempts.length - 1];
+    const maxAttemptsReached = maxAttempts !== null && attempts.length >= maxAttempts;
+    let retakeBlockedReason: string | null = null;
+    let canRetake = !maxAttemptsReached;
+    if (maxAttemptsReached) {
+      retakeBlockedReason = "You have reached the maximum number of attempts for this assessment. Contact your administrator.";
+    } else if (retakeDelayHours > 0) {
+      const availableAt = new Date(new Date(attempt.submittedAt).getTime() + retakeDelayHours * 3600_000);
+      if (new Date() < availableAt) {
+        canRetake = false;
+        retakeBlockedReason = `You can retake this assessment after ${availableAt.toLocaleString()}.`;
+      }
+    }
+    return (
+      <AssessmentResultScreen
+        assignmentTitle={assignmentTitle}
+        questions={allQuestions}
+        attempt={attempt}
+        allAttempts={attempts}
+        passMarkPercent={passMarkPercent}
+        showCorrectAnswers={showCorrectAnswers}
+        canRetake={canRetake}
+        retakeBlockedReason={retakeBlockedReason}
+        onRetake={startAssessment}
+      />
+    );
+  }
+
+  if (phase === "passed_no_certificate") {
+    const attempt = attempts[attempts.length - 1];
+    return (
+      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="text-4xl">🎉</div>
+        <h1 className="text-xl font-extrabold text-text-dark">Congratulations, {employeeName}!</h1>
+        <p className="text-sm text-text-muted">
+          You have successfully completed {assignmentTitle} at {siteName} — {companyName} with a score of {attempt.percentage}%.
+        </p>
       </div>
+    );
+  }
 
-      {(employeeName || siteName || companyName) && (
-        <div className="mb-4 rounded-xl border border-border bg-white p-4">
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            {employeeName && (
-              <div>
-                <div className="font-bold uppercase tracking-wide text-text-muted">Employee</div>
-                <div className="text-sm text-text-dark">{employeeName}</div>
-              </div>
-            )}
-            {siteName && (
-              <div>
-                <div className="font-bold uppercase tracking-wide text-text-muted">Site</div>
-                <div className="text-sm text-text-dark">{siteName}</div>
-              </div>
-            )}
-            {companyName && (
-              <div className="col-span-2">
-                <div className="font-bold uppercase tracking-wide text-text-muted">Company</div>
-                <div className="text-sm text-text-dark">{companyName}</div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+  if (phase === "certificate" && certificate) {
+    return <CertificateScreen employeeName={employeeName} certificate={certificate} justSubmitted expired={false} />;
+  }
 
-      <form action={draftAction} id="induction-form" encType="multipart/form-data" className="flex flex-col gap-3">
-        <input type="hidden" name="rawToken" value={rawToken} />
-
-        {sections.map((section) => (
-          <div key={section.id} className="rounded-xl border border-border bg-white p-4">
-            <div className="mb-3">
-              <div className="text-[15px] font-bold text-text-dark">{section.title}</div>
-              {section.description && <div className="mt-0.5 text-xs text-text-muted">{section.description}</div>}
-            </div>
-            <div className="flex flex-col gap-4">
-              {section.questions.map((q) => {
-                const invalid = triedSubmit && q.required && isEmptyAnswer(answers[q.id] ?? null);
-                return (
-                  <div key={q.id}>
-                    <label className="mb-1.5 block text-sm font-semibold text-text-dark">
-                      {q.title}
-                      {q.required && <span className="ml-1 text-error">*</span>}
-                    </label>
-                    {q.description && <p className="mb-1.5 text-xs text-text-muted">{q.description}</p>}
-                    <QuestionInput question={q} value={answers[q.id] ?? null} onChange={(v) => setAnswer(q.id, v)} invalid={invalid} />
-                    {invalid && <p className="mt-1 text-[11.5px] text-error">This question is required.</p>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-
-        <div className="rounded-xl border border-border bg-white p-4">
-          <label className="text-xs font-bold uppercase tracking-wide text-text-muted">Signature — type your full name to sign</label>
-          <input
-            type="text"
-            name="signatureName"
-            value={signatureName}
-            onChange={(e) => setSignatureName(e.target.value)}
-            placeholder="Full name"
-            className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm italic outline-none focus:border-primary"
-          />
-        </div>
-
-        {(draftState.error && !draftState.expired) && <div className="text-[12.5px] text-error-text">{draftState.error}</div>}
-        {(submitState.error && !submitState.expired) && <div className="text-[12.5px] text-error-text">{submitState.error}</div>}
-
-        {/* Fixed position works fine nested inside the form — keeping both
-            buttons as actual descendants (rather than cross-referencing via
-            a `form` attribute) is what makes useFormStatus() below track
-            this form's pending state, and lets Save Draft submit at all. */}
-        <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-border bg-white px-4 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
-          <SubmitButton
-            label="Save Draft"
-            pendingLabel="Saving…"
-            className="flex-1 rounded-xl border border-border py-3 text-sm font-bold text-text-dark"
-          />
-          <button
-            type="submit"
-            formAction={submitAction}
-            onClick={() => setTriedSubmit(true)}
-            className="flex-[2] rounded-xl bg-primary py-3 text-sm font-bold text-white"
-          >
-            Submit Induction
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+  return null;
 }

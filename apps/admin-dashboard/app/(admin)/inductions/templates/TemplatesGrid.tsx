@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, EmptyState, PlusIcon, PrimaryButton } from "@/components/ui";
 import { formatDate } from "@macro/shared/datetime";
+import { INDUCTION_TYPE_LABEL } from "@macro/shared/types";
 import { deleteTemplateAction, duplicateTemplateAction, setTemplateStatusAction } from "./actions";
 import { NewTemplateModal } from "./NewTemplateModal";
 import type { TemplateRow } from "./page";
@@ -39,9 +40,15 @@ export function TemplatesGrid({ rows }: { rows: TemplateRow[] }) {
               <div key={t.id} className="flex flex-col rounded-[16px] border border-border bg-white p-4">
                 <div className="mb-1.5 flex items-start justify-between gap-2">
                   <div className="text-[15px] font-bold text-text-dark">{t.name}</div>
-                  <Badge tone={t.status === "published" ? "success" : "neutral"}>{t.status === "published" ? "Published" : "Draft"}</Badge>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <Badge tone={t.status === "published" ? "success" : "neutral"}>{t.status === "published" ? "Published" : "Draft"}</Badge>
+                    {t.is_mandatory && <Badge tone="warning">Mandatory</Badge>}
+                  </div>
                 </div>
-                {t.category && <div className="mb-0.5 text-[11px] font-bold uppercase tracking-wide text-primary">{t.category}</div>}
+                <div className="mb-0.5 text-[11px] font-bold uppercase tracking-wide text-primary">
+                  {INDUCTION_TYPE_LABEL[t.induction_type]}
+                  {t.category ? ` · ${t.category}` : ""}
+                </div>
                 <div className="mt-1 text-[11.5px] text-text-muted">
                   {t.sections.length} section{t.sections.length === 1 ? "" : "s"} · {questionCount} question{questionCount === 1 ? "" : "s"} · used in{" "}
                   {t.usageCount} invitation{t.usageCount === 1 ? "" : "s"}

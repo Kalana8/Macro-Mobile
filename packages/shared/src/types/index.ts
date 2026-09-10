@@ -259,7 +259,7 @@ export interface ReportShare {
 
 // ---- Employee Site Induction ----
 export type InductionTokenStatus = "active" | "expired" | "revoked" | "completed";
-export type InductionSubmissionStatus = "draft" | "completed" | "pending_approval" | "approved" | "rejected" | "expired";
+export type InductionSubmissionStatus = "draft" | "completed" | "failed" | "pending_approval" | "approved" | "rejected" | "expired";
 export type InductionCertificateStatus = "pending" | "active" | "expired" | "revoked";
 
 export interface InductionToken {
@@ -294,6 +294,9 @@ export type InductionQuestionType =
   | "image_upload"
   | "video_upload";
 
+/** Question types whose answer can be auto-graded against `correctAnswers` — free-text and upload types have no single right answer, so they're never scored even if given `marks`. */
+export const GRADABLE_QUESTION_TYPES: InductionQuestionType[] = ["multiple_choice", "checkboxes", "dropdown", "yes_no", "true_false"];
+
 export interface InductionQuestion {
   id: string;
   type: InductionQuestionType;
@@ -306,6 +309,12 @@ export interface InductionQuestion {
   acceptedFileTypes?: string;
   /** file_upload / image_upload / video_upload only. */
   maxFileSizeMb?: number;
+  /** Assessment grading — only meaningful for GRADABLE_QUESTION_TYPES. One value for single-answer types, multiple for a checkboxes question with more than one correct option. */
+  correctAnswers?: string[];
+  /** Points this question is worth toward the assessment score. Defaults to 1 when gradable. */
+  marks?: number;
+  /** Shown after submission alongside the correct answer, when the assignment allows answer review. */
+  explanation?: string;
 }
 
 export interface InductionFormSection {
@@ -315,16 +324,67 @@ export interface InductionFormSection {
   questions: InductionQuestion[];
 }
 
+/**
+ * One training slide the employee must view (for at least `minSeconds`)
+ * before the assessment unlocks. The slide's actual visual design — text
+ * boxes, images, shapes, lines, background — is a Fabric.js canvas, stored
+ * as its own `canvas.toJSON()` output so the PowerPoint-style editor can
+ * reopen and keep editing individual elements later, and the employee-facing
+ * presentation renders the exact same canvas read-only. `content`/`imageUrl`
+ * are legacy fields from the pre-canvas-editor slide model, kept only so
+ * older slides created before this editor still render a sensible fallback.
+ */
+export interface InductionTrainingSlide {
+  id: string;
+  title: string;
+  /** Minimum seconds the employee must stay on this slide before "Next" enables. */
+  minSeconds: number;
+  /** Fabric.js Canvas#toJSON() output — objects, background color/image, everything. Null for a slide never opened in the canvas editor. */
+  canvasJson: Record<string, unknown> | null;
+  /** Optional video shown alongside the canvas — kept as a plain URL field rather than a canvas object, since embedding a live <video> inside a Fabric canvas is unreliable. */
+  videoUrl?: string;
+  /** @deprecated pre-canvas-editor plain-text content, rendered as a fallback only when canvasJson is empty. */
+  content?: string;
+  /** @deprecated pre-canvas-editor single image, rendered as a fallback only when canvasJson is empty. */
+  imageUrl?: string;
+}
+
 export type InductionTemplateStatus = "draft" | "published";
+
+/** Broad classification separate from the free-text `category` — drives default mandatory-ness and admin filtering/reporting. */
+export type InductionType = "whs" | "site_specific" | "contractor" | "visitor" | "equipment";
+
+export const INDUCTION_TYPE_LABEL: Record<InductionType, string> = {
+  whs: "WHS General Induction",
+  site_specific: "Site-Specific Induction",
+  contractor: "Contractor Induction",
+  visitor: "Visitor Induction",
+  equipment: "Equipment / Specialised Induction",
+};
 
 export interface InductionTemplate {
   id: string;
   name: string;
   description: string;
   category: string;
+  induction_type: InductionType;
+  /** WHS inductions default to mandatory; other types can be configured either way. */
+  is_mandatory: boolean;
   status: InductionTemplateStatus;
   cover_image_url: string | null;
   sections: InductionFormSection[];
+  training_slides: InductionTrainingSlide[];
+  /** Percentage (0-100) of total marks required to pass the assessment. */
+  pass_mark_percent: number;
+  /** Null = unlimited retakes. */
+  max_attempts: number | null;
+  /** Hours an employee must wait after a failed attempt before retaking. 0 = immediately. */
+  retake_delay_hours: number;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  /** Whether a failed attempt shows which questions were wrong and their correct answers. */
+  show_correct_answers: boolean;
+  certificate_enabled: boolean;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -332,6 +392,27 @@ export interface InductionTemplate {
 
 /** One question's answer — a plain value, a set of checked options, or an uploaded file's URL/name. */
 export type InductionAnswerValue = string | string[] | { fileUrl: string; fileName: string } | null;
+
+/** Per-question outcome recorded against one assessment attempt — `correct` is null for non-gradable question types (free text, uploads). */
+export interface InductionAttemptAnswerResult {
+  questionId: string;
+  correct: boolean | null;
+  marksAwarded: number;
+  marksPossible: number;
+}
+
+/** One full pass through the assessment — appended to `InductionSubmission.attempts`, never overwritten, so the complete retake history is preserved. */
+export interface InductionAttempt {
+  attemptNumber: number;
+  startedAt: string;
+  submittedAt: string;
+  answers: Record<string, InductionAnswerValue>;
+  results: InductionAttemptAnswerResult[];
+  score: number;
+  maxScore: number;
+  percentage: number;
+  passed: boolean;
+}
 
 export interface InductionTokenHistory {
   id: string;
@@ -349,6 +430,7 @@ export interface InductionSubmission {
   token_id: string;
   employee_id: string;
   site_id: string;
+  /** The current (in-progress or most recent) attempt's answers — kept for the draft-save flow; the authoritative scored record of each submitted attempt lives in `attempts`. */
   answers: Record<string, InductionAnswerValue>;
   signature_name: string | null;
   status: InductionSubmissionStatus;
@@ -356,6 +438,11 @@ export interface InductionSubmission {
   reviewed_by: string | null;
   reviewed_at: string | null;
   review_note: string | null;
+  /** Every assessment attempt this employee has made, oldest first — retaking never deletes or overwrites a prior entry. */
+  attempts: InductionAttempt[];
+  /** slideId -> viewing progress, so reopening mid-training resumes rather than restarting. */
+  training_progress: Record<string, { viewed: boolean; timeSpentSeconds: number; completedAt?: string }>;
+  training_completed_at: string | null;
   created_at: string;
   updated_at: string;
 }
