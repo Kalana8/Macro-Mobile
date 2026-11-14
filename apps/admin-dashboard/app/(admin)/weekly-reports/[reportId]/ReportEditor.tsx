@@ -14,9 +14,10 @@ import {
   type SectionPatch,
 } from "../actions";
 import { HistoryPanel } from "../HistoryPanel";
+import { ResponsesPanel } from "../ResponsesPanel";
 import { PreviewModal } from "../PreviewModal";
 import { SectionCard } from "../SectionCard";
-import { ShareModal } from "../ShareModal";
+import { ShareModal, type ReportRecipient, type ShareTarget } from "../ShareModal";
 import { parseWireAnnotations, type AnnotationsByPhotoId, type ReportWithDetail, type SectionWithPhotos, type WireAnnotationsByPhotoId } from "../types";
 
 const STATUS_TONE: Record<WeeklyReportStatus, "neutral" | "info" | "warning" | "success"> = {
@@ -45,6 +46,9 @@ export function ReportEditor({
   shares,
   employeeNameById,
   initialAction,
+  shareTargets,
+  recipients,
+  responsePhotoUrls = {},
 }: {
   report: ReportWithDetail;
   sections: SectionWithPhotos[];
@@ -56,6 +60,11 @@ export function ReportEditor({
   shares: ReportShare[];
   employeeNameById: Map<string, string>;
   initialAction?: string;
+  shareTargets: ShareTarget[];
+  /** Null until migration 0046 is applied. */
+  recipients: ReportRecipient[] | null;
+  /** Signed links for photos sent back from the app. */
+  responsePhotoUrls?: Record<string, string>;
 }) {
   const router = useRouter();
   const [report, setReport] = useState(initialReport);
@@ -241,6 +250,12 @@ export function ReportEditor({
         </button>
       </div>
 
+      {recipients && recipients.length > 0 && (
+        <div className="mt-6">
+          <ResponsesPanel recipients={recipients} employeeNameById={employeeNameById} photoUrls={responsePhotoUrls} />
+        </div>
+      )}
+
       <div className="mt-6">
         <HistoryPanel report={report} pdfs={pdfs} shares={shares} employeeNameById={employeeNameById} />
       </div>
@@ -294,6 +309,8 @@ export function ReportEditor({
         <ShareModal
           report={report}
           latestPdf={latestPdf}
+          shareTargets={shareTargets}
+          recipients={recipients}
           onClose={() => setShowShare(false)}
           onSent={() => setReport((r) => ({ ...r, status: "sent" }))}
           onNeedsPdf={() => {

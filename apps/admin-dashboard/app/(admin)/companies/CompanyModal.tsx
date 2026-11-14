@@ -244,13 +244,26 @@ export function CompanyModal({
 
         {(isEdit || showCompanyOnlyFields) && (
           <div>
-            <FieldLabel>Company Logo</FieldLabel>
+            <FieldLabel>Company Image</FieldLabel>
+            <p className="mb-1.5 text-[11.5px] text-text-muted">
+              Shown across the top of this company&apos;s site cards in the employee app. A wide landscape photo works best.
+            </p>
             <input type="hidden" name="logo" value={logo ?? ""} />
-            <ImagePicker
-              images={logo ? [logo] : []}
-              onChange={(images) => setLogo(images[images.length - 1] ?? null)}
-              uploadFile={uploadFile}
-            />
+            {logo && (
+              <div className="relative mb-2 overflow-hidden rounded-[10px]">
+                {/* Same proportions and crop as the card in the app. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo} alt="Company" className="aspect-[12/5] w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setLogo(null)}
+                  className="absolute right-2 top-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-error-text"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+            <ImagePicker images={[]} onChange={(images) => setLogo(images[images.length - 1] ?? null)} uploadFile={uploadFile} />
           </div>
         )}
 

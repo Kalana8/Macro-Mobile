@@ -76,7 +76,7 @@ export const DASHBOARD_SCHEMA = [
   },
   {
     key: "inductions",
-    label: "Induction Links",
+    label: "Induction and Check Links",
     functions: [
       { key: "view", label: "View" },
       { key: "create", label: "Create invitations" },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
 import { FieldLabel, PrimaryButton, Select, TextInput } from "@/components/ui";
@@ -17,13 +17,62 @@ function SubmitButton() {
   return <PrimaryButton type="submit" disabled={pending}>{pending ? "Creating…" : "Create Login"}</PrimaryButton>;
 }
 
+function CopyButton({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(value);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {
+          // still visible to select by hand
+        }
+      }}
+      className="shrink-0 rounded-lg bg-primary px-3.5 py-2 text-[12.5px] font-bold text-white"
+    >
+      {copied ? "Copied ✓" : label}
+    </button>
+  );
+}
+
 export function AddEmployeeModal({ roles, onClose }: { roles: RoleOption[]; onClose: () => void }) {
   const [state, formAction] = useActionState<EmployeeFormState, FormData>(createEmployeeAction, {});
+  // Kept in this browser only so the admin can copy them once; never sent back from the server.
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  useEffect(() => {
-    if (state.success) onClose();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.success]);
+  if (state.success) {
+    return (
+      <Modal title="Login Created" onClose={onClose}>
+        <div className="flex flex-col gap-3.5">
+          <div className="rounded-lg bg-olive/15 px-3.5 py-3 text-sm font-semibold text-olive-text">
+            Copy these and send them to the employee. The password isn&apos;t shown again; they&apos;ll set their own at first sign-in.
+          </div>
+          <div>
+            <FieldLabel>Username</FieldLabel>
+            <div className="flex gap-2">
+              <TextInput readOnly value={username} onFocus={(e) => e.target.select()} className="flex-1" />
+              <CopyButton value={username} label="Copy" />
+            </div>
+          </div>
+          <div>
+            <FieldLabel>Password</FieldLabel>
+            <div className="flex gap-2">
+              <TextInput readOnly value={password} onFocus={(e) => e.target.select()} className="flex-1 font-mono" />
+              <CopyButton value={password} label="Copy" />
+            </div>
+          </div>
+          <div className="mt-2 flex justify-end gap-2">
+            <CopyButton value={`Username: ${username}\nPassword: ${password}`} label="Copy both" />
+            <PrimaryButton onClick={onClose}>Done</PrimaryButton>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal title="Add Employee" onClose={onClose}>
@@ -47,12 +96,12 @@ export function AddEmployeeModal({ roles, onClose }: { roles: RoleOption[]; onCl
         </div>
         <div>
           <FieldLabel>Username (login email)</FieldLabel>
-          <TextInput type="email" name="username" required autoComplete="off" />
+          <TextInput type="email" name="username" required autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value.trim())} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <FieldLabel>Password</FieldLabel>
-            <PasswordInput name="password" required minLength={8} autoComplete="new-password" />
+            <PasswordInput name="password" required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
           <div>
             <FieldLabel>Confirm Password</FieldLabel>

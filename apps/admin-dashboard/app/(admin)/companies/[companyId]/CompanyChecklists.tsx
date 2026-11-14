@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cycleEnded } from "@macro/shared/checklistCycle";
 import { Badge, IconChip, PlusIcon, PrimaryButton } from "@/components/ui";
 import { DeleteButton } from "@/components/DeleteButton";
 import { todayInBusinessTimezone } from "@macro/shared/datetime";
@@ -11,6 +12,7 @@ import { CreateTemplateModal } from "../../checklists/CreateTemplateModal";
 import { TemplateDetailModal } from "../../checklists/TemplateDetailModal";
 import { AssignChecklistModal } from "../../checklists/AssignChecklistModal";
 import { EndTemplateButton } from "../../checklists/EndTemplateButton";
+import { templateAreaNames, templateSubtaskCount } from "../../checklists/templateContent";
 
 export function CompanyChecklists({
   companyId,
@@ -52,16 +54,18 @@ export function CompanyChecklists({
       ) : (
         <div className="flex flex-col gap-2">
           {templates.map((template) => {
-            const subtasks = template.areas.reduce((n, a) => n + a.subtasks.length, 0);
+            const subtasks = templateSubtaskCount(template);
             // Defensive against rows fetched before visit_dates existed on
             // this table (mid-migration).
             const visitDates = template.visit_dates ?? [];
-            const ended = visitDates.length > 0 && !visitDates.some((d) => d >= todayInBusinessTimezone());
+            const ended = template.cycle_start
+                  ? cycleEnded(template, todayInBusinessTimezone())
+                  : visitDates.length > 0 && !visitDates.some((d) => d >= todayInBusinessTimezone());
             return (
               <div key={template.id} className="flex items-center justify-between rounded-[16px] border border-border bg-white p-4">
                 <button type="button" onClick={() => setTemplateDetail(template)} className="flex-1 text-left">
                   <div className="text-sm font-semibold text-text-dark">
-                    {template.areas.map((a) => a.main_area).join(", ") || "Checklist"}
+                    {templateAreaNames(template) || "Checklist"}
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-text-muted">
                     {template.site} · {subtasks} subtasks · {scheduleSummary(template)}

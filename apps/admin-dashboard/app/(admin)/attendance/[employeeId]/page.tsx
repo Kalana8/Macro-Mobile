@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/server";
-import { formatDate, formatTime, todayInBusinessTimezone } from "@macro/shared/datetime";
+import { businessDayOf, businessDayRange, formatDate, formatTime, todayInBusinessTimezone } from "@macro/shared/datetime";
 import { Badge, EmptyState, PageHeader, Table } from "@/components/ui";
 
 function addDays(date: string, days: number): string {
@@ -145,13 +145,11 @@ export default async function EmployeeAttendancePage({
     )
     .eq("employee_id", employeeId);
 
-  const { data: records, error } =
-    tab === "daily"
-      ? await baseQuery.eq("date", day).order("clock_in_at", { ascending: false })
-      : await baseQuery
-          .gte("date", toDateStr(weekStart))
-          .lte("date", toDateStr(weekEnd))
-          .order("date", { ascending: false });
+  const range = tab === "daily" ? businessDayRange(day) : businessDayRange(toDateStr(weekStart), toDateStr(weekEnd));
+  const { data: records, error } = await baseQuery
+    .gte("clock_in_at", range.start)
+    .lt("clock_in_at", range.end)
+    .order("clock_in_at", { ascending: false });
 
   const qs = (params: Record<string, string>) => new URLSearchParams(params).toString();
 
@@ -243,7 +241,7 @@ export default async function EmployeeAttendancePage({
             <tr key={r.id} className="border-b border-border last:border-0">
               <td className="px-5 py-3.5 text-text-muted">{(r.companies as { name?: string } | null)?.name ?? "—"}</td>
               <td className="px-5 py-3.5 text-text-muted">{(siteRow as { name?: string } | null)?.name ?? "—"}</td>
-              {tab === "weekly" && <td className="px-5 py-3.5 text-text-muted">{r.date}</td>}
+              {tab === "weekly" && <td className="px-5 py-3.5 text-text-muted">{r.clock_in_at ? businessDayOf(r.clock_in_at) : r.date}</td>}
               <td className="px-5 py-3.5 text-text-muted">{timeOf(r.clock_in_at)}</td>
               <td className="px-5 py-3.5">
                 <LocationCell
@@ -272,7 +270,7 @@ export default async function EmployeeAttendancePage({
               <td className="px-5 py-3.5 text-text-muted">{hoursOf(r.clock_in_at, r.clock_out_at, r.total_break_minutes)}</td>
               <td className="px-5 py-3.5">
                 <Badge tone={r.status === "complete" ? "success" : "warning"}>
-                  {r.status === "complete" ? "Complete" : "In Progress"}
+                  {r.status === "complete" ? "Complete" : r.status === "on_break" ? "On Break" : "In Progress"}
                 </Badge>
               </td>
             </tr>

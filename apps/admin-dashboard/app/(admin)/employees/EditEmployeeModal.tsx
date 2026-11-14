@@ -61,16 +61,6 @@ export function EditEmployeeModal({
           <FieldLabel>Username (login email)</FieldLabel>
           <TextInput type="email" name="username" required autoComplete="off" defaultValue={employee.username} />
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <FieldLabel>Phone</FieldLabel>
-            <TextInput name="phone" defaultValue={employee.phone ?? ""} />
-          </div>
-          <div>
-            <FieldLabel>Department</FieldLabel>
-            <TextInput name="department" defaultValue={employee.department ?? ""} />
-          </div>
-        </div>
         <div>
           <FieldLabel>Status</FieldLabel>
           <Select name="status" defaultValue={employee.status}>

@@ -87,8 +87,6 @@ export async function updateEmployeeAction(
   const jobRole = String(formData.get("jobRole") ?? "").trim();
   const accessRoleId = String(formData.get("accessRoleId") ?? "");
   const username = String(formData.get("username") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim() || null;
-  const department = String(formData.get("department") ?? "").trim() || null;
   const status = String(formData.get("status") ?? "active");
   const newPassword = String(formData.get("newPassword") ?? "");
   const confirmNewPassword = String(formData.get("confirmNewPassword") ?? "");
@@ -122,8 +120,6 @@ export async function updateEmployeeAction(
       job_role: jobRole,
       access_role_id: accessRoleId,
       username,
-      phone,
-      department,
       status,
       ...(newPassword ? { must_change_password: true } : {}),
     })

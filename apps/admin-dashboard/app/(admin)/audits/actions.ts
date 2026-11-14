@@ -156,3 +156,17 @@ export async function sendAuditResultsAction(
   revalidatePath("/audits");
   return { success: true };
 }
+
+/**
+ * Sends a checked or submitted audit back to the employee, so they can check
+ * it and submit a note and photos again. Their earlier note and photos stay
+ * on the audit until they submit new ones.
+ */
+export async function reopenAuditForEmployeeAction(auditId: string): Promise<AuditFormState> {
+  if (!auditId) return { error: "Missing audit." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("audits").update({ employee_verified_at: null, employee_submitted_at: null }).eq("id", auditId);
+  if (error) return { error: /employee_verified_at/.test(error.message) ? "Run migration 0050_audit_report_verify_submit.sql in Supabase first." : error.message };
+  revalidatePath("/audits");
+  return { success: true };
+}

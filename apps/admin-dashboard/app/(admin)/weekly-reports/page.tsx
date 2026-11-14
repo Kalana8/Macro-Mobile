@@ -6,7 +6,7 @@ import { WeeklyReportsTable, type WeeklyReportRow } from "./WeeklyReportsTable";
 export default async function WeeklyReportsPage() {
   const supabase = await createClient();
 
-  const [{ data: reports, error }, { data: companies }, { data: sites }, { data: employees }, { data: sections }] =
+  const [{ data: reports, error }, { data: companies }, { data: sites }, { data: employees }, { data: sections }, { data: recipients }] =
     await Promise.all([
       supabase
         .from("weekly_reports")
@@ -16,12 +16,24 @@ export default async function WeeklyReportsPage() {
       supabase.from("sites").select("id, name, company_id").order("name"),
       supabase.from("employees").select("id, full_name").order("full_name"),
       supabase.from("report_sections").select("id, report_id"),
+      // `*`: verified_at only exists once migration 0050 is applied; missing entirely before 0046.
+      supabase.from("weekly_report_recipients").select("*"),
     ]);
 
   const employeeNameById = new Map((employees ?? []).map((e) => [e.id, e.full_name]));
   const sectionCountByReport = new Map<string, number>();
   for (const s of sections ?? []) {
     sectionCountByReport.set(s.report_id, (sectionCountByReport.get(s.report_id) ?? 0) + 1);
+  }
+
+  // What the people it was shared with have done in the app.
+  const responsesByReport = new Map<string, { shared: number; verified: number; submitted: number }>();
+  for (const x of (recipients ?? []) as { report_id: string; verified_at?: string | null; submitted_at?: string | null }[]) {
+    const t = responsesByReport.get(x.report_id) ?? { shared: 0, verified: 0, submitted: 0 };
+    t.shared += 1;
+    if (x.verified_at || x.submitted_at) t.verified += 1;
+    if (x.submitted_at) t.submitted += 1;
+    responsesByReport.set(x.report_id, t);
   }
 
   const rows: WeeklyReportRow[] = (reports ?? []).map((r) => ({
@@ -31,12 +43,13 @@ export default async function WeeklyReportsPage() {
     auditorName: r.auditor_id ? (employeeNameById.get(r.auditor_id) ?? "—") : "—",
     supervisorName: r.supervisor_id ? (employeeNameById.get(r.supervisor_id) ?? "—") : "—",
     sectionCount: sectionCountByReport.get(r.id) ?? 0,
+    responses: responsesByReport.get(r.id) ?? { shared: 0, verified: 0, submitted: 0 },
   }));
 
   return (
     <div>
       <PageHeader
-        title="Weekly Action Report"
+        title="Actions Reports"
         subtitle="Site-inspection improvement reports for Auditors and Supervisors"
       />
 

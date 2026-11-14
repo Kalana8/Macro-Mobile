@@ -1,16 +1,17 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
 import { CheckboxSquare, FieldLabel, PrimaryButton, Select, TextArea } from "@/components/ui";
 import type { ChecklistTemplate } from "@macro/shared/types";
 import { scheduleSummary } from "../companies/siteSchedule";
 import { createAssignmentAction, type ChecklistFormState } from "./actions";
+import { templateDays } from "./templateContent";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
-  return <PrimaryButton type="submit" disabled={pending}>{pending ? "Assigning…" : "Assign"}</PrimaryButton>;
+  return <PrimaryButton type="submit" disabled={pending}>{pending ? "Sending…" : "Assign & Send"}</PrimaryButton>;
 }
 
 export function AssignChecklistModal({
@@ -48,10 +49,6 @@ export function AssignChecklistModal({
     return `${t.site} — ${scheduleSummary(t)}`;
   }
 
-  useEffect(() => {
-    if (state.success) onClose();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.success]);
 
   function toggleEmployee(id: string) {
     setSelectedEmployees((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -64,8 +61,8 @@ export function AssignChecklistModal({
         {selectedEmployees.map((id) => <input key={id} type="hidden" name="employeeIds" value={id} />)}
 
         <p className="-mt-1 text-[12.5px] text-text-muted">
-          No date to pick here — the checklist is sent automatically to each employee on the specific dates set
-          when it was created.
+          Assign &amp; Send gives each employee today’s checklist straight away. After that it’s sent automatically on
+          every day of its 28-day schedule.
         </p>
 
         <div>
@@ -102,14 +99,19 @@ export function AssignChecklistModal({
           </div>
         </div>
 
-        {selectedTemplate && selectedTemplate.areas.length > 0 && (
+        {selectedTemplate && templateDays(selectedTemplate).length > 0 && (
           <div className="rounded-xl bg-bg px-3.5 py-3">
             <div className="mb-2 text-[11px] font-bold text-text-muted">CHECKLIST DETAILS</div>
-            {selectedTemplate.areas.map((area, i) => (
-              <div key={i} className="mb-2.5 last:mb-0">
-                <div className="mb-1 text-[13px] font-bold text-text-dark">{area.main_area}</div>
-                {area.subtasks.map((s) => (
-                  <div key={s.id} className="pl-2 text-[12.5px] text-text-muted">• {s.text}</div>
+            {templateDays(selectedTemplate).map(({ day, label, areas }) => (
+              <div key={day} className="mb-3 last:mb-0">
+                <div className="mb-1 text-[12px] font-extrabold text-primary">{label}</div>
+                {areas.map((area, i) => (
+                  <div key={i} className="mb-2 last:mb-0">
+                    <div className="mb-1 text-[13px] font-bold text-text-dark">{area.main_area}</div>
+                    {area.subtasks.map((s) => (
+                      <div key={s.id} className="pl-2 text-[12.5px] text-text-muted">• {s.text}</div>
+                    ))}
+                  </div>
                 ))}
               </div>
             ))}
@@ -124,12 +126,17 @@ export function AssignChecklistModal({
         {state.error && (
           <div className="text-[12.5px] text-error-text">{state.error}</div>
         )}
+        {state.success && (
+          <div className="rounded-lg bg-olive/15 px-3.5 py-2.5 text-sm font-semibold text-olive-text">
+            Assigned. {state.message}
+          </div>
+        )}
 
         <div className="mt-2 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-[12px] border border-border px-4 py-2.5 text-sm font-semibold text-text-dark">
-            Cancel
+            {state.success ? "Done" : "Cancel"}
           </button>
-          <SubmitButton />
+          {!state.success && <SubmitButton />}
         </div>
       </form>
     </Modal>

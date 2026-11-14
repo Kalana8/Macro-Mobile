@@ -66,6 +66,12 @@ function NavIcon({ name }: { name: string }) {
           <rect x="4" y="11" width="16" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
         </svg>
       );
+    case "photos":
+      return (
+        <svg {...common}>
+          <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.8" /><path d="m21 16-5-5-8 8" />
+        </svg>
+      );
     case "communication":
       return (
         <svg {...common}>
@@ -102,9 +108,11 @@ const NAV_ITEMS = [
   { href: "/attendance", label: "Attendance", icon: "attendance", area: "attendance" as const },
   { href: "/audits", label: "Audits", icon: "audits", area: "audits" as const },
   { href: "/checklists", label: "Checklists", icon: "checklists", area: "checklists" as const },
-  { href: "/weekly-reports", label: "Weekly Action Report", icon: "weeklyReports", area: "weeklyReports" as const },
-  { href: "/inductions", label: "Induction Links", icon: "inductions", area: "inductions" as const },
+  { href: "/weekly-reports", label: "Action Reports", icon: "weeklyReports", area: "weeklyReports" as const },
+  { href: "/inductions", label: "Induction and Check Links", icon: "inductions", area: "inductions" as const },
   { href: "/communication", label: "Communication", icon: "communication", area: "communication" as const },
+  // Photo sharing goes with messaging, so it uses the Communication permission.
+  { href: "/photos", label: "Photos", icon: "photos", area: "communication" as const },
   { href: "/roles-access", label: "Roles & Access", icon: "roles", area: "roles" as const },
 ];
 

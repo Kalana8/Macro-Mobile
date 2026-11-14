@@ -2,11 +2,34 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ensureFirebaseSession, sendMessage, subscribeToMessages, type ChatMessage } from "@macro/shared/firebase/chat";
+import { createClient } from "@macro/shared/supabase/client";
 import { PrimaryButton, TextArea } from "@/components/ui";
 import { touchCommunicationAction, uploadCommunicationImageAction } from "./actions";
 
-// ImageKit URLs are public CDN URLs — no signed-URL resolution needed, just render them.
-function ChatImage({ url, onOpen }: { url: string; onOpen: (url: string) => void }) {
+/**
+ * ImageKit links from the dashboard are public and shown as they are. Photos
+ * sent from the employee app are paths in the private chat-images bucket
+ * (migration 0052), shown through a short-lived signed link that only works
+ * for people in the conversation.
+ */
+function ChatImage({ url: stored, onOpen }: { url: string; onOpen: (url: string) => void }) {
+  const isLink = /^https?:/i.test(stored);
+  const [signed, setSigned] = useState<string | null>(null);
+  useEffect(() => {
+    if (isLink) return;
+    let cancelled = false;
+    createClient()
+      .storage.from("chat-images")
+      .createSignedUrl(stored, 60 * 60)
+      .then(({ data }) => {
+        if (!cancelled && data?.signedUrl) setSigned(data.signedUrl);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [stored, isLink]);
+  const url = isLink ? stored : signed;
+  if (!url) return <div className="h-24 w-24 rounded-lg bg-bg" aria-label="Loading photo" />;
   return (
     <button type="button" onClick={() => onOpen(url)} className="block">
       {/* eslint-disable-next-line @next/next/no-img-element */}

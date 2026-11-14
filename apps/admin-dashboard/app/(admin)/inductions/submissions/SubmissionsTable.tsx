@@ -92,7 +92,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
         <TextInput
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by employee, induction, or site…"
+          placeholder="Search by induction, company or site…"
         />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
           <Select value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
@@ -126,9 +126,11 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
                 <div key={r.id} className="rounded-[14px] border border-border bg-white p-4">
                   <button type="button" onClick={() => router.push(`/inductions/${r.tokenId}`)} className="flex w-full items-start justify-between gap-2 text-left">
                     <div className="min-w-0">
-                      <div className="truncate font-semibold text-text-dark">{r.employeeName}</div>
+                      <div className="truncate font-semibold text-text-dark">{r.assignmentName}</div>
+                      <div className="truncate text-xs text-text-muted">Company: {r.companyName}</div>
+                      <div className="truncate text-xs text-text-muted">Site: {r.siteName}</div>
                       <div className="truncate text-xs text-text-muted">
-                        {INDUCTION_TYPE_LABEL[r.inductionType]} · {r.assignmentName} · {r.siteName}
+                        {INDUCTION_TYPE_LABEL[r.inductionType]}
                       </div>
                     </div>
                     <Badge tone={STATUS_TONE[eStatus]}>{STATUS_LABEL[eStatus]}</Badge>
@@ -164,18 +166,15 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
           </div>
 
           <div className="hidden md:block">
-            <Table head={["Employee", "Company", "Induction", "Type", "Site", "Training", "Score", "Attempts", "Status", "Actions"]}>
+            <Table head={["Company", "Site", "Induction", "Type", "Training", "Score", "Attempts", "Status", "Actions"]}>
               {filtered.map((r) => {
                 const eStatus = effectiveSubmissionStatus(r);
                 return (
                   <tr key={r.id} className="border-b border-border last:border-0">
-                    <td className="cursor-pointer px-5 py-3.5 font-semibold text-text-dark" onClick={() => router.push(`/inductions/${r.tokenId}`)}>
-                      {r.employeeName}
-                    </td>
-                    <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{r.companyName}</td>
+                    <td className="cursor-pointer px-5 py-3.5 font-semibold text-text-dark" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{r.companyName}</td>
+                    <td className="cursor-pointer px-5 py-3.5 text-text-dark" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{r.siteName}</td>
                     <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{r.assignmentName}</td>
                     <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{INDUCTION_TYPE_LABEL[r.inductionType]}</td>
-                    <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>{r.siteName}</td>
                     <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.tokenId}`)}>
                       {TRAINING_LABEL[r.trainingStatus]}
                       {r.slidesTotal > 0 && <div className="text-[11px] text-text-muted">{r.slidesViewed}/{r.slidesTotal} slides</div>}

@@ -355,3 +355,56 @@ export async function logReportShareAction(params: {
   revalidatePath("/weekly-reports");
   return { success: true };
 }
+
+// ---------------------------------------------------------------------------
+// Sharing with app users (migration 0046). Each chosen employee can then read
+// the report in the employee app and is notified until they open it.
+// Sharing again with someone re-sends it (they are notified again).
+// ---------------------------------------------------------------------------
+
+export async function shareReportWithUsersAction(params: {
+  reportId: string;
+  employeeIds: string[];
+  note?: string;
+}): Promise<ActionResult> {
+  const ids = [...new Set(params.employeeIds)].filter(Boolean);
+  if (ids.length === 0) return { error: "Choose at least one person." };
+  const note = (params.note ?? "").trim().slice(0, 1000) || null;
+  const employeeId = await requireEmployeeId();
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+
+  const base = ids.map((id) => ({ report_id: params.reportId, employee_id: id, shared_by: employeeId, note, shared_at: now, seen_at: null }));
+  // Reports are view only in the app. Sharing again asks the person to check it again.
+  let { error } = await supabase
+    .from("weekly_report_recipients")
+    .upsert(base.map((r) => ({ ...r, access: "view", submitted_at: null, verified_at: null })), { onConflict: "report_id,employee_id" });
+  if (error && /access|submitted_at|verified_at/.test(error.message)) {
+    // Before migrations 0047/0050 those columns don't exist: plain sharing still works.
+    ({ error } = await supabase.from("weekly_report_recipients").upsert(base, { onConflict: "report_id,employee_id" }));
+  }
+  if (error) {
+    if (error.code === "42P01" || error.code === "PGRST205" || /weekly_report_recipients/.test(error.message)) {
+      return { error: "Sharing with app users isn't switched on yet. Run migration 0046_weekly_report_recipients.sql in Supabase first." };
+    }
+    return { error: error.message };
+  }
+
+  const { data: people } = await supabase.from("employees").select("full_name").in("id", ids);
+  const names = (people ?? []).map((p) => p.full_name).filter(Boolean);
+  const recipient = names.length <= 3 ? names.join(", ") : `${names.slice(0, 3).join(", ")} +${names.length - 3} more`;
+  await supabase.from("report_shares").insert({
+    report_id: params.reportId,
+    pdf_id: null,
+    channel: "app",
+    recipient: recipient || `${ids.length} app users`,
+    message: note,
+    status: "sent",
+    sent_by: employeeId,
+  });
+
+  await supabase.from("weekly_reports").update({ status: "sent" }).eq("id", params.reportId);
+  revalidatePath(`/weekly-reports/${params.reportId}`);
+  revalidatePath("/weekly-reports");
+  return { success: true };
+}

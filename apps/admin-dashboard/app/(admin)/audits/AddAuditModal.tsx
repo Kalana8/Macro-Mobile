@@ -118,6 +118,9 @@ export function AddAuditModal({
             {employeeOptions.map((e) => <option key={e.id} value={e.id}>{e.full_name}</option>)}
           </Select>
         </div>
+        <div className="rounded-lg bg-bg px-3.5 py-2.5 text-xs text-text-muted">
+          The employee sees this audit as view only. They press Verified to confirm they&apos;ve checked it, and can submit a note and photos.
+        </div>
         <div>
           <FieldLabel>Date</FieldLabel>
           <TextInput type="date" name="date" required defaultValue={todayInBusinessTimezone()} />

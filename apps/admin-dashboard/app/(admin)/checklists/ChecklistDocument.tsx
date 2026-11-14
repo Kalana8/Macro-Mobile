@@ -78,7 +78,7 @@ export const ChecklistDocument = forwardRef<
         )}
 
         <div className="divide-y divide-border">
-          <Section title={`Checklist Areas · ${totalDone}/${totalTasks} complete`}>
+          <Section title={`Checklist Areas · ${totalDone}/${totalTasks} completed`}>
             <div className="flex flex-col gap-5">
               {checklist.areas.map((area, i) => (
                 <div key={i}>

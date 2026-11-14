@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@macro/shared/supabase/server";
-import { formatDate, formatTime, todayInBusinessTimezone } from "@macro/shared/datetime";
+import { businessDayOf, businessDayRange, formatDate, formatTime, todayInBusinessTimezone } from "@macro/shared/datetime";
 import { Badge, Card, PageHeader } from "@/components/ui";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -64,13 +64,14 @@ export default async function DashboardPage({
     supabase.from("audits").select("*", { count: "exact", head: true }).eq("status", "complete"),
     supabase
       .from("attendance")
-      .select("date")
-      .gte("date", toDateStr(weekDates[0]))
-      .lte("date", toDateStr(weekDates[6])),
+      .select("clock_in_at")
+      .gte("clock_in_at", businessDayRange(toDateStr(weekDates[0]), toDateStr(weekDates[6])).start)
+      .lt("clock_in_at", businessDayRange(toDateStr(weekDates[0]), toDateStr(weekDates[6])).end),
     supabase
       .from("attendance")
       .select("employee_id, clock_in_at, clock_out_at, employees(full_name), companies(name), sites(name)")
-      .eq("date", today),
+      .gte("clock_in_at", businessDayRange(today).start)
+      .lt("clock_in_at", businessDayRange(today).end),
     supabase.from("checklists").select("employee_id, status").eq("assigned_date", today),
     supabase.from("checklists").select("employee_id, status"),
     supabase.from("employees").select("id, full_name").order("full_name"),
@@ -86,7 +87,7 @@ export default async function DashboardPage({
 
   const attendanceByDay = weekDates.map((d) => {
     const dateStr = toDateStr(d);
-    const count = (weekAttendance ?? []).filter((r) => r.date === dateStr).length;
+    const count = (weekAttendance ?? []).filter((r) => r.clock_in_at && businessDayOf(r.clock_in_at) === dateStr).length;
     return { label: DAY_LABELS[d.getUTCDay()], count };
   });
   const maxDayCount = Math.max(1, ...attendanceByDay.map((d) => d.count));
@@ -94,7 +95,7 @@ export default async function DashboardPage({
   const auditBars = [
     { label: "Pending", count: submitAudits ?? 0, color: "var(--color-orange)" },
     { label: "Saved", count: verifyAudits ?? 0, color: "var(--color-olive-text)" },
-    { label: "Complete", count: completedAudits ?? 0, color: "var(--color-primary)" },
+    { label: "Completed", count: completedAudits ?? 0, color: "var(--color-primary)" },
   ];
   const maxAuditCount = Math.max(1, ...auditBars.map((b) => b.count));
 

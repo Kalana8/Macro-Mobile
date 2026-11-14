@@ -53,7 +53,7 @@ export function HistoryPanel({
           {shares.map((s) => (
             <div key={s.id} className="flex items-center justify-between gap-2 rounded-lg bg-bg px-3 py-2 text-[12px]">
               <div>
-                <span className="font-semibold text-text-dark">{s.channel === "whatsapp" ? "WhatsApp" : "Email"}</span>
+                <span className="font-semibold text-text-dark">{s.channel === "whatsapp" ? "WhatsApp" : s.channel === "app" ? "App" : "Email"}</span>
                 <span className="text-text-muted"> → {s.recipient}</span>
                 <div className="text-[11px] text-text-muted">{when(s.sent_at)}</div>
               </div>

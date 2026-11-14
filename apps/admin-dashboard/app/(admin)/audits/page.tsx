@@ -37,6 +37,16 @@ export default async function AuditsPage() {
     employeeName: (a.employees as { full_name?: string } | null)?.full_name ?? "—",
   }));
 
+  // Photos employees add from the app are private storage paths; sign them for display.
+  const paths = rows
+    .flatMap((r) => [...(r.main_audits ?? []).flatMap((m) => m.images ?? []), ...(r.employee_images ?? [])])
+    .filter((u) => !/^https?:/i.test(u));
+  const photoUrls: Record<string, string> = {};
+  if (paths.length) {
+    const { data: signed } = await supabase.storage.from("audit-images").createSignedUrls([...new Set(paths)], 60 * 60);
+    for (const s of signed ?? []) if (s.path && s.signedUrl) photoUrls[s.path] = s.signedUrl;
+  }
+
   return (
     <div>
       <PageHeader title="Audits" subtitle="Showing audits from the last 2 months" />
@@ -48,7 +58,7 @@ export default async function AuditsPage() {
       )}
 
       {!error && (
-        <AuditsTable audits={rows} companies={companies ?? []} sites={sites ?? []} employees={employeeOptions} />
+        <AuditsTable audits={rows} companies={companies ?? []} sites={sites ?? []} employees={employeeOptions} photoUrls={photoUrls} />
       )}
     </div>
   );

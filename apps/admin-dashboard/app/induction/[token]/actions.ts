@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { createServiceRoleClient } from "@macro/shared/supabase/server";
-import { hashToken } from "@/lib/inductionToken";
+import { hashToken, tokenHashFilter } from "@/lib/inductionToken";
 import { generateCertificateNumber, generateCertificatePdfBuffer } from "@/lib/certificate";
 import { scoreAttempt } from "@/lib/assessment";
 import { toOne } from "@/lib/embed";
@@ -70,7 +70,12 @@ interface FullTemplate {
 async function loadLiveToken(rawToken: string) {
   const supabase = createServiceRoleClient();
   const tokenHash = hashToken(rawToken);
-  const { data: token } = await supabase.from("induction_tokens").select("*").eq("token_hash", tokenHash).maybeSingle();
+  const first = await supabase.from("induction_tokens").select("*").or(tokenHashFilter(tokenHash)).maybeSingle();
+  // Before migration 0054 there is no app key column; match the invitation link only.
+  const token =
+    first.error && /app_token_hash/.test(first.error.message)
+      ? (await supabase.from("induction_tokens").select("*").eq("token_hash", tokenHash).maybeSingle()).data
+      : first.data;
   return { supabase, token };
 }
 
