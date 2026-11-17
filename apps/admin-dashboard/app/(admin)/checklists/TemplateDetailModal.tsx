@@ -4,7 +4,7 @@ import { Modal } from "@/components/Modal";
 import { todayInBusinessTimezone } from "@macro/shared/datetime";
 import type { ChecklistTemplate } from "@macro/shared/types";
 import { scheduleSummary } from "../companies/siteSchedule";
-import { templateDays, templateSubtaskCount } from "./templateContent";
+import { doneByLabel, templateDays, templateSubtaskCount } from "./templateContent";
 
 function SectionLabel({ children }: { children: string }) {
   return <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-text-muted">{children}</div>;
@@ -29,6 +29,12 @@ export function TemplateDetailModal({
     <Modal title={companyName} onClose={onClose}>
       <div className="mb-4 text-sm text-text-muted">
         {template.site} · {templateSubtaskCount(template)} subtasks · {scheduleSummary(template)}
+        <div className="mt-1">
+          Done by:{" "}
+          <span className="font-semibold text-text-dark">
+            {doneByLabel(template.day_ends_at_hour)}
+          </span>
+        </div>
       </div>
 
       {template.special_note && (

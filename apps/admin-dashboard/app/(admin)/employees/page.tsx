@@ -51,6 +51,7 @@ export default async function EmployeesPage() {
     inductions: inductionsByEmployee[e.id] ?? { done: 0, total: 0, toReview: 0 },
     checks: (checkTypes ?? []).map((t) => ({ name: t.name as string, state: checkState(checkByKey.get(`${e.id}:${t.id}`), today) })),
     accessRoleId: e.access_role_id,
+    ownPassword: e.must_change_password === false,
     companyNames: companyNamesByEmployee[e.id] ?? [],
     roleName: (e.roles as { name?: string } | null)?.name ?? "—",
   }));

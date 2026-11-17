@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { checklistName } from "@/lib/checklistName";
 import { Modal } from "@/components/Modal";
 import type { Checklist } from "@macro/shared/types";
 import { ChecklistDocument } from "./ChecklistDocument";
@@ -10,7 +11,7 @@ export interface ShareableChecklist extends Checklist {
   employeeName: string;
 }
 
-const titleOf = (c: Checklist) => c.areas.map((a) => a.main_area).join(", ") || "Checklist";
+const titleOf = (c: Checklist & { companyName?: string }) => checklistName(c.companyName, c.site);
 
 async function capture(node: HTMLDivElement) {
   // Wait for photos and the web font, or the capture can come out blank or misaligned.
@@ -37,7 +38,7 @@ export function ShareChecklistsModal({ checklists, onClose }: { checklists: Shar
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const links = useMemo(
-    () => checklists.map((c) => ({ c, url: `${origin}/shared/checklists/${c.id}`, label: `${titleOf(c)} — ${c.assigned_date} — ${c.companyName}` })),
+    () => checklists.map((c) => ({ c, url: `${origin}/shared/checklists/${c.id}`, label: `${titleOf(c)} — ${c.assigned_date}` })),
     [checklists, origin],
   );
   const heading = checklists.length === 1 ? titleOf(checklists[0]) : `${checklists.length} checklists`;

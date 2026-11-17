@@ -67,10 +67,10 @@ function expiryFrom(option: string, custom: string, now: Date): { expiresAt?: Da
 }
 
 /**
- * Adds an induction to a site: sends it to the chosen employees of the site's
- * company (each sees it in the app under Profile and on Home), and, when
- * `automatic` is on, records it so employees added to the company later get
- * it too (migration 0056).
+ * Adds an induction to a site, like a check: it goes to everyone who works at
+ * the site (each sees it in the app under Profile and on Home), and is
+ * recorded so anyone added to the site later gets it automatically
+ * (site_inductions + the employee_sites trigger, migrations 0056 and 0062).
  */
 export async function createSiteInductionAction(_prev: SiteInductionResult, formData: FormData): Promise<SiteInductionResult> {
   const companyId = String(formData.get("companyId") ?? "");
@@ -78,12 +78,11 @@ export async function createSiteInductionAction(_prev: SiteInductionResult, form
   const templateId = String(formData.get("templateId") ?? "") || null;
   const expiryOption = String(formData.get("expiryOption") ?? "7d");
   const customExpiresAt = String(formData.get("customExpiresAt") ?? "");
-  const employeeIds = [...new Set(formData.getAll("employeeIds").map(String).filter(Boolean))];
-  const automatic = formData.get("automatic") === "on";
+  // Always automatic: new employees at the site get it too.
+  const automatic = true;
 
   if (!companyId || !siteId) return { error: "Select a company and a site." };
   if (!templateId) return { error: "Select an induction template — create one first if none exist yet." };
-  if (employeeIds.length === 0 && !automatic) return { error: "Tick at least one employee." };
 
   const now = new Date();
   const { expiresAt, error: expiryError } = expiryFrom(expiryOption, customExpiresAt, now);
@@ -93,18 +92,22 @@ export async function createSiteInductionAction(_prev: SiteInductionResult, form
   const supabase = await createClient();
 
   // Only the site's own company's employees.
-  const [{ data: site }, { data: members }] = await Promise.all([
+  const [{ data: site }, { data: members }, { data: siteLinks, error: siteLinksError }] = await Promise.all([
     supabase.from("sites").select("id, company_id").eq("id", siteId).maybeSingle(),
-    supabase.from("employee_companies").select("employee_id, employees(full_name)").eq("company_id", companyId),
+    supabase.from("employee_companies").select("employee_id, employees(full_name, status)").eq("company_id", companyId),
+    supabase.from("employee_sites").select("employee_id").eq("site_id", siteId),
   ]);
   if (!site || site.company_id !== companyId) return { error: "That site isn't part of the selected company." };
   const nameOf = new Map(
-    (members ?? []).map((m) => {
-      const e = Array.isArray(m.employees) ? m.employees[0] : m.employees;
-      return [m.employee_id as string, (e as { full_name?: string } | null)?.full_name ?? "Employee"];
+    (members ?? []).flatMap((m) => {
+      const e = (Array.isArray(m.employees) ? m.employees[0] : m.employees) as { full_name?: string; status?: string } | null;
+      if (e?.status && e.status !== "active") return [];
+      return [[m.employee_id as string, e?.full_name ?? "Employee"] as const];
     }),
   );
-  const targets = employeeIds.filter((id) => nameOf.has(id));
+  // Everyone who works at the site (before migration 0062: everyone in the company).
+  const atSite = siteLinksError ? [...nameOf.keys()] : (siteLinks ?? []).map((l) => l.employee_id as string);
+  const targets = [...new Set(atSite)].filter((id) => nameOf.has(id));
 
   // Skip anyone who already has it for this site: live or completed.
   const { data: existing } = targets.length

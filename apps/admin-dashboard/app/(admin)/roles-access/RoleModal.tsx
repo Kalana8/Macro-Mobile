@@ -4,7 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
 import { PrimaryButton, TextInput } from "@/components/ui";
-import { EMPTY_PERMISSIONS } from "@macro/shared/rbac";
+import { EMPTY_PERMISSIONS, withAppDefaults } from "@macro/shared/rbac";
 import type { RolePermissions, Role } from "@macro/shared/types";
 import { APP_SCHEMA, DASHBOARD_SCHEMA } from "./permission-schema-labels";
 import { saveRoleAction, type RoleFormState } from "./actions";
@@ -13,6 +13,9 @@ function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return <PrimaryButton type="submit" disabled={pending} className="flex-1">{pending ? "Saving…" : label}</PrimaryButton>;
 }
+
+/** App → Checklists → photos only: the either/or partner of the full view, left out of "all". */
+const isAlternative = (app: boolean, areaKey: string, fnKey: string) => app && areaKey === "checklists" && fnKey === "imagesOnly";
 
 function AreaGroup({
   schema,
@@ -29,7 +32,8 @@ function AreaGroup({
     <div className="flex max-h-[340px] flex-col gap-2.5 overflow-y-auto pr-1">
       {schema.map((area) => {
         const areaValues = values[area.key] ?? {};
-        const allChecked = area.functions.every((f) => areaValues[f.key]);
+        // Photos only is the alternative to the full view, so "all" doesn't include it.
+        const allChecked = area.functions.filter((f) => !isAlternative(schema === APP_SCHEMA, area.key, f.key)).every((f) => areaValues[f.key]);
         return (
           <div key={area.key} className="rounded-[10px] border border-border p-2.5">
             <button
@@ -70,7 +74,10 @@ function AreaGroup({
 export function RoleModal({ role, onClose }: { role?: Role; onClose: () => void }) {
   const isEdit = Boolean(role);
   const [state, formAction] = useActionState<RoleFormState, FormData>(saveRoleAction, {});
-  const [permissions, setPermissions] = useState<RolePermissions>(role?.permissions ?? EMPTY_PERMISSIONS);
+  const [permissions, setPermissions] = useState<RolePermissions>(
+    // Roles saved before a switch existed show it as it currently behaves.
+    role?.permissions ? { ...role.permissions, app: withAppDefaults(role.permissions.app) } : EMPTY_PERMISSIONS,
+  );
 
   useEffect(() => {
     if (state.success) onClose();
@@ -82,18 +89,23 @@ export function RoleModal({ role, onClose }: { role?: Role; onClose: () => void 
     const area = schema.find((a) => a.key === areaKey)!;
     setPermissions((prev) => {
       const areaValues = (prev[side] as unknown as Record<string, Record<string, boolean>>)[areaKey] ?? {};
-      const allChecked = area.functions.every((f) => areaValues[f.key]);
-      const next = Object.fromEntries(area.functions.map((f) => [f.key, !allChecked]));
+      const allChecked = area.functions.filter((f) => !isAlternative(side === "app", areaKey, f.key)).every((f) => areaValues[f.key]);
+      const next: Record<string, boolean> = Object.fromEntries(area.functions.map((f) => [f.key, !allChecked]));
+      // "Everything" on checklists means the full view, not photos only.
+      if (side === "app" && areaKey === "checklists" && next.reviewAll) next.imagesOnly = false;
       return { ...prev, [side]: { ...prev[side], [areaKey]: next } };
     });
   }
   function toggleFn(side: "dashboard" | "app", areaKey: string, fnKey: string) {
     setPermissions((prev) => {
       const areaValues = (prev[side] as unknown as Record<string, Record<string, boolean>>)[areaKey] ?? {};
-      return {
-        ...prev,
-        [side]: { ...prev[side], [areaKey]: { ...areaValues, [fnKey]: !areaValues[fnKey] } },
-      };
+      const next = { ...areaValues, [fnKey]: !areaValues[fnKey] };
+      // Company checklists are seen either in full or as photos only, not both.
+      if (side === "app" && areaKey === "checklists" && next[fnKey]) {
+        if (fnKey === "reviewAll") next.imagesOnly = false;
+        if (fnKey === "imagesOnly") next.reviewAll = false;
+      }
+      return { ...prev, [side]: { ...prev[side], [areaKey]: next } };
     });
   }
 

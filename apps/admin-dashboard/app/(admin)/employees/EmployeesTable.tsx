@@ -6,6 +6,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { deleteEmployeeAction } from "./actions";
 import { AddEmployeeModal } from "./AddEmployeeModal";
 import { EditEmployeeModal } from "./EditEmployeeModal";
+import { PasswordCell } from "./PasswordCell";
 import Link from "next/link";
 import { CHECK_TONE, type CheckState } from "@/lib/checks";
 
@@ -26,6 +27,8 @@ export interface EmployeeRow {
   accessRoleId: string;
   companyNames: string[];
   roleName: string;
+  /** They've set their own password, so there's no office one to show. */
+  ownPassword: boolean;
   /** Inductions sent to them and how many are done. */
   inductions: { done: number; total: number; toReview: number };
   /** Each required check, e.g. Police Check: approved. Empty until migration 0057. */
@@ -86,11 +89,12 @@ export function EmployeesTable({
       {employees.length === 0 ? (
         <EmptyState title="No employees yet" hint="Add your first employee to provision their login." />
       ) : (
-      <Table head={["Name", "Username", "Company", "Role", "Induction", "Checks", "Status", ""]}>
+      <Table head={["Name", "Username", "Password", "Company", "Role", "Induction", "Checks", "Status", ""]}>
         {employees.map((employee) => (
           <tr key={employee.id} className="border-b border-border last:border-0">
             <td className="px-5 py-3.5 font-semibold text-text-dark">{employee.full_name}</td>
             <td className="px-5 py-3.5 text-text-muted">{employee.username}</td>
+            <td className="px-5 py-3.5"><PasswordCell employeeId={employee.id} username={employee.username} ownPassword={employee.ownPassword} /></td>
             <td className="px-5 py-3.5 text-text-muted">{employee.companyNames.join(", ") || "—"}</td>
             <td className="px-5 py-3.5 text-text-muted">{employee.job_role || "—"} <span className="text-xs">({employee.roleName})</span></td>
             <td className="px-5 py-3.5"><InductionCell i={employee.inductions} /></td>

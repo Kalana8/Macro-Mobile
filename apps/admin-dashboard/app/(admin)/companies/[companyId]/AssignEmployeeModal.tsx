@@ -13,11 +13,17 @@ interface EmployeeOption {
 export function AssignEmployeeModal({
   companyId,
   companyName,
+  siteId,
+  sites,
   candidates,
   onClose,
 }: {
   companyId: string;
   companyName: string;
+  /** Add them to this one site of the company. */
+  siteId?: string;
+  /** Without a fixed site: let the admin pick which site they work at. */
+  sites?: { id: string; name: string }[];
   candidates: EmployeeOption[];
   onClose: () => void;
 }) {
@@ -32,6 +38,18 @@ export function AssignEmployeeModal({
       <div className="-mt-2.5 mb-4 text-[13px] text-text-muted">Select from existing employees</div>
       <form action={assignEmployeeToCompanyAction} onSubmit={onClose} className="flex flex-col gap-3">
         <input type="hidden" name="companyId" value={companyId} />
+        {siteId && <input type="hidden" name="siteId" value={siteId} />}
+        {!siteId && sites && sites.length > 1 && (
+          <label className="flex flex-col gap-1 text-[13px] font-semibold text-text-dark">
+            Site
+            <select name="siteId" defaultValue="" className="rounded-[11px] border border-border bg-white px-3 py-2 text-[13.5px] font-normal">
+              <option value="">All sites</option>
+              {sites.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </label>
+        )}
         {selected.map((id) => (
           <input key={id} type="hidden" name="employeeIds" value={id} />
         ))}

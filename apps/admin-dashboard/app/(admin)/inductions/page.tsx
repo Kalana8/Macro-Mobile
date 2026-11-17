@@ -23,6 +23,7 @@ export default async function InductionsPage({
     { data: certificates },
     { data: templates },
     { data: siteInductions },
+    { data: siteLinks, error: siteLinksError },
   ] = await Promise.all([
       supabase
         .from("induction_tokens")
@@ -36,12 +37,15 @@ export default async function InductionsPage({
       supabase.from("induction_templates").select("id, name").eq("status", "published").order("name"),
       // Missing until migration 0056 is run; then the list is just empty.
       supabase.from("site_inductions").select("id, site_id, template_id, induction_templates(name)").eq("active", true).order("created_at"),
+      // Who works at which site (migration 0062); missing before it.
+      supabase.from("employee_sites").select("employee_id, site_id"),
     ]);
 
   const members = (memberRows ?? []).flatMap((m) => {
     const e = toOne(m.employees as { full_name?: string; status?: string } | { full_name?: string; status?: string }[] | null);
     if (!e?.full_name || (e.status && e.status !== "active")) return [];
-    return [{ employee_id: m.employee_id as string, company_id: m.company_id as string, full_name: e.full_name }];
+    const siteIds = siteLinksError ? null : (siteLinks ?? []).filter((l) => l.employee_id === m.employee_id).map((l) => l.site_id as string);
+    return [{ employee_id: m.employee_id as string, company_id: m.company_id as string, full_name: e.full_name, siteIds }];
   });
   const siteById = new Map((sites ?? []).map((s) => [s.id, s]));
   const companyName = new Map((companies ?? []).map((c) => [c.id, c.name as string]));

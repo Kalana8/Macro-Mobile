@@ -185,6 +185,7 @@ export function CreateTemplateModal({
   // The cycle runs from the Monday of the week the checklist is made. It's never shown: everything is Week 1–4, Mon–Sun.
   const start = template?.cycle_start ?? mondayOf(todayInBusinessTimezone());
   const [repeats, setRepeats] = useState(template?.cycle_repeats !== false);
+  const [doneBy, setDoneBy] = useState(template?.day_ends_at_hour ?? 10);
   const [areas, setAreas] = useState<DraftArea[]>(() => {
     if (template?.cycle_start && template.cycle_areas?.length) return fromCycleAreas(template.cycle_areas);
     if (template && Object.keys(template.day_areas ?? {}).length) return fromWeekdayAreas(template.day_areas);
@@ -228,6 +229,7 @@ export function CreateTemplateModal({
         <input type="hidden" name="cycleJson" value={payload} />
         <input type="hidden" name="siteId" value={siteId} />
         <input type="hidden" name="specialNote" value={specialNote} />
+        <input type="hidden" name="doneBy" value={doneBy} />
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
@@ -282,6 +284,21 @@ export function CreateTemplateModal({
                 </button>
               ))}
             </div>
+        </div>
+
+        <div>
+          <FieldLabel>Done by</FieldLabel>
+          <Select value={doneBy} onChange={(e) => setDoneBy(Number(e.target.value))} aria-label="Done by">
+            <option value={0}>Midnight (end of the same day)</option>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+              <option key={h} value={h}>
+                {h === 12 ? "12:00 noon" : `${h}:00 am`} the next morning
+              </option>
+            ))}
+          </Select>
+          <p className="mt-1 text-[11.5px] text-text-muted">
+            Night work is common, so a day&apos;s checklist can be finished the next morning. After this time it shows as expired in the app (it can still be submitted).
+          </p>
         </div>
 
         <div>

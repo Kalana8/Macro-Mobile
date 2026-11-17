@@ -29,6 +29,8 @@ export interface MemberOption {
   employee_id: string;
   company_id: string;
   full_name: string;
+  /** The sites they work at; null before migration 0062 (then: every site of the company). */
+  siteIds: string[] | null;
 }
 
 function SubmitButton({ count }: { count: number }) {
@@ -62,9 +64,9 @@ function CopyLink({ link }: { link: string }) {
 }
 
 /**
- * Add an induction to a site. It goes to every ticked employee of the site's
- * company (they see it in the app), and optionally to employees added to the
- * company later.
+ * Add an induction to a site. Like a check, it goes to everyone who works at
+ * the site (they see it in the app), and anyone added to the site later gets
+ * it automatically.
  */
 export function CreateInductionModal({
   companies,
@@ -85,15 +87,15 @@ export function CreateInductionModal({
   const [companyId, setCompanyId] = useState("");
   const [siteId, setSiteId] = useState("");
   const [expiryOption, setExpiryOption] = useState("7d");
-  const [unticked, setUnticked] = useState<Set<string>>(new Set());
-  const [automatic, setAutomatic] = useState(true);
 
   const companySites = useMemo(() => sites.filter((s) => s.company_id === companyId), [sites, companyId]);
   const people = useMemo(
-    () => members.filter((m) => m.company_id === companyId).sort((a, b) => a.full_name.localeCompare(b.full_name)),
-    [members, companyId],
+    () =>
+      members
+        .filter((m) => m.company_id === companyId && (!siteId || m.siteIds === null || m.siteIds.includes(siteId)))
+        .sort((a, b) => a.full_name.localeCompare(b.full_name)),
+    [members, companyId, siteId],
   );
-  const ticked = people.filter((p) => !unticked.has(p.employee_id));
   const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   if (state.success || (state.links && state.links.length > 0)) {
@@ -105,7 +107,7 @@ export function CreateInductionModal({
             {links.length > 0
               ? `Sent to ${links.length} ${links.length === 1 ? "employee" : "employees"}. They'll see it in the app under Profile and on Home.`
               : "No new invitations were needed."}
-            {state.automatic ? " Employees added to this company later will get it automatically." : ""}
+            {state.automatic ? " Anyone added to this site later gets it automatically." : ""}
           </div>
           {state.error && <div className="text-[12.5px] text-error-text">{state.error}</div>}
           {(state.skipped ?? []).length > 0 && (
@@ -141,7 +143,6 @@ export function CreateInductionModal({
             onChange={(e) => {
               setCompanyId(e.target.value);
               setSiteId("");
-              setUnticked(new Set());
             }}
           >
             <option value="" disabled>Select company</option>
@@ -175,55 +176,25 @@ export function CreateInductionModal({
           </div>
         )}
 
-        {companyId && (
+        {siteId && (
           <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <FieldLabel>Employees ({ticked.length} of {people.length})</FieldLabel>
-              {people.length > 0 && (
-                <button
-                  type="button"
-                  className="text-[12px] font-semibold text-primary"
-                  onClick={() => setUnticked(ticked.length === people.length ? new Set(people.map((p) => p.employee_id)) : new Set())}
-                >
-                  {ticked.length === people.length ? "Clear all" : "Select all"}
-                </button>
-              )}
-            </div>
+            <FieldLabel>Goes to everyone at this site ({people.length})</FieldLabel>
             {people.length === 0 ? (
-              <div className="rounded-lg border border-border px-3 py-2.5 text-[12.5px] text-text-muted">No employees in this company yet.</div>
+              <div className="rounded-lg border border-border px-3 py-2.5 text-[12.5px] text-text-muted">No employees at this site yet. They&apos;ll get it when they&apos;re added.</div>
             ) : (
               <div className="flex max-h-[220px] flex-col overflow-y-auto rounded-lg border border-border">
                 {people.map((p) => (
-                  <label key={p.employee_id} className="flex cursor-pointer items-center gap-2.5 border-b border-border px-3 py-2 text-sm last:border-b-0">
-                    <input
-                      type="checkbox"
-                      name="employeeIds"
-                      value={p.employee_id}
-                      checked={!unticked.has(p.employee_id)}
-                      onChange={(e) =>
-                        setUnticked((prev) => {
-                          const next = new Set(prev);
-                          if (e.target.checked) next.delete(p.employee_id);
-                          else next.add(p.employee_id);
-                          return next;
-                        })
-                      }
-                    />
-                    {p.full_name}
-                  </label>
+                  <div key={p.employee_id} className="border-b border-border px-3 py-2 text-sm last:border-b-0">{p.full_name}</div>
                 ))}
               </div>
             )}
           </div>
         )}
 
-        <label className="flex cursor-pointer items-start gap-2.5 rounded-lg bg-primary/5 px-3 py-2.5 text-[13px]">
-          <input type="checkbox" name="automatic" checked={automatic} onChange={(e) => setAutomatic(e.target.checked)} className="mt-0.5" />
-          <span>
-            <span className="font-semibold text-text-dark">Send to new employees automatically</span>
-            <span className="block text-text-muted">Anyone added to this company later gets this induction too.</span>
-          </span>
-        </label>
+        <div className="rounded-lg bg-primary/5 px-3 py-2.5 text-[13px]">
+          <span className="font-semibold text-text-dark">New employees get it automatically</span>
+          <span className="block text-text-muted">Like checks: anyone added to this site later gets this induction too.</span>
+        </div>
 
         {state.error && <div className="text-[12.5px] text-error-text">{state.error}</div>}
 
@@ -231,7 +202,7 @@ export function CreateInductionModal({
           <button type="button" onClick={onClose} className="rounded-[12px] border border-border px-4 py-2.5 text-sm font-semibold text-text-dark">
             Cancel
           </button>
-          <SubmitButton count={companyId ? ticked.length : 0} />
+          <SubmitButton count={siteId ? people.length : 0} />
         </div>
       </form>
     </Modal>

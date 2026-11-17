@@ -61,7 +61,7 @@ export function SiteModal({
             min={1}
             step={1}
             required
-            defaultValue={site?.allowed_radius ?? 20}
+            defaultValue={site?.allowed_radius ?? 35}
           />
         </div>
 

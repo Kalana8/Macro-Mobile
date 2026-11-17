@@ -173,6 +173,8 @@ export interface ChecklistTemplate {
   cycle_start?: string | null;
   /** Start again after the 28 days, or stop. */
   cycle_repeats?: boolean;
+  /** Hour the morning after its day until which it's on time (0 = midnight, 10 = 10:00 next morning). Migration 0068. */
+  day_ends_at_hour?: number;
   /** Last day anything is sent ("End now"). */
   cycle_end?: string | null;
   /** Main areas whose subtasks each carry a frequency and cycle days. */
@@ -533,10 +535,15 @@ export interface AppPermissions {
   // detail page shows just submitted photos, no subtasks/notes/status.
   // reviewAll (e.g. Supervisor) is the opposite direction — full detail,
   // but for every submission across their company, not just their own.
-  checklists: { view: boolean; submit: boolean; imagesOnly: boolean; reviewAll: boolean };
-  audits: { view: boolean };
+  // share: send completed checklists (PDF, message, copy).
+  checklists: { view: boolean; submit: boolean; share: boolean; imagesOnly: boolean; reviewAll: boolean };
+  // respond: press Verified, then add a note and photos and submit.
+  audits: { view: boolean; respond: boolean };
+  reports: { view: boolean; respond: boolean };
+  photos: { view: boolean; send: boolean; download: boolean };
   communication: { view: boolean; send: boolean };
-  profile: { view: boolean; changePassword: boolean };
+  // changePassword is only used by the web employee app now.
+  profile: { view: boolean; photo: boolean; inductions: boolean; changePassword?: boolean };
 }
 
 export interface RolePermissions {

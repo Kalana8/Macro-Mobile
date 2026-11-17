@@ -21,10 +21,12 @@ export const EMPTY_PERMISSIONS: RolePermissions = {
   app: {
     home: { view: false },
     attendance: { clockInOut: false, viewHistory: false },
-    checklists: { view: false, submit: false, imagesOnly: false, reviewAll: false },
-    audits: { view: false },
+    checklists: { view: false, submit: false, share: false, imagesOnly: false, reviewAll: false },
+    audits: { view: false, respond: false },
+    reports: { view: false, respond: false },
+    photos: { view: false, send: false, download: false },
     communication: { view: false, send: false },
-    profile: { view: false, changePassword: false },
+    profile: { view: false, photo: false, inductions: false, changePassword: false },
   },
 };
 
@@ -44,12 +46,58 @@ export const FULL_PERMISSIONS: RolePermissions = {
   app: {
     home: { view: true },
     attendance: { clockInOut: true, viewHistory: true },
-    checklists: { view: true, submit: true, imagesOnly: false, reviewAll: false },
-    audits: { view: true },
+    checklists: { view: true, submit: true, share: true, imagesOnly: false, reviewAll: false },
+    audits: { view: true, respond: true },
+    reports: { view: true, respond: true },
+    photos: { view: true, send: true, download: true },
     communication: { view: true, send: true },
-    profile: { view: true, changePassword: true },
+    profile: { view: true, photo: true, inductions: true, changePassword: true },
   },
 };
+
+/**
+ * Roles saved before an app feature had its own switch don't have it yet.
+ * Until the role is edited, each new switch follows what the role could
+ * already do, so nobody loses a page they had:
+ *   reports                 - with audits.view (the tab used to follow Audits)
+ *   photos                  - with communication (the tab used to follow Messages)
+ *   audits.respond          - with audits.view
+ *   checklists.share        - with checklists.view, unless images only
+ *   profile.photo/inductions - with profile.view
+ */
+export function withAppDefaults(app: Partial<AppPermissions> | null | undefined): AppPermissions {
+  const a = (app ?? {}) as Partial<Record<keyof AppPermissions, Record<string, boolean | undefined>>>;
+  const pick = (v: boolean | undefined, fallback: boolean) => (v === undefined ? fallback : v);
+  const checklistsView = Boolean(a.checklists?.view);
+  const profileView = Boolean(a.profile?.view);
+  return {
+    home: { view: Boolean(a.home?.view) },
+    attendance: { clockInOut: Boolean(a.attendance?.clockInOut), viewHistory: Boolean(a.attendance?.viewHistory) },
+    checklists: {
+      view: checklistsView,
+      submit: Boolean(a.checklists?.submit),
+      share: pick(a.checklists?.share, checklistsView && !(a.checklists?.imagesOnly && !a.checklists?.reviewAll)),
+      // The full read-only view wins over photos only if a role somehow has both.
+      imagesOnly: Boolean(a.checklists?.imagesOnly) && !a.checklists?.reviewAll,
+      reviewAll: Boolean(a.checklists?.reviewAll),
+    },
+    audits: { view: Boolean(a.audits?.view), respond: pick(a.audits?.respond, Boolean(a.audits?.view)) },
+    // Reports used to show with Audits, and Photos with Messages.
+    reports: { view: pick(a.reports?.view, Boolean(a.audits?.view)), respond: pick(a.reports?.respond, Boolean(a.audits?.view)) },
+    photos: {
+      view: pick(a.photos?.view, Boolean(a.communication?.view)),
+      send: pick(a.photos?.send, Boolean(a.communication?.send)),
+      download: pick(a.photos?.download, Boolean(a.communication?.view)),
+    },
+    communication: { view: Boolean(a.communication?.view), send: Boolean(a.communication?.send) },
+    profile: {
+      view: profileView,
+      photo: pick(a.profile?.photo, profileView),
+      inductions: pick(a.profile?.inductions, profileView),
+      changePassword: Boolean(a.profile?.changePassword),
+    },
+  };
+}
 
 type DashboardArea = keyof DashboardPermissions;
 type AppArea = keyof AppPermissions;

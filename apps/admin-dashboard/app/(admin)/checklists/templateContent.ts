@@ -34,3 +34,10 @@ export function templateSubtaskCount(t: TemplateContent): number {
 export function templateAreaNames(t: TemplateContent): string {
   return [...new Set(templateDays(t).flatMap((d) => d.areas.map((a) => a.main_area)))].join(", ");
 }
+
+/** "10:00 am the next morning", "midnight (end of the same day)"; 10 if not set. */
+export function doneByLabel(hour: number | null | undefined): string {
+  const h = hour ?? 10;
+  if (h === 0) return "midnight (end of the same day)";
+  return `${h === 12 ? "12:00 noon" : `${h}:00 am`} the next morning`;
+}

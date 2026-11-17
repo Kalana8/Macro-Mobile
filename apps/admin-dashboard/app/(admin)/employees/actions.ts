@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient, createServiceRoleClient } from "@macro/shared/supabase/server";
+import { getCurrentAdmin } from "@/lib/session";
+import { openPassword, sealPassword } from "@/lib/tempPassword";
 
 export interface EmployeeFormState {
   error?: string;
@@ -66,6 +68,7 @@ export async function createEmployeeAction(
     await admin.auth.admin.deleteUser(created.user.id);
     return { error: insertError.message };
   }
+  await keepTempPassword(created.user.id, password);
 
   revalidatePath("/employees");
   return { success: true };
@@ -126,9 +129,43 @@ export async function updateEmployeeAction(
     .eq("id", id);
 
   if (error) return { error: error.message };
+  if (newPassword) await keepTempPassword(id, newPassword);
 
   revalidatePath("/employees");
   return { success: true };
+}
+
+/**
+ * Keeps an encrypted copy of the temporary password for the Employees page
+ * (migration 0063). Before that migration the table is missing and this
+ * quietly does nothing.
+ */
+async function keepTempPassword(employeeId: string, password: string) {
+  try {
+    const admin = createServiceRoleClient();
+    await admin.from("employee_temp_passwords").upsert({ employee_id: employeeId, secret: sealPassword(password), created_at: new Date().toISOString() });
+  } catch {
+    // Never block creating or resetting a login over this.
+  }
+}
+
+export interface TempPasswordResult {
+  password?: string;
+  /** "changed": they've set their own; "unreadable": reset to see one again; "unavailable": migration 0063 not run. */
+  status: "ok" | "changed" | "unreadable" | "unavailable" | "denied";
+}
+
+/** The temporary password of one employee, for admins only. */
+export async function getTempPasswordAction(employeeId: string): Promise<TempPasswordResult> {
+  const me = await getCurrentAdmin();
+  if (!me?.role?.is_admin) return { status: "denied" };
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return { status: "unavailable" };
+  const admin = createServiceRoleClient();
+  const { data, error } = await admin.from("employee_temp_passwords").select("secret").eq("employee_id", employeeId).maybeSingle();
+  if (error) return { status: "unavailable" };
+  if (!data) return { status: "changed" };
+  const password = openPassword(data.secret as string);
+  return password ? { status: "ok", password } : { status: "unreadable" };
 }
 
 export async function deleteEmployeeAction(formData: FormData): Promise<void> {

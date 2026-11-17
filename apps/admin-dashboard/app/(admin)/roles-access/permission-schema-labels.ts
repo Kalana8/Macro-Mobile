@@ -86,41 +86,68 @@ export const DASHBOARD_SCHEMA = [
   },
 ] as const;
 
+// Matches the pages and features of the employee mobile app.
 export const APP_SCHEMA = [
-  { key: "home", label: "Home", functions: [{ key: "view", label: "View sites" }] },
+  { key: "home", label: "Home", functions: [{ key: "view", label: "View home (sites, setup reminder, up next)" }] },
   {
     key: "attendance",
-    label: "Attendance",
+    label: "Clock In / Attendance",
     functions: [
-      { key: "clockInOut", label: "Clock in/out" },
-      { key: "viewHistory", label: "View history" },
+      { key: "clockInOut", label: "Clock in/out and breaks" },
+      { key: "viewHistory", label: "View attendance history" },
     ],
   },
   {
     key: "checklists",
     label: "Checklists",
     functions: [
-      { key: "view", label: "View assigned" },
-      { key: "submit", label: "Submit" },
-      { key: "imagesOnly", label: "View images only (no subtasks/notes)" },
-      { key: "reviewAll", label: "View all company submissions (supervisor)" },
+      { key: "view", label: "View assigned (today, expired, full checklist)" },
+      { key: "submit", label: "Tick off and submit (notes, photos)" },
+      { key: "share", label: "Share completed checklists" },
+      { key: "reviewAll", label: "Company checklists: full checklist, read only (tasks, ticks, notes, photos)" },
+      { key: "imagesOnly", label: "Company checklists: photos only (no tasks or notes)" },
     ],
   },
-  { key: "audits", label: "Audits", functions: [{ key: "view", label: "View assigned" }] },
+  {
+    key: "audits",
+    label: "Audits",
+    functions: [
+      { key: "view", label: "View audits shared with them" },
+      { key: "respond", label: "Verified and submit (note, photos)" },
+    ],
+  },
+  {
+    key: "reports",
+    label: "Reports",
+    functions: [
+      { key: "view", label: "View reports shared with them" },
+      { key: "respond", label: "Verified and submit (note, photos)" },
+    ],
+  },
+  {
+    key: "photos",
+    label: "Photos",
+    functions: [
+      { key: "view", label: "View received photos" },
+      { key: "send", label: "Send photos" },
+      { key: "download", label: "Download photos" },
+    ],
+  },
   {
     key: "communication",
-    label: "Communication",
+    label: "Messages",
     functions: [
-      { key: "view", label: "View" },
-      { key: "send", label: "Send messages" },
+      { key: "view", label: "View messages" },
+      { key: "send", label: "Start and reply (with photos)" },
     ],
   },
   {
     key: "profile",
     label: "Profile",
     functions: [
-      { key: "view", label: "View" },
-      { key: "changePassword", label: "Change password" },
+      { key: "view", label: "View profile and staff ID" },
+      { key: "photo", label: "Change profile photo" },
+      { key: "inductions", label: "Complete inductions and checks" },
     ],
   },
 ] as const;

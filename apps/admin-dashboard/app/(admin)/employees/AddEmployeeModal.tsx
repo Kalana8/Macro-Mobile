@@ -40,7 +40,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
 
 export function AddEmployeeModal({ roles, onClose }: { roles: RoleOption[]; onClose: () => void }) {
   const [state, formAction] = useActionState<EmployeeFormState, FormData>(createEmployeeAction, {});
-  // Kept in this browser only so the admin can copy them once; never sent back from the server.
+  // Shown here right after creating; the Employees page keeps an encrypted copy until they set their own.
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -49,7 +49,7 @@ export function AddEmployeeModal({ roles, onClose }: { roles: RoleOption[]; onCl
       <Modal title="Login Created" onClose={onClose}>
         <div className="flex flex-col gap-3.5">
           <div className="rounded-lg bg-olive/15 px-3.5 py-3 text-sm font-semibold text-olive-text">
-            Copy these and send them to the employee. The password isn&apos;t shown again; they&apos;ll set their own at first sign-in.
+            Copy these and send them to the employee. You can see them again on the Employees page until the employee sets their own password at first sign-in.
           </div>
           <div>
             <FieldLabel>Username</FieldLabel>

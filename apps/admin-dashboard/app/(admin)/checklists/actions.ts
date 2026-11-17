@@ -88,6 +88,9 @@ export async function saveCycleTemplateAction(_prev: ChecklistFormState, formDat
   const siteId = String(formData.get("siteId") ?? "").trim();
   const templateId = String(formData.get("templateId") ?? "");
   const specialNote = String(formData.get("specialNote") ?? "").trim() || null;
+  // Done by: the hour the next morning until which the day's checklist is on time.
+  const doneByRaw = Number(formData.get("doneBy") ?? 10);
+  const doneBy = Number.isInteger(doneByRaw) && doneByRaw >= 0 && doneByRaw <= 12 ? doneByRaw : 10;
   if (!companyId || !siteId) return { error: "Company and site are required.", id: templateId || undefined };
 
   let draft: DraftCycle;
@@ -115,10 +118,15 @@ export async function saveCycleTemplateAction(_prev: ChecklistFormState, formDat
     visit_dates: [],
   };
   const supabase = await createClient();
-  const { data, error } = templateId
-    ? await supabase.from("checklist_templates").update(values).eq("id", templateId).select("id").single()
-    : await supabase.from("checklist_templates").insert(values).select("id").single();
-  if (error) {
+  const write = (v: Record<string, unknown>) =>
+    templateId
+      ? supabase.from("checklist_templates").update(v).eq("id", templateId).select("id").single()
+      : supabase.from("checklist_templates").insert(v).select("id").single();
+  let { data, error } = await write({ ...values, day_ends_at_hour: doneBy });
+  // Before migration 0068 there's no done-by column: save the rest (every checklist is then done by 10:00).
+  if (error && /day_ends_at_hour/.test(error.message)) ({ data, error } = await write(values));
+  if (error || !data) {
+    if (!error) return { error: "Couldn't save the checklist.", id: templateId || undefined };
     const missing = /cycle_/.test(error.message);
     return { error: missing ? "Run migration 0055_checklist_28_day_cycle.sql in Supabase first." : error.message, id: templateId || undefined };
   }

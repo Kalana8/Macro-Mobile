@@ -154,7 +154,7 @@ export function CompanyModal({
                   </button>
                   {nameCheck === "duplicate" && (
                     <p className="mt-1 text-[11.5px] text-[#B35A10]">
-                      A company named &quot;{customCompanyName}&quot; already exists. You can continue anyway, or use a different name.
+                      A company named &quot;{customCompanyName}&quot; already exists. Continuing adds this site to it, so both sites show on its page.
                     </p>
                   )}
                   {nameCheck === "clear" && (
@@ -226,7 +226,7 @@ export function CompanyModal({
             initialAddress={matchingSites[0]?.address ?? ""}
             initialLat={matchingSites[0]?.lat}
             initialLng={matchingSites[0]?.lng}
-            helpText="Type an address (auto-located) or stand at the site and use your current location. Used for the 20m geofenced login/clock-in."
+            helpText="Type an address (auto-located) or stand at the site and use your current location. Used for the 35 m geofenced login/clock-in."
           />
         ) : showCompanyOnlyFields ? (
           <LocationField addressFieldName="location" latFieldName="siteLat" lngFieldName="siteLng" />
