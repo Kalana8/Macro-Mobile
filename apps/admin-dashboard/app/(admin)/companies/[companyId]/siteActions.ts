@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@macro/shared/supabase/server";
+import { COORDS_MISSING_MESSAGE, coordsMissing, readCoord } from "@/lib/coords";
 
 export interface SiteFormState {
   error?: string;
@@ -13,13 +14,13 @@ export async function createSiteAction(_prev: SiteFormState, formData: FormData)
   const name = String(formData.get("name") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim() || null;
   const status = String(formData.get("status") ?? "open");
-  const lat = Number(formData.get("lat"));
-  const lng = Number(formData.get("lng"));
-  const allowedRadius = Number(formData.get("allowedRadius") ?? 20);
+  const lat = readCoord(formData.get("lat"));
+  const lng = readCoord(formData.get("lng"));
+  const allowedRadius = Number(formData.get("allowedRadius") ?? 35);
 
   if (!companyId || !name) return { error: "Site name is required." };
-  if (Number.isNaN(lat) || Number.isNaN(lng)) {
-    return { error: "Set the site's coordinates — enter them or use \"Use my current location\"." };
+  if (coordsMissing(lat, lng)) {
+    return { error: COORDS_MISSING_MESSAGE };
   }
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     return { error: "Coordinates look invalid. Latitude must be -90..90, longitude -180..180." };
@@ -45,13 +46,13 @@ export async function updateSiteAction(_prev: SiteFormState, formData: FormData)
   const name = String(formData.get("name") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim() || null;
   const status = String(formData.get("status") ?? "open");
-  const lat = Number(formData.get("lat"));
-  const lng = Number(formData.get("lng"));
-  const allowedRadius = Number(formData.get("allowedRadius") ?? 20);
+  const lat = readCoord(formData.get("lat"));
+  const lng = readCoord(formData.get("lng"));
+  const allowedRadius = Number(formData.get("allowedRadius") ?? 35);
 
   if (!id || !name) return { error: "Site name is required." };
-  if (Number.isNaN(lat) || Number.isNaN(lng)) {
-    return { error: "Set the site's coordinates — enter them or use \"Use my current location\"." };
+  if (coordsMissing(lat, lng)) {
+    return { error: COORDS_MISSING_MESSAGE };
   }
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     return { error: "Coordinates look invalid. Latitude must be -90..90, longitude -180..180." };

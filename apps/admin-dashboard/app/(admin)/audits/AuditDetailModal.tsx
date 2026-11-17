@@ -6,7 +6,7 @@ import { Modal } from "@/components/Modal";
 import { ImagePicker } from "@/components/ImagePicker";
 import { Badge, CheckboxSquare, PrimaryButton, TextInput } from "@/components/ui";
 import type { Audit, AuditMainItem, AuditRating } from "@macro/shared/types";
-import { sendAuditResultsAction, updateAuditRatingsAction, uploadAuditImageAction, type AuditFormState } from "./actions";
+import { reopenAuditForEmployeeAction, sendAuditResultsAction, updateAuditRatingsAction, uploadAuditImageAction, type AuditFormState } from "./actions";
 
 async function uploadFile(file: File): Promise<string> {
   const formData = new FormData();
@@ -17,7 +17,7 @@ async function uploadFile(file: File): Promise<string> {
 }
 
 const STATUS_TONE = { submit: "info", verify: "warning", complete: "success" } as const;
-const STATUS_LABEL = { submit: "Pending", verify: "Saved", complete: "Complete" } as const;
+const STATUS_LABEL = { submit: "Pending", verify: "Saved", complete: "Completed" } as const;
 const RATINGS: { key: AuditRating; label: string }[] = [
   { key: "not_satisfactory", label: "Not Satisfactory" },
   { key: "satisfactory", label: "Satisfactory" },
@@ -48,16 +48,22 @@ export function AuditDetailModal({
   employeeName,
   companyEmployees,
   onClose,
+  photoUrls = {},
 }: {
   audit: Audit;
   companyName: string;
   employeeName: string;
-  companyEmployees: { id: string; full_name: string }[];
+  companyEmployees: { id: string; full_name: string; isClient?: boolean }[];
   onClose: () => void;
+  /** Signed URLs for photos employees added from the app, keyed by storage path. */
+  photoUrls?: Record<string, string>;
 }) {
   const [mainAudits, setMainAudits] = useState<AuditMainItem[]>(audit.main_audits);
   const [finalMarks, setFinalMarks] = useState<string>(audit.final_marks?.toString() ?? "");
   const [recipients, setRecipients] = useState<string[]>(audit.sent_to ?? []);
+  // Clients are locked: click the lock first, so results only go to a client on purpose.
+  // Clients it was already sent to stay unlocked.
+  const [unlocked, setUnlocked] = useState<string[]>(audit.sent_to ?? []);
 
   const [ratingsState, ratingsAction] = useActionState<AuditFormState, FormData>(updateAuditRatingsAction, {});
   const [sendState, sendAction] = useActionState<AuditFormState, FormData>(sendAuditResultsAction, {});
@@ -92,6 +98,7 @@ export function AuditDetailModal({
         <Badge tone={STATUS_TONE[status] ?? "neutral"}>{STATUS_LABEL[status] ?? audit.status}</Badge>
       </div>
       <div className="mb-4 text-sm text-text-muted">{employeeName}</div>
+      <EmployeeResponse audit={audit} photoUrls={photoUrls} />
 
       <form action={ratingsAction} className="flex flex-col gap-5">
         <input type="hidden" name="auditId" value={audit.id} />
@@ -187,6 +194,7 @@ export function AuditDetailModal({
                 images={ma.images}
                 onChange={(images) => updateMain(mi, { images })}
                 uploadFile={uploadFile}
+                resolveUrl={(u) => photoUrls[u] ?? u}
               />
             </div>
           </div>
@@ -217,17 +225,44 @@ export function AuditDetailModal({
         {recipients.map((id) => <input key={id} type="hidden" name="recipientIds" value={id} />)}
         <div className="mb-2 text-xs font-bold text-text-muted">SEND AUDIT RESULTS</div>
         <div className="mb-2.5 max-h-32 overflow-y-auto rounded-xl border border-border p-2">
-          {companyEmployees.map((e) => (
-            <button
-              type="button"
-              key={e.id}
-              onClick={() => toggleRecipient(e.id)}
-              className="flex w-full items-center gap-2.5 rounded-[8px] px-2 py-[7px] text-left text-[13.5px] text-text-dark"
-            >
-              <CheckboxSquare checked={recipients.includes(e.id)} />
-              {e.full_name}
-            </button>
-          ))}
+          {companyEmployees.map((e) => {
+            const locked = !!e.isClient && !unlocked.includes(e.id);
+            return (
+              <div key={e.id} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={locked}
+                  onClick={() => toggleRecipient(e.id)}
+                  className={`flex flex-1 items-center gap-2.5 rounded-[8px] px-2 py-[7px] text-left text-[13.5px] ${locked ? "cursor-not-allowed text-text-muted" : "text-text-dark"}`}
+                >
+                  <CheckboxSquare checked={recipients.includes(e.id)} />
+                  {e.full_name}
+                  {e.isClient && <span className="rounded-full bg-bg px-2 py-0.5 text-[10.5px] font-bold text-text-muted">Client</span>}
+                </button>
+                {e.isClient && (
+                  <button
+                    type="button"
+                    aria-label={locked ? `Unlock ${e.full_name} (client) to send` : `Lock ${e.full_name} (client)`}
+                    title={locked ? "Client: click to unlock, then tick to send" : "Lock again"}
+                    onClick={() => {
+                      if (locked) setUnlocked((u) => [...u, e.id]);
+                      else {
+                        setUnlocked((u) => u.filter((x) => x !== e.id));
+                        setRecipients((r) => r.filter((x) => x !== e.id));
+                      }
+                    }}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${locked ? "border-border bg-white text-text-muted" : "border-primary/40 bg-primary/5 text-primary"}`}
+                  >
+                    {locked ? (
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+                    ) : (
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 7.5-2" /></svg>
+                    )}
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
         {audit.sent_to?.length > 0 && (
           <div className="mb-2.5 text-[11.5px] text-text-muted">
@@ -248,5 +283,67 @@ export function AuditDetailModal({
         Close
       </button>
     </Modal>
+  );
+}
+
+const when = (iso: string) => new Date(iso).toLocaleString("en-AU", { timeZone: "Australia/Sydney", dateStyle: "medium", timeStyle: "short" });
+
+/** What the employee did in the app: pressed Verified, and the note and photos they submitted. */
+function EmployeeResponse({ audit, photoUrls }: { audit: Audit; photoUrls: Record<string, string> }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [reopened, setReopened] = useState(false);
+  const submitted = !reopened && Boolean(audit.employee_submitted_at);
+  const verified = !reopened && Boolean(audit.employee_verified_at);
+  const images = audit.employee_images ?? [];
+
+  async function reopen() {
+    if (!confirm("Send this audit back to the employee to check and submit again?")) return;
+    setSaving(true);
+    setError(null);
+    const result = await reopenAuditForEmployeeAction(audit.id);
+    setSaving(false);
+    if (result.error) setError(result.error);
+    else setReopened(true);
+  }
+
+  return (
+    <div className={`mb-4 rounded-xl px-3.5 py-3 ${submitted ? "bg-primary/5" : verified ? "bg-olive/10" : "bg-bg"}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-[11px] font-bold uppercase tracking-wide text-text-muted">Employee</div>
+        <Badge tone={submitted ? "info" : verified ? "success" : "warning"}>{submitted ? "Submitted" : verified ? "Verified" : "Ongoing"}</Badge>
+      </div>
+      <div className="mt-1 text-sm text-text-dark">
+        {submitted
+          ? `Submitted ${when(audit.employee_submitted_at!)}`
+          : verified
+            ? `Verified ${when(audit.employee_verified_at!)}`
+            : audit.status === "complete"
+              ? "Results sent. Waiting for the employee to check it and respond."
+              : "Not verified yet. The employee sees this audit as view only."}
+      </div>
+      {submitted && audit.employee_note ? <p className="mt-2 whitespace-pre-wrap rounded-lg bg-white px-3 py-2 text-sm text-text-dark">{audit.employee_note}</p> : null}
+      {submitted && images.length > 0 && (
+        <div className="mt-2 grid grid-cols-4 gap-2">
+          {images.map((p, i) =>
+            photoUrls[p] ? (
+              <a key={p} href={photoUrls[p]} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element -- signed private storage link, not a static asset */}
+                <img src={photoUrls[p]} alt={`Employee photo ${i + 1}`} className="aspect-square w-full object-cover" />
+              </a>
+            ) : (
+              <div key={p} className="aspect-square rounded-lg bg-white" />
+            ),
+          )}
+        </div>
+      )}
+      {(submitted || verified) && (
+        <button type="button" disabled={saving} onClick={reopen} className="mt-2 text-xs font-semibold text-primary">
+          {saving ? "Reopening…" : "Send back to the employee"}
+        </button>
+      )}
+      {reopened && <div className="mt-1 text-[12px] text-text-muted">Sent back. The employee can check and submit it again.</div>}
+      {error && <div className="mt-1 text-[12px] text-error-text">{error}</div>}
+    </div>
   );
 }

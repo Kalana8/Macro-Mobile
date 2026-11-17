@@ -5,7 +5,7 @@ import { CompaniesTable, type CompanyEmployeeRow } from "./CompaniesTable";
 
 export default async function CompaniesPage() {
   const supabase = await createClient();
-  const [{ data: companies, error }, { data: memberships }, { data: checklists }, { data: allEmployees }, { data: sites }] =
+  const [{ data: companies, error }, { data: memberships }, { data: checklists }, { data: allEmployees }, { data: sites }, { data: siteLinks, error: siteLinksError }] =
     await Promise.all([
       supabase.from("companies").select("*").order("name"),
       supabase
@@ -14,7 +14,16 @@ export default async function CompaniesPage() {
       supabase.from("checklists").select("employee_id, status"),
       supabase.from("employees").select("id, full_name").order("full_name"),
       supabase.from("sites").select("*").order("name"),
+      // Missing until migration 0062; until then everyone is listed at all their company's sites.
+      supabase.from("employee_sites").select("employee_id, site_id"),
     ]);
+
+  const sitesOf = new Map<string, string[]>();
+  for (const l of siteLinks ?? []) {
+    const list = sitesOf.get(l.employee_id as string) ?? [];
+    list.push(l.site_id as string);
+    sitesOf.set(l.employee_id as string, list);
+  }
 
   const sitesByCompany: Record<string, Site[]> = {};
   for (const s of (sites ?? []) as Site[]) {
@@ -29,20 +38,22 @@ export default async function CompaniesPage() {
     checklistSummaryByEmployee.set(c.employee_id, existing);
   }
 
-  const employeeCounts: Record<string, number> = {};
   const companyEmployees: Record<string, CompanyEmployeeRow[]> = {};
   for (const m of memberships ?? []) {
     const employee = m.employees as unknown as
       | { id: string; full_name: string; job_role: string; status: string }
       | null;
     if (!employee) continue;
-    employeeCounts[m.company_id] = (employeeCounts[m.company_id] ?? 0) + 1;
     const summary = checklistSummaryByEmployee.get(employee.id);
+    const companySiteIds = (sitesByCompany[m.company_id] ?? []).map((s) => s.id);
+    const assigned = (sitesOf.get(employee.id) ?? []).filter((id) => companySiteIds.includes(id));
     (companyEmployees[m.company_id] ??= []).push({
       id: employee.id,
       name: employee.full_name,
       role: employee.job_role,
       checklistSummary: summary ? `${summary.submitted}/${summary.total} submitted` : "No checklists",
+      // Only the sites they were added to; before migration 0062, all of them.
+      siteIds: siteLinksError ? companySiteIds : assigned,
     });
   }
 
@@ -59,7 +70,6 @@ export default async function CompaniesPage() {
       {!error && (
         <CompaniesTable
           companies={companies ?? []}
-          employeeCounts={employeeCounts}
           companyEmployees={companyEmployees}
           allEmployees={allEmployees ?? []}
           sitesByCompany={sitesByCompany}

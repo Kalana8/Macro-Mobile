@@ -1,17 +1,9 @@
 "use client";
 
 import { useState, type RefObject } from "react";
+import { checklistFileName, checklistName } from "@/lib/checklistName";
 import type { Checklist } from "@macro/shared/types";
 
-function checklistFileName(checklist: Checklist): string {
-  const areaNames = checklist.areas.map((a) => a.main_area).join("-") || "checklist";
-  const slug = `${checklist.assigned_date}-${areaNames}`
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-  return `checklist-${slug || checklist.id}`;
-}
 
 function downloadDataUrl(dataUrl: string, filename: string) {
   const link = document.createElement("a");
@@ -85,17 +77,20 @@ export function ChecklistShareBar({
   targetRef,
   checklist,
   shareUrl,
+  companyName,
 }: {
   targetRef: RefObject<HTMLDivElement | null>;
   checklist: Checklist;
   shareUrl: string;
+  /** The checklist's company, for its name ("Seoul Garden · Chadstone"). */
+  companyName?: string;
 }) {
   const [busy, setBusy] = useState<"image" | "pdf" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSharePopover, setShowSharePopover] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const title = checklist.areas.map((a) => a.main_area).join(", ") || "Checklist";
+  const title = checklistName(companyName, checklist.site);
 
   async function captureNode() {
     const node = targetRef.current;
@@ -120,7 +115,7 @@ export function ChecklistShareBar({
     setBusy("image");
     try {
       const dataUrl = await captureNode();
-      downloadDataUrl(dataUrl, `${checklistFileName(checklist)}.png`);
+      downloadDataUrl(dataUrl, `${checklistFileName([{ ...checklist, companyName }])}.png`);
     } catch {
       setError("Couldn't generate the image — try again.");
     } finally {
@@ -156,7 +151,7 @@ export function ChecklistShareBar({
         doc.addImage(dataUrl, "PNG", 0, offsetMm, A4_WIDTH_MM, imgHeightMm);
         heightLeftMm -= A4_HEIGHT_MM;
       }
-      doc.save(`${checklistFileName(checklist)}.pdf`);
+      doc.save(`${checklistFileName([{ ...checklist, companyName }])}.pdf`);
     } catch {
       setError("Couldn't generate the PDF — try again.");
     } finally {

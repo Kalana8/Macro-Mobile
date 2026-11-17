@@ -1,4 +1,5 @@
 import { createClient } from "@macro/shared/supabase/server";
+import { isClientRole } from "@/lib/clients";
 import { PageHeader } from "@/components/ui";
 import type { Audit } from "@macro/shared/types";
 import { AuditsTable, type AuditRow } from "./AuditsTable";
@@ -17,7 +18,7 @@ export default async function AuditsPage() {
         .order("date", { ascending: false }),
       supabase.from("companies").select("id, name").order("name"),
       supabase.from("sites").select("id, name, company_id").order("name"),
-      supabase.from("employees").select("id, full_name").order("full_name"),
+      supabase.from("employees").select("id, full_name, roles(name, permissions)").order("full_name"),
       supabase.from("employee_companies").select("employee_id, company_id"),
     ]);
 
@@ -29,6 +30,8 @@ export default async function AuditsPage() {
     id: e.id,
     full_name: e.full_name,
     companyIds: companyIdsByEmployee[e.id] ?? [],
+    // Clients are locked in Send Results until unlocked on purpose.
+    isClient: isClientRole(Array.isArray(e.roles) ? e.roles[0] : (e.roles as { name?: string; permissions?: unknown } | null)),
   }));
 
   const rows: AuditRow[] = (audits ?? []).map((a) => ({
@@ -36,6 +39,16 @@ export default async function AuditsPage() {
     companyName: (a.companies as { name?: string } | null)?.name ?? "—",
     employeeName: (a.employees as { full_name?: string } | null)?.full_name ?? "—",
   }));
+
+  // Photos employees add from the app are private storage paths; sign them for display.
+  const paths = rows
+    .flatMap((r) => [...(r.main_audits ?? []).flatMap((m) => m.images ?? []), ...(r.employee_images ?? [])])
+    .filter((u) => !/^https?:/i.test(u));
+  const photoUrls: Record<string, string> = {};
+  if (paths.length) {
+    const { data: signed } = await supabase.storage.from("audit-images").createSignedUrls([...new Set(paths)], 60 * 60);
+    for (const s of signed ?? []) if (s.path && s.signedUrl) photoUrls[s.path] = s.signedUrl;
+  }
 
   return (
     <div>
@@ -48,7 +61,7 @@ export default async function AuditsPage() {
       )}
 
       {!error && (
-        <AuditsTable audits={rows} companies={companies ?? []} sites={sites ?? []} employees={employeeOptions} />
+        <AuditsTable audits={rows} companies={companies ?? []} sites={sites ?? []} employees={employeeOptions} photoUrls={photoUrls} />
       )}
     </div>
   );

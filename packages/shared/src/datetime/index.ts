@@ -28,3 +28,52 @@ export function currentHourInBusinessTimezone(): number {
     new Intl.DateTimeFormat("en-US", { timeZone: BUSINESS_TIMEZONE, hour: "numeric", hour12: false }).format(new Date())
   );
 }
+
+/** How far BUSINESS_TIMEZONE is ahead of UTC at a given instant, in ms. */
+function businessOffsetMs(instant: number): number {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: BUSINESS_TIMEZONE,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+    })
+      .formatToParts(new Date(instant))
+      .map((p) => [p.type, Number(p.value)])
+  );
+  return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second) - instant;
+}
+
+/** The instant a calendar day starts in BUSINESS_TIMEZONE. Checked twice because daylight saving can change between the guess and midnight. */
+function businessMidnight(year: number, month: number, day: number): number {
+  const wallClock = Date.UTC(year, month - 1, day);
+  const guess = wallClock - businessOffsetMs(wallClock);
+  return wallClock - businessOffsetMs(guess);
+}
+
+/**
+ * The ISO instants bounding one or more YYYY-MM-DD business days, for filtering
+ * by clock_in_at (start inclusive, end exclusive). attendance.date can't be
+ * trusted for this: it defaults to the UTC date, which is the previous day for
+ * the first ~11 hours of every Sydney day.
+ */
+export function businessDayRange(firstDay: string, lastDay: string = firstDay): { start: string; end: string } {
+  const [y1, m1, d1] = firstDay.split("-").map(Number);
+  const [y2, m2, d2] = lastDay.split("-").map(Number);
+  return {
+    start: new Date(businessMidnight(y1, m1, d1)).toISOString(),
+    end: new Date(businessMidnight(y2, m2, d2 + 1)).toISOString(),
+  };
+}
+
+/** The YYYY-MM-DD business day an instant falls on. */
+export function businessDayOf(iso: string): string {
+  const [month, day, year] = new Date(iso)
+    .toLocaleDateString("en-US", { timeZone: BUSINESS_TIMEZONE, year: "numeric", month: "numeric", day: "numeric" })
+    .match(/\d+/g)!;
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}

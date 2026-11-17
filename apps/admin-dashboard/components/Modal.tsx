@@ -6,10 +6,13 @@ export function Modal({
   title,
   onClose,
   children,
+  wide,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** For forms with tables or grids: up to 768px instead of 512px. */
+  wide?: boolean;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(22,32,46,0.45)] p-4 pt-10 sm:items-center sm:pt-4">
@@ -24,7 +27,7 @@ export function Modal({
         where supported, so it also shrinks to fit the space actually left
         once the keyboard is open, rather than overflowing off-screen.
       */}
-      <div className="max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6">
+      <div className={`max-h-[85dvh] w-full ${wide ? "max-w-3xl" : "max-w-lg"} overflow-y-auto rounded-2xl bg-white p-6`}>
         <div className="mb-4 flex items-center justify-between">
           <div className="text-lg font-extrabold text-text-dark">{title}</div>
           <button onClick={onClose} className="text-text-muted" aria-label="Close">

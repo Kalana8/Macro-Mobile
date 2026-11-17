@@ -24,7 +24,7 @@ export function SharedChecklistView({
 
   return (
     <div className="mx-auto max-w-2xl p-5">
-      <ChecklistShareBar targetRef={captureRef} checklist={checklist} shareUrl={shareUrl} />
+      <ChecklistShareBar targetRef={captureRef} checklist={checklist} shareUrl={shareUrl} companyName={companyName} />
       <div className="overflow-hidden rounded-2xl border border-border">
         <ChecklistDocument checklist={checklist} companyName={companyName} employeeName={employeeName} />
       </div>

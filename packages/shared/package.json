@@ -18,7 +18,8 @@
     "./geo": "./src/geo/index.ts",
     "./datetime": "./src/datetime/index.ts",
     "./rbac": "./src/rbac/index.ts",
-    "./tokens": "./src/tokens/index.ts"
+    "./tokens": "./src/tokens/index.ts",
+    "./checklistCycle": "./src/checklistCycle/index.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, EmptyState, IconChip, PlusIcon, PrimaryButton, Select, Table, TextInput } from "@/components/ui";
 import { formatDate, formatTime } from "@macro/shared/datetime";
-import { revokeInductionAction } from "./actions";
-import { CreateInductionModal } from "./CreateInductionModal";
+import { revokeInductionAction, stopSiteInductionAction } from "./actions";
+import { CreateInductionModal, type CompanyOption, type MemberOption, type SiteOption } from "./CreateInductionModal";
 import { ExtendModal } from "./ExtendModal";
 import { RegenerateButton } from "./RegenerateButton";
 import { effectiveStatus, type EffectiveStatus, type InductionRow } from "./types";
@@ -67,15 +67,20 @@ function RevokeIcon() {
 
 export function InductionsTable({
   rows,
-  employees,
+  companies,
   sites,
+  members,
   templates,
+  automatic,
   initialTemplateId,
 }: {
   rows: InductionRow[];
-  employees: { id: string; full_name: string }[];
-  sites: { id: string; name: string; company_id: string }[];
+  companies: CompanyOption[];
+  sites: SiteOption[];
+  members: MemberOption[];
   templates: { id: string; name: string }[];
+  /** Site inductions sent to new employees automatically (0056). */
+  automatic: { id: string; siteName: string; companyName: string; templateName: string }[];
   initialTemplateId?: string;
 }) {
   const router = useRouter();
@@ -106,6 +111,28 @@ export function InductionsTable({
 
   return (
     <div>
+      {automatic.length > 0 && (
+        <div className="mb-4 rounded-[14px] border border-border bg-white p-4">
+          <div className="mb-2 text-[13px] font-bold text-text-dark">Sent to new employees automatically</div>
+          <div className="flex flex-col divide-y divide-border">
+            {automatic.map((a) => (
+              <div key={a.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-text-dark">{a.templateName}</div>
+                  <div className="truncate text-xs text-text-muted">{a.companyName} · {a.siteName}</div>
+                </div>
+                <form
+                  action={stopSiteInductionAction}
+                  onSubmit={(e) => { if (!window.confirm("Stop sending this induction to new employees? Links already sent stay.")) e.preventDefault(); }}
+                >
+                  <input type="hidden" name="id" value={a.id} />
+                  <button type="submit" className="rounded-lg border border-border px-3 py-1.5 text-[12px] font-semibold text-error">Stop</button>
+                </form>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {(["active", "expiring_soon", "expired", "completed", "revoked"] as const).map((s) => (
           <div key={s} className="rounded-[14px] border border-border bg-white p-4">
@@ -120,12 +147,12 @@ export function InductionsTable({
           <TextInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by employee, site, or company…"
+            placeholder="Search by site or company…"
             className="sm:flex-1"
           />
           <PrimaryButton onClick={() => setShowNew(true)} className="sm:w-fit">
             <PlusIcon />
-            Create Induction
+            Add Site Induction
           </PrimaryButton>
         </div>
         <Select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="sm:w-fit">
@@ -149,8 +176,10 @@ export function InductionsTable({
                 <div key={r.id} className="rounded-[14px] border border-border bg-white p-4">
                   <button type="button" onClick={() => router.push(`/inductions/${r.id}`)} className="flex w-full items-start justify-between gap-2 text-left">
                     <div className="min-w-0">
-                      <div className="truncate font-semibold text-text-dark">{r.employeeName}</div>
-                      <div className="truncate text-xs text-text-muted">{r.siteName} · {r.companyName}</div>
+                      <div className="truncate text-[11px] font-bold uppercase tracking-wide text-text-muted">Company</div>
+                      <div className="truncate font-semibold text-text-dark">{r.companyName}</div>
+                      <div className="mt-1 truncate text-[11px] font-bold uppercase tracking-wide text-text-muted">Site</div>
+                      <div className="truncate font-semibold text-text-dark">{r.siteName}</div>
                     </div>
                     <Badge tone={STATUS_TONE[eStatus]}>{STATUS_LABEL[eStatus]}</Badge>
                   </button>
@@ -195,18 +224,13 @@ export function InductionsTable({
           </div>
 
           <div className="hidden md:block">
-            <Table head={["Employee", "Site", "Status", "Created", "Expires", "Remaining", "Actions"]}>
+            <Table head={["Company", "Site", "Status", "Created", "Expires", "Remaining", "Actions"]}>
               {filtered.map((r) => {
                 const eStatus = effectiveStatus(r);
                 return (
                   <tr key={r.id} className="border-b border-border last:border-0">
-                    <td className="cursor-pointer px-5 py-3.5 font-semibold text-text-dark" onClick={() => router.push(`/inductions/${r.id}`)}>
-                      {r.employeeName}
-                    </td>
-                    <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/inductions/${r.id}`)}>
-                      {r.siteName}
-                      <div className="text-[11px] text-text-muted">{r.companyName}</div>
-                    </td>
+                    <td className="cursor-pointer px-5 py-3.5 font-semibold text-text-dark" onClick={() => router.push(`/inductions/${r.id}`)}>{r.companyName}</td>
+                    <td className="cursor-pointer px-5 py-3.5 text-text-dark" onClick={() => router.push(`/inductions/${r.id}`)}>{r.siteName}</td>
                     <td className="cursor-pointer px-5 py-3.5" onClick={() => router.push(`/inductions/${r.id}`)}>
                       <Badge tone={STATUS_TONE[eStatus]}>{STATUS_LABEL[eStatus]}</Badge>
                     </td>
@@ -248,8 +272,9 @@ export function InductionsTable({
 
       {showNew && (
         <CreateInductionModal
-          employees={employees}
+          companies={companies}
           sites={sites}
+          members={members}
           templates={templates}
           defaultTemplateId={initialTemplateId}
           onClose={() => setShowNew(false)}

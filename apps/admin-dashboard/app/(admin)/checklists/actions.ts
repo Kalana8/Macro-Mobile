@@ -5,12 +5,254 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@macro/shared/supabase/server";
 import { uploadImageToImageKit } from "@macro/shared/imagekit";
 import { todayInBusinessTimezone } from "@macro/shared/datetime";
-import type { ChecklistArea } from "@macro/shared/types";
+import type { ChecklistArea, SubtaskFrequency } from "@macro/shared/types";
+import { areasOn, cycleDays, mondayOf, nextDueDate, WEEKDAY_NAMES } from "@macro/shared/checklistCycle";
 import { parseVisitSchedule } from "../companies/scheduleForm";
 
 export interface ChecklistFormState {
   error?: string;
   success?: boolean;
+  /** The template that was saved, so the next save from the same form updates it. */
+  id?: string;
+  /** What happened when sending, e.g. "Sent to 2 employees." */
+  message?: string;
+}
+
+// ---------------------------------------------------------------------------
+// 28-day cycle templates (migration 0055)
+// ---------------------------------------------------------------------------
+
+interface DraftCycleSubtask {
+  id?: string;
+  text: string;
+  frequency: SubtaskFrequency;
+  weekday?: number;
+  weekdays?: number[];
+  week?: number;
+  days?: number[];
+}
+interface DraftCycleArea {
+  mainArea: string;
+  note: string;
+  images: string[];
+  subtasks: DraftCycleSubtask[];
+}
+interface DraftCycle {
+  start: string;
+  repeats: boolean;
+  areas: DraftCycleArea[];
+}
+
+const FREQUENCIES: SubtaskFrequency[] = ["daily", "weekly", "monthly", "custom"];
+const ISO = /^\d{4}-\d{2}-\d{2}$/;
+const clampInt = (n: unknown, max: number) => Math.min(max, Math.max(0, Math.floor(Number(n) || 0)));
+
+/** Builds the saved areas: names trimmed, empty rows dropped, every subtask's cycle days worked out from its frequency. */
+function buildCycleAreas(draft: DraftCycleArea[]): { areas?: ChecklistArea[]; error?: string } {
+  const areas: ChecklistArea[] = [];
+  for (const a of draft) {
+    const name = String(a.mainArea ?? "").trim();
+    const subs = (a.subtasks ?? []).filter((s) => String(s.text ?? "").trim());
+    if (!name && subs.length === 0) continue;
+    if (!name) return { error: "Give every main task a name." };
+    if (subs.length === 0) return { error: `Add at least one subtask to “${name}”.` };
+    const subtasks = [];
+    for (const s of subs) {
+      const frequency = FREQUENCIES.includes(s.frequency) ? s.frequency : "daily";
+      const weekday = clampInt(s.weekday, 6);
+      const weekdays = [...new Set((s.weekdays ?? []).map((d) => clampInt(d, 6)))].sort((a, b) => a - b);
+      const week = clampInt(s.week, 3);
+      if (frequency === "weekly" && weekdays.length === 0) return { error: `Pick at least one day for “${String(s.text).trim()}”.` };
+      const days = cycleDays(frequency, { weekday, weekdays, week, days: (s.days ?? []).map((d) => clampInt(d, 27)) });
+      if (days.length === 0) return { error: `Pick at least one day for “${String(s.text).trim()}”.` };
+      subtasks.push({
+        // Keep ids when editing, so checklists already sent still match.
+        id: s.id && /^[\w-]{8,64}$/.test(s.id) ? s.id : randomUUID(),
+        text: String(s.text).trim(),
+        frequency,
+        ...(frequency === "weekly" ? { weekdays } : {}),
+        ...(frequency === "monthly" ? { weekday } : {}),
+        ...(frequency === "monthly" ? { week } : {}),
+        days,
+      });
+    }
+    areas.push({ main_area: name, note: String(a.note ?? "").trim(), images: (a.images ?? []).filter((u) => typeof u === "string"), subtasks });
+  }
+  if (areas.length === 0) return { error: "Add at least one main task with a subtask." };
+  return { areas };
+}
+
+/** Saves a 28-day cycle template. */
+export async function saveCycleTemplateAction(_prev: ChecklistFormState, formData: FormData): Promise<ChecklistFormState> {
+  const companyId = String(formData.get("companyId") ?? "");
+  const siteId = String(formData.get("siteId") ?? "").trim();
+  const templateId = String(formData.get("templateId") ?? "");
+  const specialNote = String(formData.get("specialNote") ?? "").trim() || null;
+  // Done by: the hour the next morning until which the day's checklist is on time.
+  const doneByRaw = Number(formData.get("doneBy") ?? 10);
+  const doneBy = Number.isInteger(doneByRaw) && doneByRaw >= 0 && doneByRaw <= 12 ? doneByRaw : 10;
+  if (!companyId || !siteId) return { error: "Company and site are required.", id: templateId || undefined };
+
+  let draft: DraftCycle;
+  try {
+    draft = JSON.parse(String(formData.get("cycleJson") ?? "{}"));
+  } catch {
+    return { error: "Invalid checklist data.", id: templateId || undefined };
+  }
+  if (!ISO.test(draft.start ?? "")) return { error: "Pick the date Week 1 starts.", id: templateId || undefined };
+  const built = buildCycleAreas(draft.areas ?? []);
+  if (built.error) return { error: built.error, id: templateId || undefined };
+
+  const values = {
+    company_id: companyId,
+    site_id: siteId,
+    special_note: specialNote,
+    // Week 1 always starts on a Monday.
+    cycle_start: mondayOf(draft.start),
+    cycle_repeats: draft.repeats !== false,
+    cycle_end: null,
+    cycle_areas: built.areas,
+    // The older date-based fields aren't used by cycle templates.
+    areas: [],
+    day_areas: {},
+    visit_dates: [],
+  };
+  const supabase = await createClient();
+  const write = (v: Record<string, unknown>) =>
+    templateId
+      ? supabase.from("checklist_templates").update(v).eq("id", templateId).select("id").single()
+      : supabase.from("checklist_templates").insert(v).select("id").single();
+  let { data, error } = await write({ ...values, day_ends_at_hour: doneBy });
+  // Before migration 0068 there's no done-by column: save the rest (every checklist is then done by 10:00).
+  if (error && /day_ends_at_hour/.test(error.message)) ({ data, error } = await write(values));
+  if (error || !data) {
+    if (!error) return { error: "Couldn't save the checklist.", id: templateId || undefined };
+    const missing = /cycle_/.test(error.message);
+    return { error: missing ? "Run migration 0055_checklist_28_day_cycle.sql in Supabase first." : error.message, id: templateId || undefined };
+  }
+  await refreshTodaysCopies(supabase, data.id as string);
+  revalidatePath("/checklists");
+  revalidatePath("/companies");
+  return { success: true, id: data.id as string };
+}
+
+type TemplateRow = {
+  site_id: string;
+  areas: ChecklistArea[] | null;
+  day_areas: Record<string, ChecklistArea[]> | null;
+  visit_dates: string[] | null;
+  special_note: string | null;
+  cycle_start?: string | null;
+  cycle_repeats?: boolean;
+  cycle_end?: string | null;
+  cycle_areas?: ChecklistArea[];
+  sites: { name?: string } | { name?: string }[] | null;
+};
+
+/** What a template sends on a date, for cycle and older date-based templates alike. */
+function areasForDate(t: TemplateRow, iso: string): ChecklistArea[] {
+  if (t.cycle_start) return areasOn(t, iso);
+  if (!(t.visit_dates ?? []).includes(iso)) return [];
+  const dow = new Date(`${iso}T00:00:00`).getDay();
+  return (t.day_areas ?? {})[String(dow)] ?? t.areas ?? [];
+}
+
+/**
+ * Sends today's checklist from a template to employees who haven't had it
+ * today. Returns how many got it, or when the next one is due if nothing
+ * falls on today.
+ */
+async function sendToday(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  templateId: string,
+  companyId: string,
+  employeeIds: string[],
+  adminNote: string | null,
+): Promise<{ sent: number; next: string | null; already: number; updated: number }> {
+  const { data } = await supabase.from("checklist_templates").select("*, sites(name)").eq("id", templateId).maybeSingle();
+  const template = data as TemplateRow | null;
+  if (!template) return { sent: 0, next: null, already: 0, updated: 0 };
+  const today = todayInBusinessTimezone();
+  const areas = areasForDate(template, today);
+  if (areas.length === 0) {
+    const next = template.cycle_start ? nextDueDate(template, today) : ((template.visit_dates ?? []).filter((d) => d > today).sort()[0] ?? null);
+    return { sent: 0, next, already: 0, updated: 0 };
+  }
+
+  const { data: existing } = await supabase
+    .from("checklists")
+    .select("id, employee_id, status")
+    .eq("template_id", templateId)
+    .eq("assigned_date", today)
+    .in("employee_id", employeeIds);
+  const alreadySent = new Set((existing ?? []).map((c) => c.employee_id as string));
+  // Already sent today but not submitted: bring it up to date with any edits.
+  const stale = (existing ?? []).filter((c) => c.status === "pending").map((c) => c.id as string);
+  if (stale.length > 0) {
+    await supabase.from("checklists").update({ areas, special_note: template.special_note }).in("id", stale);
+  }
+  const toSend = employeeIds.filter((id) => !alreadySent.has(id));
+  if (toSend.length > 0) {
+    const site = Array.isArray(template.sites) ? template.sites[0] : template.sites;
+    await supabase.from("checklists").insert(
+      toSend.map((employee_id) => ({
+        template_id: templateId,
+        company_id: companyId,
+        site: site?.name ?? "",
+        site_id: template.site_id,
+        employee_id,
+        assigned_date: today,
+        areas,
+        special_note: template.special_note,
+        status: "pending",
+        admin_note: adminNote,
+      })),
+    );
+  }
+  return { sent: toSend.length, next: null, already: alreadySent.size, updated: stale.length };
+}
+
+/**
+ * After a checklist is edited, today's copies that employees haven't
+ * submitted yet are updated to match, so the edits show straight away.
+ * Submitted ones stay as they were.
+ */
+async function refreshTodaysCopies(supabase: Awaited<ReturnType<typeof createClient>>, templateId: string) {
+  const { data } = await supabase.from("checklist_templates").select("*, sites(name)").eq("id", templateId).maybeSingle();
+  const template = data as TemplateRow | null;
+  if (!template) return;
+  const today = todayInBusinessTimezone();
+  const areas = areasForDate(template, today);
+  if (areas.length === 0) return;
+  await supabase
+    .from("checklists")
+    .update({ areas, special_note: template.special_note })
+    .eq("template_id", templateId)
+    .eq("assigned_date", today)
+    .eq("status", "pending");
+}
+
+function sendMessage(r: { sent: number; next: string | null; already: number; updated: number }): string {
+  const parts: string[] = [];
+  if (r.sent > 0) parts.push(`Sent today’s checklist to ${r.sent} employee${r.sent === 1 ? "" : "s"}.`);
+  if (r.updated > 0) parts.push(`Updated today’s checklist for ${r.updated} employee${r.updated === 1 ? "" : "s"} who already had it.`);
+  if (parts.length) return parts.join(" ");
+  if (r.already > 0) return "Today’s checklist was already sent and submitted.";
+  if (!r.next) return "Nothing is due on this checklist.";
+  // A weekday, not a date: checklists run on Week 1–4, Mon–Sun.
+  const weekday = WEEKDAY_NAMES[(new Date(`${r.next}T00:00:00Z`).getUTCDay() + 6) % 7];
+  return `Nothing is due today. The first checklist goes out on ${weekday}.`;
+}
+
+/** Sends today's checklist for one standing assignment right away. */
+export async function sendAssignmentNowAction(assignmentId: string): Promise<ChecklistFormState> {
+  if (!assignmentId) return { error: "Missing assignment." };
+  const supabase = await createClient();
+  const { data: a } = await supabase.from("checklist_assignments").select("template_id, company_id, employee_id, admin_note").eq("id", assignmentId).maybeSingle();
+  if (!a) return { error: "This assignment no longer exists." };
+  const result = await sendToday(supabase, a.template_id as string, a.company_id as string, [a.employee_id as string], (a.admin_note as string | null) ?? null);
+  revalidatePath("/checklists");
+  return { success: true, message: sendMessage(result) };
 }
 
 interface DraftArea {
@@ -46,7 +288,16 @@ function buildAreas(draft: DraftArea[]): ChecklistArea[] {
     }));
 }
 
-export async function createTemplateAction(
+/**
+ * Saves a template. Always hands back the id it worked on, even when the save
+ * fails, so the open form keeps updating one template instead of creating more.
+ */
+export async function createTemplateAction(prev: ChecklistFormState, formData: FormData): Promise<ChecklistFormState> {
+  const result = await saveTemplate(prev, formData);
+  return { ...result, id: result.id ?? (String(formData.get("templateId") ?? "") || undefined) };
+}
+
+async function saveTemplate(
   _prev: ChecklistFormState,
   formData: FormData
 ): Promise<ChecklistFormState> {
@@ -76,20 +327,17 @@ export async function createTemplateAction(
   const schedule = parseVisitSchedule(formData);
 
   const supabase = await createClient();
-  const { error } = templateId
-    ? await supabase
-        .from("checklist_templates")
-        .update({ company_id: companyId, site_id: siteId, areas: [], day_areas: dayAreas, special_note: specialNote, ...schedule })
-        .eq("id", templateId)
-    : await supabase
-        .from("checklist_templates")
-        .insert({ company_id: companyId, site_id: siteId, areas: [], day_areas: dayAreas, special_note: specialNote, ...schedule });
+  const values = { company_id: companyId, site_id: siteId, areas: [], day_areas: dayAreas, special_note: specialNote, ...schedule };
+  const { data, error } = templateId
+    ? await supabase.from("checklist_templates").update(values).eq("id", templateId).select("id").single()
+    : await supabase.from("checklist_templates").insert(values).select("id").single();
 
   if (error) return { error: error.message };
 
+  await refreshTodaysCopies(supabase, data.id as string);
   revalidatePath("/checklists");
   revalidatePath("/companies");
-  return { success: true };
+  return { success: true, id: data.id as string };
 }
 
 export async function deleteTemplateAction(formData: FormData): Promise<void> {
@@ -106,13 +354,17 @@ export async function endTemplateAction(formData: FormData): Promise<void> {
   if (!id) return;
 
   const supabase = await createClient();
-  const { data: template } = await supabase.from("checklist_templates").select("visit_dates").eq("id", id).maybeSingle();
+  const { data: template } = await supabase.from("checklist_templates").select("*").eq("id", id).maybeSingle();
   if (!template) return;
 
   const today = todayInBusinessTimezone();
-  const pastDates = ((template.visit_dates as string[] | null) ?? []).filter((d) => d < today);
-
-  await supabase.from("checklist_templates").update({ visit_dates: pastDates }).eq("id", id);
+  if ((template as { cycle_start?: string | null }).cycle_start) {
+    // A cycle template stops after today: today's checklists (already sent) stay.
+    await supabase.from("checklist_templates").update({ cycle_end: today }).eq("id", id);
+  } else {
+    const pastDates = ((template.visit_dates as string[] | null) ?? []).filter((d) => d < today);
+    await supabase.from("checklist_templates").update({ visit_dates: pastDates }).eq("id", id);
+  }
   revalidatePath("/checklists");
   revalidatePath("/companies");
 }
@@ -152,50 +404,11 @@ export async function createAssignmentAction(
 
   if (error) return { error: error.message };
 
-  const { data: template } = await supabase
-    .from("checklist_templates")
-    .select("site_id, areas, day_areas, visit_dates, special_note, sites(name)")
-    .eq("id", templateId)
-    .maybeSingle();
-
-  if (template) {
-    const today = todayInBusinessTimezone();
-    const isScheduledToday = ((template.visit_dates as string[] | null) ?? []).includes(today);
-    const dayAreas = (template.day_areas as Record<string, ChecklistArea[]> | null) ?? {};
-    const todayDow = new Date(`${today}T00:00:00`).getDay();
-    const areasForToday = dayAreas[String(todayDow)] ?? template.areas;
-
-    const { data: existing } = await supabase
-      .from("checklists")
-      .select("employee_id")
-      .eq("template_id", templateId)
-      .eq("assigned_date", today)
-      .in("employee_id", employeeIds);
-
-    const alreadySent = new Set((existing ?? []).map((c) => c.employee_id));
-    const toSend = isScheduledToday ? employeeIds.filter((id) => !alreadySent.has(id)) : [];
-
-    if (toSend.length > 0) {
-      const siteName = (template.sites as { name?: string } | null)?.name ?? "";
-      await supabase.from("checklists").insert(
-        toSend.map((employee_id) => ({
-          template_id: templateId,
-          company_id: companyId,
-          site: siteName,
-          site_id: template.site_id,
-          employee_id,
-          assigned_date: today,
-          areas: areasForToday,
-          special_note: template.special_note,
-          status: "pending",
-          admin_note: adminNote,
-        }))
-      );
-    }
-  }
+  // Send it now: the employee gets today's checklist straight away.
+  const result = await sendToday(supabase, templateId, companyId, employeeIds, adminNote);
 
   revalidatePath("/checklists");
-  return { success: true };
+  return { success: true, message: sendMessage(result) };
 }
 
 export async function deleteAssignmentAction(formData: FormData): Promise<void> {

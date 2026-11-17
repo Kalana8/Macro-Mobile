@@ -15,6 +15,31 @@ export interface WeeklyReportRow extends WeeklyReport {
   auditorName: string;
   supervisorName: string;
   sectionCount: number;
+  /** How many people it was shared with in the app, and how many verified or submitted. */
+  responses: { shared: number; verified: number; submitted: number };
+}
+
+type Stage = "ongoing" | "verified" | "submitted";
+const TABS = ["all", "ongoing", "verified", "submitted"] as const;
+type Tab = (typeof TABS)[number];
+const TAB_LABEL: Record<Tab, string> = { all: "All Reports", ongoing: "Ongoing", verified: "Verified", submitted: "Submitted" };
+const STAGE_BADGE: Record<Stage, { tone: "warning" | "success" | "info"; label: string }> = {
+  ongoing: { tone: "warning", label: "Ongoing" },
+  verified: { tone: "success", label: "Verified" },
+  submitted: { tone: "info", label: "Submitted" },
+};
+
+/** As on the Audits page: Submitted once someone has submitted, Verified once someone has verified, otherwise Ongoing. */
+export function reportStage(r: Pick<WeeklyReportRow, "responses">): Stage {
+  if (r.responses.submitted > 0) return "submitted";
+  if (r.responses.verified > 0) return "verified";
+  return "ongoing";
+}
+
+function responseText(r: WeeklyReportRow) {
+  const { shared, verified, submitted } = r.responses;
+  if (shared === 0) return "Not shared in the app";
+  return `${verified}/${shared} verified · ${submitted} submitted`;
 }
 
 const STATUS_TONE: Record<WeeklyReportStatus, "neutral" | "info" | "warning" | "success"> = {
@@ -75,10 +100,12 @@ export function WeeklyReportsTable({
   const [auditorId, setAuditorId] = useState("");
   const [supervisorId, setSupervisorId] = useState("");
   const [weekFrom, setWeekFrom] = useState("");
+  const [tab, setTab] = useState<Tab>("all");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return reports.filter((r) => {
+      if (tab !== "all" && reportStage(r) !== tab) return false;
       if (status !== "all" && r.status !== status) return false;
       if (companyId && r.company_id !== companyId) return false;
       if (siteId && r.site_id !== siteId) return false;
@@ -91,7 +118,8 @@ export function WeeklyReportsTable({
       }
       return true;
     });
-  }, [reports, search, status, companyId, siteId, auditorId, supervisorId, weekFrom]);
+  }, [reports, search, tab, status, companyId, siteId, auditorId, supervisorId, weekFrom]);
+  const stageCount = (t: Stage) => reports.filter((r) => reportStage(r) === t).length;
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { draft: 0, in_progress: 0, completed: 0, sent: 0 };
@@ -104,6 +132,21 @@ export function WeeklyReportsTable({
 
   return (
     <div>
+      <div className="mb-5 flex w-fit flex-wrap gap-1 rounded-lg bg-bg p-1" role="tablist">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={tab === t}
+            onClick={() => setTab(t)}
+            className={`rounded-md px-4 py-2 text-sm font-semibold ${tab === t ? "bg-white text-primary shadow-sm" : "text-text-muted"}`}
+          >
+            {TAB_LABEL[t]} · {t === "all" ? reports.length : stageCount(t)}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { label: "Draft Reports", value: counts.draft },
@@ -180,7 +223,10 @@ export function WeeklyReportsTable({
                     <div className="font-semibold text-text-dark">{r.report_number}</div>
                     <div className="truncate text-xs text-text-muted">{r.title || "Untitled"}</div>
                   </div>
-                  <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+                  <span className="flex flex-col items-end gap-1">
+                    <Badge tone={STAGE_BADGE[reportStage(r)].tone}>{STAGE_BADGE[reportStage(r)].label}</Badge>
+                    <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+                  </span>
                 </button>
 
                 <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
@@ -207,6 +253,10 @@ export function WeeklyReportsTable({
                     <div className="truncate text-text-dark">{r.supervisorName}</div>
                   </div>
                   <div className="col-span-2 min-w-0">
+                    <div className="font-bold uppercase tracking-wide text-text-muted">App responses</div>
+                    <div className="text-text-dark">{responseText(r)}</div>
+                  </div>
+                  <div className="col-span-2 min-w-0">
                     <div className="font-bold uppercase tracking-wide text-text-muted">Updated</div>
                     <div className="text-text-dark">{formatDate(r.updated_at, { month: "short", day: "numeric" })}</div>
                   </div>
@@ -229,7 +279,7 @@ export function WeeklyReportsTable({
           </div>
 
           <div className="hidden md:block">
-            <Table head={["Report ID", "Week", "Site / Company", "Auditor", "Supervisor", "Sections", "Status", "Updated", "Actions"]}>
+            <Table head={["Report ID", "Week", "Site / Company", "Auditor", "Supervisor", "App responses", "Status", "Updated", "Actions"]}>
               {filtered.map((r) => (
                 <tr key={r.id} className="border-b border-border last:border-0">
                   <td className="cursor-pointer px-5 py-3.5 font-semibold text-text-dark" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
@@ -244,7 +294,10 @@ export function WeeklyReportsTable({
                   </td>
                   <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>{r.auditorName}</td>
                   <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>{r.supervisorName}</td>
-                  <td className="cursor-pointer px-5 py-3.5 text-text-muted" onClick={() => router.push(`/weekly-reports/${r.id}`)}>{r.sectionCount}</td>
+                  <td className="cursor-pointer px-5 py-3.5" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
+                    <Badge tone={STAGE_BADGE[reportStage(r)].tone}>{STAGE_BADGE[reportStage(r)].label}</Badge>
+                    <div className="mt-1 text-[11px] text-text-muted">{responseText(r)}</div>
+                  </td>
                   <td className="cursor-pointer px-5 py-3.5" onClick={() => router.push(`/weekly-reports/${r.id}`)}>
                     <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
                   </td>

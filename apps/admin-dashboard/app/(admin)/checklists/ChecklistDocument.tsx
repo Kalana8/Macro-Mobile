@@ -48,7 +48,6 @@ export const ChecklistDocument = forwardRef<
   // would make the same download look different depending on whether it
   // was triggered from a phone or a desktop.
   const imageGrid = imageGridClassName ?? RESPONSIVE_IMAGE_GRID;
-  const areaNames = checklist.areas.map((a) => a.main_area).join(", ") || "Checklist";
   const submitted = checklist.status === "submitted";
   const totalDone = checklist.areas.reduce((n, a) => n + a.subtasks.filter((t) => t.done).length, 0);
   const totalTasks = checklist.areas.reduce((n, a) => n + a.subtasks.length, 0);
@@ -60,7 +59,7 @@ export const ChecklistDocument = forwardRef<
         <div className="border-b border-border pb-5">
           <div className="text-[11px] font-bold uppercase tracking-[0.15em] text-primary">Checklist Report</div>
           <div className="mt-1.5 text-2xl font-extrabold">{companyName}</div>
-          <div className="mt-1 text-sm text-text-muted">{areaNames}</div>
+          {checklist.site && <div className="mt-1 text-sm text-text-muted">{checklist.site}</div>}
         </div>
 
         <div className="grid grid-cols-2 gap-2.5 py-5 sm:grid-cols-4">
@@ -78,7 +77,7 @@ export const ChecklistDocument = forwardRef<
         )}
 
         <div className="divide-y divide-border">
-          <Section title={`Checklist Areas · ${totalDone}/${totalTasks} complete`}>
+          <Section title={`Checklist Areas · ${totalDone}/${totalTasks} completed`}>
             <div className="flex flex-col gap-5">
               {checklist.areas.map((area, i) => (
                 <div key={i}>

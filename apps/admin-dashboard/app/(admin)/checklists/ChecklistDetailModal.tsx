@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { checklistName } from "@/lib/checklistName";
 import { Modal } from "@/components/Modal";
 import type { Checklist } from "@macro/shared/types";
 import { ChecklistDocument } from "./ChecklistDocument";
@@ -23,12 +24,12 @@ export function ChecklistDetailModal({
   // cramped thumbnails and wraps text awkwardly once captured. This hidden
   // copy renders at a proper document width regardless of the modal's size.
   const captureRef = useRef<HTMLDivElement>(null);
-  const areaNames = checklist.areas.map((a) => a.main_area).join(", ") || "Checklist";
+  const title = checklistName(companyName, checklist.site);
   const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/shared/checklists/${checklist.id}` : "";
 
   return (
-    <Modal title={areaNames} onClose={onClose}>
-      <ChecklistShareBar targetRef={captureRef} checklist={checklist} shareUrl={shareUrl} />
+    <Modal title={title} onClose={onClose}>
+      <ChecklistShareBar targetRef={captureRef} checklist={checklist} shareUrl={shareUrl} companyName={companyName} />
 
       <div className="overflow-hidden rounded-2xl border border-border">
         <ChecklistDocument checklist={checklist} companyName={companyName} employeeName={employeeName} />

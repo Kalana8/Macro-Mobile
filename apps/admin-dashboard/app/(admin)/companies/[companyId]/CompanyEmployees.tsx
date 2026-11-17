@@ -11,6 +11,8 @@ interface EmployeeRow {
   full_name: string;
   job_role: string;
   status: string;
+  /** The sites they work at, e.g. "Glen Waverly", or "All sites". */
+  sites: string;
 }
 
 export function CompanyEmployees({
@@ -18,11 +20,13 @@ export function CompanyEmployees({
   companyName,
   employees,
   candidates,
+  sites,
 }: {
   companyId: string;
   companyName: string;
   employees: EmployeeRow[];
   candidates: { id: string; full_name: string }[];
+  sites: { id: string; name: string }[];
 }) {
   const [showModal, setShowModal] = useState(false);
 
@@ -41,10 +45,11 @@ export function CompanyEmployees({
           No employees assigned yet.
         </div>
       ) : (
-        <Table head={["Name", "Role", "Status", ""]}>
+        <Table head={["Name", "Site", "Role", "Status", ""]}>
           {employees.map((employee) => (
             <tr key={employee.id} className="border-b border-border last:border-0">
               <td className="px-5 py-3.5 font-semibold text-text-dark">{employee.full_name}</td>
+              <td className="px-5 py-3.5 text-text-dark">{employee.sites}</td>
               <td className="px-5 py-3.5 text-text-muted">{employee.job_role || "—"}</td>
               <td className="px-5 py-3.5">
                 <Badge tone={employee.status === "active" ? "success" : "neutral"}>{employee.status}</Badge>
@@ -66,6 +71,7 @@ export function CompanyEmployees({
           companyId={companyId}
           companyName={companyName}
           candidates={candidates}
+          sites={sites}
           onClose={() => setShowModal(false)}
         />
       )}

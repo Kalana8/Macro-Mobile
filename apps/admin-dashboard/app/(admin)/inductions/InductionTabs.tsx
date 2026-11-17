@@ -8,20 +8,48 @@ const TABS = [
   { key: "certificates", label: "Certificates", href: "/inductions/certificates" },
 ] as const;
 
-export function InductionTabs({ active }: { active: "invitations" | "templates" | "submissions" | "results" | "certificates" }) {
+type TabKey = (typeof TABS)[number]["key"];
+
+/** The two parts of "Induction and Check Links": Inductions and Checks. */
+export function PartSwitch({ active }: { active: "inductions" | "checks" }) {
+  const parts = [
+    { key: "inductions", label: "Inductions", href: "/inductions" },
+    { key: "checks", label: "Checks", href: "/inductions/checks" },
+  ] as const;
   return (
-    <div className="mb-4 flex w-fit flex-wrap gap-1.5 rounded-lg bg-bg p-1">
-      {TABS.map((tab) => (
+    <div className="mb-3 flex w-fit gap-1 rounded-[12px] border border-border bg-white p-1" role="tablist" aria-label="Induction and Check Links">
+      {parts.map((p) => (
         <Link
-          key={tab.key}
-          href={tab.href}
-          className={`rounded-md px-4 py-2 text-sm font-bold ${
-            active === tab.key ? "bg-white text-primary shadow-sm" : "text-text-muted"
-          }`}
+          key={p.key}
+          href={p.href}
+          role="tab"
+          aria-selected={active === p.key}
+          className={`rounded-[9px] px-5 py-2 text-sm font-extrabold ${active === p.key ? "bg-primary text-white" : "text-text-muted"}`}
         >
-          {tab.label}
+          {p.label}
         </Link>
       ))}
     </div>
+  );
+}
+
+export function InductionTabs({ active }: { active: TabKey }) {
+  return (
+    <>
+      <PartSwitch active="inductions" />
+      <div className="mb-4 flex w-fit flex-wrap gap-1.5 rounded-lg bg-bg p-1">
+        {TABS.map((tab) => (
+          <Link
+            key={tab.key}
+            href={tab.href}
+            className={`rounded-md px-4 py-2 text-sm font-bold ${
+              active === tab.key ? "bg-white text-primary shadow-sm" : "text-text-muted"
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }

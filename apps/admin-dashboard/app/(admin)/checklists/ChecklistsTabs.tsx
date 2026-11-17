@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, EmptyState, IconChip, PlusIcon, PrimaryButton, Table } from "@/components/ui";
+import { cycleEnded } from "@macro/shared/checklistCycle";
+import { Badge, CheckboxSquare, EmptyState, IconChip, PlusIcon, PrimaryButton, Table } from "@/components/ui";
 import { DeleteButton } from "@/components/DeleteButton";
 import { todayInBusinessTimezone } from "@macro/shared/datetime";
 import type { Checklist, ChecklistTemplate, Site } from "@macro/shared/types";
@@ -12,6 +13,9 @@ import { TemplateDetailModal } from "./TemplateDetailModal";
 import { AssignChecklistModal } from "./AssignChecklistModal";
 import { ChecklistDetailModal } from "./ChecklistDetailModal";
 import { EndTemplateButton } from "./EndTemplateButton";
+import { SendNowButton } from "./SendNowButton";
+import { ShareChecklistsModal } from "./ShareChecklistsModal";
+import { templateSubtaskCount } from "./templateContent";
 
 interface JoinedChecklist extends Checklist {
   companyName: string;
@@ -58,6 +62,11 @@ export function ChecklistsTabs({
   const [templateDetail, setTemplateDetail] = useState<JoinedTemplate | null>(null);
   const [checklistDetail, setChecklistDetail] = useState<JoinedChecklist | null>(null);
   const [showAssign, setShowAssign] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [sharing, setSharing] = useState(false);
+  const chosen = submitted.filter((c) => selected.includes(c.id));
+  const allChosen = submitted.length > 0 && chosen.length === submitted.length;
+  const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   return (
     <div>
@@ -79,7 +88,41 @@ export function ChecklistsTabs({
         (submitted.length === 0 ? (
           <EmptyState title="No submitted checklists yet" />
         ) : (
-          <Table head={["Date", "Main Areas", "Company", "Employee", "Subtasks", "Notes", "Images"]}>
+          <>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="text-[13px] text-text-muted">
+              {chosen.length ? `${chosen.length} selected` : "Tick checklists to share them together, or open one to share it."}
+            </div>
+            <div className="flex items-center gap-2">
+              {chosen.length > 0 && (
+                <button type="button" onClick={() => setSelected([])} className="text-[13px] font-semibold text-primary">
+                  Clear
+                </button>
+              )}
+              <PrimaryButton type="button" onClick={() => setSharing(true)} disabled={chosen.length === 0}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 3v12" /><path d="M7 8l5-5 5 5" /><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+                </svg>
+                {chosen.length ? `Share ${chosen.length}` : "Share"}
+              </PrimaryButton>
+            </div>
+          </div>
+          <Table
+            head={[
+              <button
+                key="all"
+                type="button"
+                role="checkbox"
+                aria-checked={allChosen}
+                aria-label={allChosen ? "Clear all" : "Select all"}
+                onClick={() => setSelected(allChosen ? [] : submitted.map((c) => c.id))}
+                className="flex items-center"
+              >
+                <CheckboxSquare checked={allChosen} />
+              </button>,
+              "Date", "Main Areas", "Company", "Employee", "Subtasks", "Notes", "Images",
+            ]}
+          >
             {submitted.map((row) => {
               const done = row.areas.reduce((n, a) => n + a.subtasks.filter((t) => t.done).length, 0);
               const total = row.areas.reduce((n, a) => n + a.subtasks.length, 0);
@@ -92,8 +135,20 @@ export function ChecklistsTabs({
                 <tr
                   key={row.id}
                   onClick={() => setChecklistDetail(row)}
-                  className="cursor-pointer border-b border-border last:border-0"
+                  className={`cursor-pointer border-b border-border last:border-0 ${selected.includes(row.id) ? "bg-primary/5" : ""}`}
                 >
+                  <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={selected.includes(row.id)}
+                      aria-label={`Select ${row.areas.map((a) => a.main_area).join(", ")}, ${row.assigned_date}`}
+                      onClick={() => toggle(row.id)}
+                      className="flex items-center"
+                    >
+                      <CheckboxSquare checked={selected.includes(row.id)} />
+                    </button>
+                  </td>
                   <td className="px-5 py-3.5 text-text-muted">{row.assigned_date}</td>
                   <td className="px-5 py-3.5 font-semibold text-text-dark">{row.areas.map((a) => a.main_area).join(", ")}</td>
                   <td className="px-5 py-3.5 text-text-muted">{row.companyName}</td>
@@ -105,6 +160,7 @@ export function ChecklistsTabs({
               );
             })}
           </Table>
+          </>
         ))}
 
       {tab === "create" && (
@@ -120,11 +176,13 @@ export function ChecklistsTabs({
           ) : (
             <Table head={["Company", "Site", "Schedule", "Subtasks", "Actions"]}>
               {templates.map((t) => {
-                const subtasks = t.areas.reduce((n, a) => n + a.subtasks.length, 0);
+                const subtasks = templateSubtaskCount(t);
                 // Defensive against rows fetched before visit_dates existed
                 // on this table (mid-migration).
                 const visitDates = t.visit_dates ?? [];
-                const ended = visitDates.length > 0 && !visitDates.some((d) => d >= todayInBusinessTimezone());
+                const ended = t.cycle_start
+                  ? cycleEnded(t, todayInBusinessTimezone())
+                  : visitDates.length > 0 && !visitDates.some((d) => d >= todayInBusinessTimezone());
                 return (
                   <tr key={t.id} className="border-b border-border last:border-0">
                     <td className="cursor-pointer px-5 py-3.5 font-semibold text-text-dark" onClick={() => setTemplateDetail(t)}>{t.companyName}</td>
@@ -170,7 +228,7 @@ export function ChecklistsTabs({
           </div>
 
           <div className="mb-2 text-xs font-bold text-text-muted">
-            STANDING ASSIGNMENTS — sent automatically on each template&apos;s own listed dates
+            STANDING ASSIGNMENTS — sent automatically on every day of the checklist&apos;s schedule. Send now sends today&apos;s checklist straight away.
           </div>
           {assignments.length === 0 ? (
             <div className="mb-6 rounded-[16px] border border-dashed border-border p-6 text-center text-sm text-text-muted">
@@ -185,11 +243,14 @@ export function ChecklistsTabs({
                   <td className="px-5 py-3.5 text-text-muted">{row.employeeName}</td>
                   <td className="px-5 py-3.5 text-[13px] text-text-muted">{row.adminNote ?? "—"}</td>
                   <td className="px-5 py-3.5">
+                    <div className="flex items-start gap-2">
+                    <SendNowButton assignmentId={row.id} employeeName={row.employeeName} />
                     <DeleteButton
                       action={deleteAssignmentAction}
                       confirmText={`Stop auto-sending this checklist to ${row.employeeName}?`}
                       hiddenFields={{ id: row.id }}
                     />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -218,6 +279,7 @@ export function ChecklistsTabs({
           onClose={() => setChecklistDetail(null)}
         />
       )}
+      {sharing && chosen.length > 0 && <ShareChecklistsModal checklists={chosen} onClose={() => setSharing(false)} />}
       {showAssign && (
         <AssignChecklistModal companies={companies} templates={templates} employees={employees} onClose={() => setShowAssign(false)} />
       )}

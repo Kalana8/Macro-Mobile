@@ -13,10 +13,13 @@ export function ImagePicker({
   images,
   onChange,
   uploadFile,
+  resolveUrl = (u) => u,
 }: {
   images: string[];
   onChange: (urls: string[]) => void;
   uploadFile: (file: File) => Promise<string>;
+  /** Turns a stored value into something an <img> can show, e.g. a signed URL for a private storage path. */
+  resolveUrl?: (stored: string) => string;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +81,7 @@ export function ImagePicker({
           {images.map((url) => (
             <div key={url} className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt="Attachment" className="h-20 w-20 rounded-lg object-cover" />
+              <img src={resolveUrl(url)} alt="Attachment" className="h-20 w-20 rounded-lg object-cover" />
               <button
                 type="button"
                 onClick={() => removeImage(url)}

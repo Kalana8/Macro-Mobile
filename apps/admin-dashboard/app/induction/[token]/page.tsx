@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { createServiceRoleClient } from "@macro/shared/supabase/server";
 import { formatDate, formatTime } from "@macro/shared/datetime";
-import { hashToken } from "@/lib/inductionToken";
+import { hashToken, tokenHashFilter } from "@/lib/inductionToken";
 import { toOne } from "@/lib/embed";
 import type { InductionAttempt, InductionFormSection, InductionTrainingSlide } from "@macro/shared/types";
 import { InductionForm } from "./InductionForm";
@@ -61,11 +61,13 @@ export default async function InductionLinkPage({ params }: { params: Promise<{ 
   const supabase = createServiceRoleClient();
   const tokenHash = hashToken(rawToken);
 
-  const { data: token } = await supabase
-    .from("induction_tokens")
-    .select("*, employees!induction_tokens_employee_id_fkey(full_name), sites(name, allowed_radius, companies(name))")
-    .eq("token_hash", tokenHash)
-    .maybeSingle();
+  const columns = "*, employees!induction_tokens_employee_id_fkey(full_name), sites(name, allowed_radius, companies(name))";
+  // The invitation link, or the key the employee app made for its owner (0054).
+  const first = await supabase.from("induction_tokens").select(columns).or(tokenHashFilter(tokenHash)).maybeSingle();
+  const token =
+    first.error && /app_token_hash/.test(first.error.message)
+      ? (await supabase.from("induction_tokens").select(columns).eq("token_hash", tokenHash).maybeSingle()).data
+      : first.data;
 
   if (!token) {
     return <MessagePage emoji="⚠️" title="Invalid Link" message="This induction link is invalid or no longer available." />;

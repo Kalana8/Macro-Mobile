@@ -114,13 +114,33 @@ export interface Audit {
   max_marks: number;
   sent_to: string[];
   created_at: string;
+  /** No longer used: audits are view only for employees since 0050. */
+  employee_access?: "view" | "edit";
+  /** When the employee submitted their note and photos; closed for them after that. */
+  employee_submitted_at?: string | null;
+  /** When the employee pressed Checked in the app (0050). Submitting also sets it. */
+  employee_verified_at?: string | null;
+  /** The employee's note and photos (audit-images storage paths), sent with Submit (0050). */
+  employee_note?: string;
+  employee_images?: string[];
 }
+
+export type SubtaskFrequency = "daily" | "weekly" | "monthly" | "custom";
 
 export interface ChecklistSubtask {
   id: string;
   text: string;
   done?: boolean;
   comment?: string;
+  /** On a 28-day cycle template (0055): how often, and the cycle days (0 = Week 1 Mon … 27 = Week 4 Sun) it falls on. */
+  frequency?: SubtaskFrequency;
+  /** Monthly (and older weekly ones): the weekday, 0 = Monday … 6 = Sunday. */
+  weekday?: number;
+  /** Weekly: one or more weekdays, 0 = Monday … 6 = Sunday. */
+  weekdays?: number[];
+  /** Monthly: the week, 0 = Week 1 … 3 = Week 4. */
+  week?: number;
+  days?: number[];
 }
 
 export interface ChecklistArea {
@@ -149,6 +169,16 @@ export interface ChecklistTemplate {
   // from the 4-week grid. "End Now" strips today-and-future dates, leaving
   // past dates untouched.
   visit_dates: string[]; // "YYYY-MM-DD"
+  /** 28-day cycle (0055): the Monday Week 1 starts. Null on older, date-based templates. */
+  cycle_start?: string | null;
+  /** Start again after the 28 days, or stop. */
+  cycle_repeats?: boolean;
+  /** Hour the morning after its day until which it's on time (0 = midnight, 10 = 10:00 next morning). Migration 0068. */
+  day_ends_at_hour?: number;
+  /** Last day anything is sent ("End now"). */
+  cycle_end?: string | null;
+  /** Main areas whose subtasks each carry a frequency and cycle days. */
+  cycle_areas?: ChecklistArea[];
   created_at: string;
 }
 
@@ -181,7 +211,7 @@ export interface ChecklistAssignment {
 
 // ---- Weekly Action Report ----
 export type WeeklyReportStatus = "draft" | "in_progress" | "completed" | "pdf_generated" | "sent";
-export type ReportShareChannel = "whatsapp" | "email";
+export type ReportShareChannel = "whatsapp" | "email" | "app";
 export type ReportShareStatus = "sent" | "failed";
 
 export interface WeeklyReport {
@@ -505,10 +535,15 @@ export interface AppPermissions {
   // detail page shows just submitted photos, no subtasks/notes/status.
   // reviewAll (e.g. Supervisor) is the opposite direction — full detail,
   // but for every submission across their company, not just their own.
-  checklists: { view: boolean; submit: boolean; imagesOnly: boolean; reviewAll: boolean };
-  audits: { view: boolean };
+  // share: send completed checklists (PDF, message, copy).
+  checklists: { view: boolean; submit: boolean; share: boolean; imagesOnly: boolean; reviewAll: boolean };
+  // respond: press Verified, then add a note and photos and submit.
+  audits: { view: boolean; respond: boolean };
+  reports: { view: boolean; respond: boolean };
+  photos: { view: boolean; send: boolean; download: boolean };
   communication: { view: boolean; send: boolean };
-  profile: { view: boolean; changePassword: boolean };
+  // changePassword is only used by the web employee app now.
+  profile: { view: boolean; photo: boolean; inductions: boolean; changePassword?: boolean };
 }
 
 export interface RolePermissions {

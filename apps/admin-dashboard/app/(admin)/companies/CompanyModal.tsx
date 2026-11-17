@@ -83,6 +83,10 @@ export function CompanyModal({
   // admin can tell they're adding another one rather than the first.
   const matchingSites = pickedExistingSite && isAddSiteMode ? companySites.filter((s) => s.name === siteNameChoice) : [];
   const [viewingSite, setViewingSite] = useState<Site | null>(null);
+  // Editing: each site keeps its own location, so pick which one to move on the map.
+  const editSites = isEdit ? sitesByCompany[company!.id] ?? [] : [];
+  const [editSiteId, setEditSiteId] = useState(editSites[0]?.id ?? "");
+  const editSite = editSites.find((s) => s.id === editSiteId);
 
   useEffect(() => {
     if (state.success) onClose();
@@ -154,7 +158,7 @@ export function CompanyModal({
                   </button>
                   {nameCheck === "duplicate" && (
                     <p className="mt-1 text-[11.5px] text-[#B35A10]">
-                      A company named &quot;{customCompanyName}&quot; already exists. You can continue anyway, or use a different name.
+                      A company named &quot;{customCompanyName}&quot; already exists. Continuing adds this site to it, so both sites show on its page.
                     </p>
                   )}
                   {nameCheck === "clear" && (
@@ -212,7 +216,30 @@ export function CompanyModal({
           </div>
         )}
 
-        {isEdit ? (
+        {isEdit && editSite ? (
+          <div className="flex flex-col gap-2">
+            <input type="hidden" name="location" value={company?.location ?? ""} />
+            <input type="hidden" name="siteId" value={editSite.id} />
+            {editSites.length > 1 && (
+              <div>
+                <FieldLabel>Site</FieldLabel>
+                <Select value={editSiteId} onChange={(e) => setEditSiteId(e.target.value)}>
+                  {editSites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </Select>
+              </div>
+            )}
+            <LocationField
+              key={editSite.id}
+              addressFieldName="siteAddress"
+              latFieldName="siteLat"
+              lngFieldName="siteLng"
+              initialAddress={editSite.address ?? ""}
+              initialLat={editSite.lat || editSite.lng ? editSite.lat : undefined}
+              initialLng={editSite.lat || editSite.lng ? editSite.lng : undefined}
+              helpText={`${editSite.name}: click the exact spot on the map, drag the pin, or use your current location at the site. Used for the ${editSite.allowed_radius ?? 35} m clock-in area.`}
+            />
+          </div>
+        ) : isEdit ? (
           <div>
             <FieldLabel>Location</FieldLabel>
             <TextInput name="location" defaultValue={company?.location ?? ""} placeholder="e.g. 123 Main St, Colombo (optional)" />
@@ -226,7 +253,7 @@ export function CompanyModal({
             initialAddress={matchingSites[0]?.address ?? ""}
             initialLat={matchingSites[0]?.lat}
             initialLng={matchingSites[0]?.lng}
-            helpText="Type an address (auto-located) or stand at the site and use your current location. Used for the 20m geofenced login/clock-in."
+            helpText="Type an address (auto-located) or stand at the site and use your current location. Used for the 35 m geofenced login/clock-in."
           />
         ) : showCompanyOnlyFields ? (
           <LocationField addressFieldName="location" latFieldName="siteLat" lngFieldName="siteLng" />
@@ -244,13 +271,26 @@ export function CompanyModal({
 
         {(isEdit || showCompanyOnlyFields) && (
           <div>
-            <FieldLabel>Company Logo</FieldLabel>
+            <FieldLabel>Company Image</FieldLabel>
+            <p className="mb-1.5 text-[11.5px] text-text-muted">
+              Shown across the top of this company&apos;s site cards in the employee app. A wide landscape photo works best.
+            </p>
             <input type="hidden" name="logo" value={logo ?? ""} />
-            <ImagePicker
-              images={logo ? [logo] : []}
-              onChange={(images) => setLogo(images[images.length - 1] ?? null)}
-              uploadFile={uploadFile}
-            />
+            {logo && (
+              <div className="relative mb-2 overflow-hidden rounded-[10px]">
+                {/* Same proportions and crop as the card in the app. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo} alt="Company" className="aspect-[12/5] w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setLogo(null)}
+                  className="absolute right-2 top-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-error-text"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+            <ImagePicker images={[]} onChange={(images) => setLogo(images[images.length - 1] ?? null)} uploadFile={uploadFile} />
           </div>
         )}
 
