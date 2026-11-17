@@ -45,6 +45,7 @@ interface EmployeeOption {
   id: string;
   full_name: string;
   companyIds: string[];
+  isClient?: boolean;
 }
 interface Site {
   id: string;

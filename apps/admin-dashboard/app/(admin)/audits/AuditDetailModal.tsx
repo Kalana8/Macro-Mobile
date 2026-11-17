@@ -53,7 +53,7 @@ export function AuditDetailModal({
   audit: Audit;
   companyName: string;
   employeeName: string;
-  companyEmployees: { id: string; full_name: string }[];
+  companyEmployees: { id: string; full_name: string; isClient?: boolean }[];
   onClose: () => void;
   /** Signed URLs for photos employees added from the app, keyed by storage path. */
   photoUrls?: Record<string, string>;
@@ -61,6 +61,9 @@ export function AuditDetailModal({
   const [mainAudits, setMainAudits] = useState<AuditMainItem[]>(audit.main_audits);
   const [finalMarks, setFinalMarks] = useState<string>(audit.final_marks?.toString() ?? "");
   const [recipients, setRecipients] = useState<string[]>(audit.sent_to ?? []);
+  // Clients are locked: click the lock first, so results only go to a client on purpose.
+  // Clients it was already sent to stay unlocked.
+  const [unlocked, setUnlocked] = useState<string[]>(audit.sent_to ?? []);
 
   const [ratingsState, ratingsAction] = useActionState<AuditFormState, FormData>(updateAuditRatingsAction, {});
   const [sendState, sendAction] = useActionState<AuditFormState, FormData>(sendAuditResultsAction, {});
@@ -222,17 +225,44 @@ export function AuditDetailModal({
         {recipients.map((id) => <input key={id} type="hidden" name="recipientIds" value={id} />)}
         <div className="mb-2 text-xs font-bold text-text-muted">SEND AUDIT RESULTS</div>
         <div className="mb-2.5 max-h-32 overflow-y-auto rounded-xl border border-border p-2">
-          {companyEmployees.map((e) => (
-            <button
-              type="button"
-              key={e.id}
-              onClick={() => toggleRecipient(e.id)}
-              className="flex w-full items-center gap-2.5 rounded-[8px] px-2 py-[7px] text-left text-[13.5px] text-text-dark"
-            >
-              <CheckboxSquare checked={recipients.includes(e.id)} />
-              {e.full_name}
-            </button>
-          ))}
+          {companyEmployees.map((e) => {
+            const locked = !!e.isClient && !unlocked.includes(e.id);
+            return (
+              <div key={e.id} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={locked}
+                  onClick={() => toggleRecipient(e.id)}
+                  className={`flex flex-1 items-center gap-2.5 rounded-[8px] px-2 py-[7px] text-left text-[13.5px] ${locked ? "cursor-not-allowed text-text-muted" : "text-text-dark"}`}
+                >
+                  <CheckboxSquare checked={recipients.includes(e.id)} />
+                  {e.full_name}
+                  {e.isClient && <span className="rounded-full bg-bg px-2 py-0.5 text-[10.5px] font-bold text-text-muted">Client</span>}
+                </button>
+                {e.isClient && (
+                  <button
+                    type="button"
+                    aria-label={locked ? `Unlock ${e.full_name} (client) to send` : `Lock ${e.full_name} (client)`}
+                    title={locked ? "Client: click to unlock, then tick to send" : "Lock again"}
+                    onClick={() => {
+                      if (locked) setUnlocked((u) => [...u, e.id]);
+                      else {
+                        setUnlocked((u) => u.filter((x) => x !== e.id));
+                        setRecipients((r) => r.filter((x) => x !== e.id));
+                      }
+                    }}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${locked ? "border-border bg-white text-text-muted" : "border-primary/40 bg-primary/5 text-primary"}`}
+                  >
+                    {locked ? (
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+                    ) : (
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 7.5-2" /></svg>
+                    )}
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
         {audit.sent_to?.length > 0 && (
           <div className="mb-2.5 text-[11.5px] text-text-muted">

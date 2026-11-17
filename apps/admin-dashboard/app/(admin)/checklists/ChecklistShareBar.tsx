@@ -1,17 +1,9 @@
 "use client";
 
 import { useState, type RefObject } from "react";
-import { checklistName } from "@/lib/checklistName";
+import { checklistFileName, checklistName } from "@/lib/checklistName";
 import type { Checklist } from "@macro/shared/types";
 
-function checklistFileName(checklist: Checklist, name: string): string {
-  const slug = `${name}-${checklist.assigned_date}`
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-  return `checklist-${slug || checklist.id}`;
-}
 
 function downloadDataUrl(dataUrl: string, filename: string) {
   const link = document.createElement("a");
@@ -123,7 +115,7 @@ export function ChecklistShareBar({
     setBusy("image");
     try {
       const dataUrl = await captureNode();
-      downloadDataUrl(dataUrl, `${checklistFileName(checklist, title)}.png`);
+      downloadDataUrl(dataUrl, `${checklistFileName([{ ...checklist, companyName }])}.png`);
     } catch {
       setError("Couldn't generate the image — try again.");
     } finally {
@@ -159,7 +151,7 @@ export function ChecklistShareBar({
         doc.addImage(dataUrl, "PNG", 0, offsetMm, A4_WIDTH_MM, imgHeightMm);
         heightLeftMm -= A4_HEIGHT_MM;
       }
-      doc.save(`${checklistFileName(checklist, title)}.pdf`);
+      doc.save(`${checklistFileName([{ ...checklist, companyName }])}.pdf`);
     } catch {
       setError("Couldn't generate the PDF — try again.");
     } finally {

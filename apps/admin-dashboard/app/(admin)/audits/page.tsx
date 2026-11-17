@@ -1,4 +1,5 @@
 import { createClient } from "@macro/shared/supabase/server";
+import { isClientRole } from "@/lib/clients";
 import { PageHeader } from "@/components/ui";
 import type { Audit } from "@macro/shared/types";
 import { AuditsTable, type AuditRow } from "./AuditsTable";
@@ -17,7 +18,7 @@ export default async function AuditsPage() {
         .order("date", { ascending: false }),
       supabase.from("companies").select("id, name").order("name"),
       supabase.from("sites").select("id, name, company_id").order("name"),
-      supabase.from("employees").select("id, full_name").order("full_name"),
+      supabase.from("employees").select("id, full_name, roles(name, permissions)").order("full_name"),
       supabase.from("employee_companies").select("employee_id, company_id"),
     ]);
 
@@ -29,6 +30,8 @@ export default async function AuditsPage() {
     id: e.id,
     full_name: e.full_name,
     companyIds: companyIdsByEmployee[e.id] ?? [],
+    // Clients are locked in Send Results until unlocked on purpose.
+    isClient: isClientRole(Array.isArray(e.roles) ? e.roles[0] : (e.roles as { name?: string; permissions?: unknown } | null)),
   }));
 
   const rows: AuditRow[] = (audits ?? []).map((a) => ({

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { checklistName } from "@/lib/checklistName";
+import { checklistFileName, checklistName } from "@/lib/checklistName";
 import { Modal } from "@/components/Modal";
 import type { Checklist } from "@macro/shared/types";
 import { ChecklistDocument } from "./ChecklistDocument";
@@ -71,9 +71,7 @@ export function ShareChecklistsModal({ checklists, onClose }: { checklists: Shar
           doc.addImage(dataUrl, "PNG", 0, offset, W, h);
         }
       }
-      const first = checklists[checklists.length - 1]?.assigned_date;
-      const last = checklists[0]?.assigned_date;
-      doc.save(`checklists-${first === last ? first : `${first}-to-${last}`}.pdf`);
+      doc.save(`${checklistFileName(checklists)}.pdf`);
       setNotice(`Downloaded ${heading}.`);
     } catch {
       setError("Couldn't create the PDF. Try again.");

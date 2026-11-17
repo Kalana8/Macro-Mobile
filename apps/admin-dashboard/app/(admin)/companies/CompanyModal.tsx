@@ -83,6 +83,10 @@ export function CompanyModal({
   // admin can tell they're adding another one rather than the first.
   const matchingSites = pickedExistingSite && isAddSiteMode ? companySites.filter((s) => s.name === siteNameChoice) : [];
   const [viewingSite, setViewingSite] = useState<Site | null>(null);
+  // Editing: each site keeps its own location, so pick which one to move on the map.
+  const editSites = isEdit ? sitesByCompany[company!.id] ?? [] : [];
+  const [editSiteId, setEditSiteId] = useState(editSites[0]?.id ?? "");
+  const editSite = editSites.find((s) => s.id === editSiteId);
 
   useEffect(() => {
     if (state.success) onClose();
@@ -212,7 +216,30 @@ export function CompanyModal({
           </div>
         )}
 
-        {isEdit ? (
+        {isEdit && editSite ? (
+          <div className="flex flex-col gap-2">
+            <input type="hidden" name="location" value={company?.location ?? ""} />
+            <input type="hidden" name="siteId" value={editSite.id} />
+            {editSites.length > 1 && (
+              <div>
+                <FieldLabel>Site</FieldLabel>
+                <Select value={editSiteId} onChange={(e) => setEditSiteId(e.target.value)}>
+                  {editSites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </Select>
+              </div>
+            )}
+            <LocationField
+              key={editSite.id}
+              addressFieldName="siteAddress"
+              latFieldName="siteLat"
+              lngFieldName="siteLng"
+              initialAddress={editSite.address ?? ""}
+              initialLat={editSite.lat || editSite.lng ? editSite.lat : undefined}
+              initialLng={editSite.lat || editSite.lng ? editSite.lng : undefined}
+              helpText={`${editSite.name}: click the exact spot on the map, drag the pin, or use your current location at the site. Used for the ${editSite.allowed_radius ?? 35} m clock-in area.`}
+            />
+          </div>
+        ) : isEdit ? (
           <div>
             <FieldLabel>Location</FieldLabel>
             <TextInput name="location" defaultValue={company?.location ?? ""} placeholder="e.g. 123 Main St, Colombo (optional)" />

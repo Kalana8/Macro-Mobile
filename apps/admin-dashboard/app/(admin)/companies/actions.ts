@@ -100,7 +100,17 @@ export async function updateCompanyAction(
   const logo = String(formData.get("logo") ?? "").trim() || null;
   const status = String(formData.get("status") ?? "active");
 
+  // The site whose location was set on the map (one of this company's).
+  const siteId = String(formData.get("siteId") ?? "");
+  const siteLat = readCoord(formData.get("siteLat"));
+  const siteLng = readCoord(formData.get("siteLng"));
+  const siteAddress = String(formData.get("siteAddress") ?? "").trim() || null;
+
   if (!id || !name) return { error: "Company name is required." };
+  if (siteId && coordsMissing(siteLat, siteLng)) return { error: COORDS_MISSING_MESSAGE };
+  if (siteId && (siteLat < -90 || siteLat > 90 || siteLng < -180 || siteLng > 180)) {
+    return { error: "Coordinates look invalid. Latitude must be -90..90, longitude -180..180." };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -109,6 +119,18 @@ export async function updateCompanyAction(
     .eq("id", id);
 
   if (error) return { error: /companies_name_unique|duplicate key/i.test(error.message) ? `There's already a company called "${name}".` : error.message };
+
+  if (siteId) {
+    const { data: moved, error: siteError } = await supabase
+      .from("sites")
+      .update({ address: siteAddress, lat: siteLat, lng: siteLng })
+      .eq("id", siteId)
+      .eq("company_id", id)
+      .select("id");
+    if (siteError) return { error: `Company saved, but the site's location wasn't: ${siteError.message}` };
+    if (!moved?.length) return { error: "Company saved, but that site isn't part of this company." };
+    revalidatePath(`/companies/${id}`);
+  }
 
   revalidatePath("/companies");
   return { success: true };

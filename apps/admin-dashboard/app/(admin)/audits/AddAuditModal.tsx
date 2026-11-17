@@ -6,6 +6,7 @@ import { Modal } from "@/components/Modal";
 import { ImagePicker } from "@/components/ImagePicker";
 import { todayInBusinessTimezone } from "@macro/shared/datetime";
 import { FieldLabel, PrimaryButton, Select, TextInput } from "@/components/ui";
+import { initialsOf } from "@/lib/checklistName";
 import { createAuditAction, uploadAuditImageAction, type AuditFormState } from "./actions";
 
 interface DraftMainAudit {
@@ -69,6 +70,11 @@ export function AddAuditModal({
   );
   const siteOptions = useMemo(() => sites.filter((s) => s.company_id === companyId), [sites, companyId]);
   const selectedSiteName = siteOptions.find((s) => s.id === siteId)?.name ?? "";
+  // The title starts as the company's initials and the site ("SG Glen Waverly"); it can be changed.
+  const companyName = uniqueCompanies.find((c) => c.id === companyId)?.name ?? "";
+  const defaultTitle = [companyName ? initialsOf(companyName) : "", selectedSiteName].filter(Boolean).join(" ");
+  const [typedTitle, setTypedTitle] = useState<string | null>(null);
+  const title = typedTitle ?? defaultTitle;
 
   useEffect(() => {
     if (state.success) onClose();
@@ -122,8 +128,25 @@ export function AddAuditModal({
           The employee sees this audit as view only. They press Verified to confirm they&apos;ve checked it, and can submit a note and photos.
         </div>
         <div>
+          <FieldLabel>Title</FieldLabel>
+          <TextInput name="title" value={title} onChange={(e) => setTypedTitle(e.target.value)} placeholder="e.g. SG Glen Waverly" />
+          {typedTitle !== null && typedTitle !== defaultTitle && defaultTitle && (
+            <button type="button" onClick={() => setTypedTitle(null)} className="mt-1 text-[12px] font-semibold text-primary">
+              Use &quot;{defaultTitle}&quot;
+            </button>
+          )}
+        </div>
+        <div>
           <FieldLabel>Date</FieldLabel>
-          <TextInput type="date" name="date" required defaultValue={todayInBusinessTimezone()} />
+          {/* Clicking anywhere in the box opens the calendar. */}
+          <TextInput
+            type="date"
+            name="date"
+            required
+            defaultValue={todayInBusinessTimezone()}
+            className="cursor-pointer"
+            onClick={(e) => (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.()}
+          />
         </div>
 
         {mainAudits.map((ma, mi) => (
@@ -175,19 +198,19 @@ export function AddAuditModal({
               </button>
             </div>
             <div className="mt-2.5">
+              <ImagePicker
+                images={ma.images}
+                onChange={(images) => updateMain(mi, { images })}
+                uploadFile={uploadFile}
+              />
+            </div>
+            <div className="mt-2.5">
               <textarea
                 value={ma.comment}
                 onChange={(e) => updateMain(mi, { comment: e.target.value })}
                 placeholder="Notes for this main audit"
                 rows={2}
                 className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-primary"
-              />
-            </div>
-            <div className="mt-2.5">
-              <ImagePicker
-                images={ma.images}
-                onChange={(images) => updateMain(mi, { images })}
-                uploadFile={uploadFile}
               />
             </div>
           </div>

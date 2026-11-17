@@ -40,6 +40,7 @@ export async function createAuditAction(
   const employeeId = String(formData.get("employeeId") ?? "");
   const date = String(formData.get("date") ?? "");
   const location = String(formData.get("location") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim().slice(0, 200);
   const mainAuditsRaw = String(formData.get("mainAuditsJson") ?? "[]");
 
   if (!companyId || !employeeId || !date) {
@@ -76,7 +77,7 @@ export async function createAuditAction(
     employee_id: employeeId,
     date,
     location,
-    title: mainAudits[0].title,
+    title: title || mainAudits[0].title,
     status: "submit",
     main_audits: mainAudits,
   });
