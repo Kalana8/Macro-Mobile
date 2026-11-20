@@ -175,6 +175,8 @@ export interface ChecklistTemplate {
   cycle_repeats?: boolean;
   /** Hour the morning after its day until which it's on time (0 = midnight, 10 = 10:00 next morning). Migration 0068. */
   day_ends_at_hour?: number;
+  /** Done by, as hours after the start of its day: 1–24 the same day (24 = midnight), 25–47 the next day (34 = 10:00 am). Migration 0071. */
+  due_hours?: number;
   /** Last day anything is sent ("End now"). */
   cycle_end?: string | null;
   /** Main areas whose subtasks each carry a frequency and cycle days. */
@@ -198,6 +200,12 @@ export interface Checklist {
   images: string[];
   submitted_at: string | null;
   created_at: string;
+  /** Done by: hour the next morning (0068); kept for older app builds. */
+  day_ends_at_hour?: number;
+  /** Done by, as hours after the start of its day (0071). */
+  due_hours?: number;
+  /** An admin's "Extend to…" for this checklist only, counted the same way (0071). */
+  extended_due_hours?: number | null;
 }
 
 export interface ChecklistAssignment {
