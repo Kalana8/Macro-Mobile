@@ -4,9 +4,9 @@ import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Modal } from "@/components/Modal";
 import { PrimaryButton, TextInput } from "@/components/ui";
-import { EMPTY_PERMISSIONS, withAppDefaults } from "@macro/shared/rbac";
+import { EMPTY_PERMISSIONS, withAppDefaults, withNotificationDefaults } from "@macro/shared/rbac";
 import type { RolePermissions, Role } from "@macro/shared/types";
-import { APP_SCHEMA, DASHBOARD_SCHEMA } from "./permission-schema-labels";
+import { APP_SCHEMA, DASHBOARD_SCHEMA, NOTIFICATION_SCHEMA } from "./permission-schema-labels";
 import { saveRoleAction, type RoleFormState } from "./actions";
 
 function SubmitButton({ label }: { label: string }) {
@@ -76,8 +76,15 @@ export function RoleModal({ role, onClose }: { role?: Role; onClose: () => void 
   const [state, formAction] = useActionState<RoleFormState, FormData>(saveRoleAction, {});
   const [permissions, setPermissions] = useState<RolePermissions>(
     // Roles saved before a switch existed show it as it currently behaves.
-    role?.permissions ? { ...role.permissions, app: withAppDefaults(role.permissions.app) } : EMPTY_PERMISSIONS,
+    role?.permissions
+      ? { ...role.permissions, app: withAppDefaults(role.permissions.app), notifications: withNotificationDefaults(role.permissions.notifications) }
+      : { ...EMPTY_PERMISSIONS, notifications: withNotificationDefaults(null) },
   );
+  const alerts = withNotificationDefaults(permissions.notifications);
+  const allAlerts = NOTIFICATION_SCHEMA.every((n) => alerts[n.key]);
+  const setAlert = (key: keyof typeof alerts, on: boolean) => setPermissions((prev) => ({ ...prev, notifications: { ...withNotificationDefaults(prev.notifications), [key]: on } }));
+  const setAllAlerts = (on: boolean) =>
+    setPermissions((prev) => ({ ...prev, notifications: Object.fromEntries(NOTIFICATION_SCHEMA.map((n) => [n.key, on])) as unknown as typeof alerts }));
 
   useEffect(() => {
     if (state.success) onClose();
@@ -138,6 +145,29 @@ export function RoleModal({ role, onClose }: { role?: Role; onClose: () => void 
               onToggleFn={(a, f) => toggleFn("app", a, f)}
             />
           </div>
+        </div>
+
+        {/* Push notifications this role gets on their phone. */}
+        <div className="rounded-[10px] border border-border p-2.5">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <button type="button" onClick={() => setAllAlerts(!allAlerts)} className="flex items-center gap-2 text-left">
+              <span className={`flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded border-2 ${allAlerts ? "border-primary bg-primary" : "border-border"}`}>
+                {allAlerts && <span className="text-[9px] text-white">✓</span>}
+              </span>
+              <span className="text-[11px] font-bold text-text-muted">EXTRA PUSH NOTIFICATIONS — ACTIVITY AT THEIR ASSIGNED SITES</span>
+            </button>
+          </div>
+          <div className="grid gap-x-4 gap-y-0.5 pl-[22px] sm:grid-cols-2">
+            {NOTIFICATION_SCHEMA.map((n) => (
+              <button type="button" key={n.key} role="checkbox" aria-checked={alerts[n.key]} onClick={() => setAlert(n.key, !alerts[n.key])} className="flex items-center gap-2 py-0.5 text-left">
+                <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border-2 ${alerts[n.key] ? "border-primary bg-primary" : "border-border"}`}>
+                  {alerts[n.key] && <span className="text-[8px] text-white">✓</span>}
+                </span>
+                <span className="text-[11.5px] text-text-muted">{n.label}</span>
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 pl-[22px] text-[11px] text-text-muted">About people at the sites they&apos;re assigned to. On top of the usual notifications, which don&apos;t change. Nobody is alerted about their own actions.</p>
         </div>
 
         {state.error && (

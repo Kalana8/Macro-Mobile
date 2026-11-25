@@ -151,3 +151,15 @@ export const APP_SCHEMA = [
     ],
   },
 ] as const;
+
+// Extra push alerts for a role (migration 0074), about the people at the
+// sites its members are assigned to. The usual notifications don't change.
+export const NOTIFICATION_SCHEMA = [
+  { key: "checklistSubmitted", label: "Checklist submitted " },
+  { key: "auditSubmitted", label: "Audit submitted (Verified, note and photos)" },
+  { key: "reportSubmitted", label: "Weekly report submitted" },
+  { key: "photosSent", label: "Photos sent" },
+  { key: "clockInOut", label: "Clock in and clock out" },
+  { key: "messages", label: "New messages" },
+  { key: "attendanceAlerts", label: "Left site while clocked in, or not clocked in on time" },
+] as const;

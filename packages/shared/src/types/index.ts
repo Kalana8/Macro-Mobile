@@ -28,6 +28,8 @@ export interface Site {
   status: "open" | "closed";
   /** Geofence radius, in meters, for site-login/clock-in/clock-out location checks. Defaults to 20. */
   allowed_radius: number;
+  /** Hour (0–23) by which people with a checklist here should clock in; null: no alert (migration 0073). */
+  clock_in_by?: number | null;
   created_at: string;
 }
 
@@ -554,7 +556,19 @@ export interface AppPermissions {
   profile: { view: boolean; photo: boolean; inductions: boolean; changePassword?: boolean };
 }
 
+/** Which push alerts a role gets (migration 0074). Missing on roles saved before it: none. */
+export interface NotificationPermissions {
+  checklistSubmitted: boolean;
+  auditSubmitted: boolean;
+  reportSubmitted: boolean;
+  photosSent: boolean;
+  clockInOut: boolean;
+  messages: boolean;
+  attendanceAlerts: boolean;
+}
+
 export interface RolePermissions {
   dashboard: DashboardPermissions;
   app: AppPermissions;
+  notifications?: NotificationPermissions;
 }

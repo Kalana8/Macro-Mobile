@@ -141,7 +141,7 @@ export default async function EmployeeAttendancePage({
   const baseQuery = supabase
     .from("attendance")
     .select(
-      "id, date, clock_in_at, clock_out_at, total_break_minutes, geo_verified, clock_in_lat, clock_in_lng, clock_in_address, clock_in_distance, clock_out_lat, clock_out_lng, clock_out_address, clock_out_distance, clock_out_geo_verified, status, companies(name), sites(name, allowed_radius)"
+      "*, companies(name), sites(name, allowed_radius)"
     )
     .eq("employee_id", employeeId);
 
@@ -229,6 +229,7 @@ export default async function EmployeeAttendancePage({
             "Clock In Loc.",
             "Clock Out",
             "Clock Out Loc.",
+            "Left Site",
             "Break",
             "Hours",
             "Status",
@@ -265,6 +266,17 @@ export default async function EmployeeAttendancePage({
                   radius={radius}
                   label="Clock-Out"
                 />
+              </td>
+              <td className="px-5 py-3.5">
+                {/* Clocked out automatically on leaving the site (migration 0073). */}
+                {r.left_site ? (
+                  <div className="flex flex-col items-start gap-1">
+                    <Badge tone="error">Left site · auto clocked out</Badge>
+                    {r.clock_out_distance != null && <span className="text-[12px] font-semibold text-error-text">{Math.round(r.clock_out_distance)} m away</span>}
+                  </div>
+                ) : (
+                  <span className="text-text-muted">—</span>
+                )}
               </td>
               <td className="px-5 py-3.5 text-text-muted">{breakOf(r.total_break_minutes)}</td>
               <td className="px-5 py-3.5 text-text-muted">{hoursOf(r.clock_in_at, r.clock_out_at, r.total_break_minutes)}</td>

@@ -1,8 +1,25 @@
 import type {
   AppPermissions,
   DashboardPermissions,
+  NotificationPermissions,
   RolePermissions,
 } from "../types";
+
+/** No push alerts: the default for a new role. */
+export const NO_NOTIFICATIONS: NotificationPermissions = {
+  checklistSubmitted: false,
+  auditSubmitted: false,
+  reportSubmitted: false,
+  photosSent: false,
+  clockInOut: false,
+  messages: false,
+  attendanceAlerts: false,
+};
+
+/** A role's push alert switches, every one present. */
+export function withNotificationDefaults(n: Partial<NotificationPermissions> | null | undefined): NotificationPermissions {
+  return { ...NO_NOTIFICATIONS, ...(n ?? {}) };
+}
 
 /** Zero-access default — used as a safe fallback when a role can't be resolved. */
 export const EMPTY_PERMISSIONS: RolePermissions = {

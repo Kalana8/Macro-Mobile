@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@macro/shared/supabase/server";
 import { hasAnyDashboardAccess } from "@macro/shared/rbac";
 import type { RolePermissions } from "@macro/shared/types";
 
 export interface LoginState {
   error?: string;
+  /** Signed in: where to go. The page opens it with a full page load, after offering to save the password. */
+  to?: string;
 }
 
 // No geofence gate here — Architecture Document §3: "Admin login is exempt
@@ -76,5 +77,5 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
   // <Link> navigation right after login could still serve a page cached
   // from whichever account was previously signed in in this same tab.
   revalidatePath("/", "layout");
-  redirect(firstAvailable?.[1] ?? "/dashboard");
+  return { to: firstAvailable?.[1] ?? "/dashboard" };
 }

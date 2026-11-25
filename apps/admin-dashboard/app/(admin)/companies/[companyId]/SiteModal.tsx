@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import type { Site } from "@macro/shared/types";
 import { Modal } from "@/components/Modal";
 import { LocationField } from "@/components/LocationField";
-import { FieldLabel, PrimaryButton, TextInput } from "@/components/ui";
+import { FieldLabel, PrimaryButton, Select, TextInput } from "@/components/ui";
 import { createSiteAction, updateSiteAction, type SiteFormState } from "./siteActions";
 
 function SubmitButton({ label }: { label: string }) {
@@ -63,6 +63,21 @@ export function SiteModal({
             required
             defaultValue={site?.allowed_radius ?? 35}
           />
+        </div>
+
+        <div>
+          <FieldLabel>Clock in by</FieldLabel>
+          <Select name="clockInBy" defaultValue={site?.clock_in_by ?? ""} aria-label="Clock in by">
+            <option value="">No alert</option>
+            {Array.from({ length: 24 }, (_, h) => (
+              <option key={h} value={h}>
+                {`${h % 12 === 0 ? 12 : h % 12}:00 ${h < 12 ? "am" : "pm"}`}
+              </option>
+            ))}
+          </Select>
+          <p className="mt-1 text-[11.5px] text-text-muted">
+            Anyone with a checklist here that day who hasn&apos;t clocked in by this time gets an alert, and so do admins.
+          </p>
         </div>
 
         <div>
