@@ -28,7 +28,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
-  const privateKey = Deno.env.get("IMAGEKIT_PRIVATE_KEY");
+  // Tolerate a key pasted with spaces, a line break or quotes around it.
+  const privateKey = (Deno.env.get("IMAGEKIT_PRIVATE_KEY") ?? "").trim().replace(/^["']|["']$/g, "").trim();
   if (!privateKey) return json({ error: "Photo uploads aren't switched on yet. Contact your admin." }, 501);
 
   // Who is uploading: their own session, checked with Supabase.
@@ -68,6 +69,14 @@ Deno.serve(async (req) => {
     body: upload,
   });
   const out = await res.json().catch(() => ({}));
-  if (!res.ok || !out.url) return json({ error: "The photo couldn't be uploaded. Try again." }, 502);
+  if (!res.ok || !out.url) {
+    // ImageKit's reason, for the function logs (never the key). A 401/403 means
+    // the IMAGEKIT_PRIVATE_KEY secret isn't the account's private key.
+    console.error("ImageKit upload failed", res.status, (out as { message?: string }).message ?? "", "key starts:", privateKey.slice(0, 8));
+    if (res.status === 401 || res.status === 403) {
+      return json({ error: "Photo uploads are set up with the wrong key. Contact your admin." }, 502);
+    }
+    return json({ error: "The photo couldn't be uploaded. Try again." }, 502);
+  }
   return json({ url: out.url as string });
 });

@@ -34,7 +34,7 @@ function firstAvailableRoute(permissions: RolePermissions): string {
   return match?.[1] ?? "/dashboard";
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { response, user, supabase } = await updateSession(request);
   const { pathname } = request.nextUrl;
 

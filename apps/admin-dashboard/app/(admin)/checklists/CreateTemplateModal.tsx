@@ -8,6 +8,7 @@ import { FieldLabel, PrimaryButton, Select, TextInput } from "@/components/ui";
 import { todayInBusinessTimezone } from "@macro/shared/datetime";
 import { areasOnCycleDay, cycleDays, frequencyLabel, mondayOf, WEEKDAY_NAMES, WEEKDAYS } from "@macro/shared/checklistCycle";
 import type { ChecklistArea, ChecklistTemplate, Site, SubtaskFrequency } from "@macro/shared/types";
+import { doneByLabel, dueHoursOf } from "./templateContent";
 import { saveCycleTemplateAction, uploadChecklistImageAction, type ChecklistFormState } from "./actions";
 
 interface DraftSubtask {
@@ -185,7 +186,7 @@ export function CreateTemplateModal({
   // The cycle runs from the Monday of the week the checklist is made. It's never shown: everything is Week 1–4, Mon–Sun.
   const start = template?.cycle_start ?? mondayOf(todayInBusinessTimezone());
   const [repeats, setRepeats] = useState(template?.cycle_repeats !== false);
-  const [doneBy, setDoneBy] = useState(template?.day_ends_at_hour ?? 10);
+  const [doneBy, setDoneBy] = useState(() => dueHoursOf(template));
   const [areas, setAreas] = useState<DraftArea[]>(() => {
     if (template?.cycle_start && template.cycle_areas?.length) return fromCycleAreas(template.cycle_areas);
     if (template && Object.keys(template.day_areas ?? {}).length) return fromWeekdayAreas(template.day_areas);
@@ -288,17 +289,58 @@ export function CreateTemplateModal({
 
         <div>
           <FieldLabel>Done by</FieldLabel>
-          <Select value={doneBy} onChange={(e) => setDoneBy(Number(e.target.value))} aria-label="Done by">
-            <option value={0}>Midnight (end of the same day)</option>
-            {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-              <option key={h} value={h}>
-                {h === 12 ? "12:00 noon" : `${h}:00 am`} the next morning
-              </option>
-            ))}
-          </Select>
-          <p className="mt-1 text-[11.5px] text-text-muted">
-            Night work is common, so a day&apos;s checklist can be finished the next morning. After this time it shows as expired in the app (it can still be submitted).
-          </p>
+          {(() => {
+            // doneBy: hours after the start of the checklist's day. 24 = midnight at the end of it.
+            const nextDay = doneBy > 24;
+            const h24 = doneBy === 24 ? 0 : doneBy % 24;
+            const hour12 = h24 % 12 === 0 ? 12 : h24 % 12;
+            const pm = h24 >= 12;
+            const set = (next: boolean, h12: number, isPm: boolean) => {
+              const h = (h12 % 12) + (isPm ? 12 : 0);
+              setDoneBy(next ? 24 + h : h === 0 ? 24 : h);
+            };
+            return (
+              <>
+                <div className="grid grid-cols-[1.4fr_1fr_0.8fr] gap-2">
+                  <Select value={nextDay ? "next" : "same"} onChange={(e) => set(e.target.value === "next", hour12, pm)} aria-label="Done by day">
+                    <option value="same">Same day</option>
+                    <option value="next">Next day</option>
+                  </Select>
+                  <Select value={hour12} onChange={(e) => set(nextDay, Number(e.target.value), pm)} aria-label="Done by hour">
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                      <option key={h} value={h}>
+                        {h}:00
+                      </option>
+                    ))}
+                  </Select>
+                  <Select value={pm ? "pm" : "am"} onChange={(e) => set(nextDay, hour12, e.target.value === "pm")} aria-label="AM or PM">
+                    <option value="am">AM</option>
+                    <option value="pm">PM</option>
+                  </Select>
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {[
+                    { label: "Same day 5:00 pm", v: 17 },
+                    { label: "Midnight", v: 24 },
+                    { label: "Next day 6:00 am", v: 30 },
+                    { label: "Next day 10:00 am", v: 34 },
+                  ].map((p) => (
+                    <button
+                      key={p.v}
+                      type="button"
+                      onClick={() => setDoneBy(p.v)}
+                      className={`rounded-full border px-2.5 py-1 text-[11.5px] font-semibold ${doneBy === p.v ? "border-primary bg-primary/5 text-primary" : "border-border text-text-muted"}`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-[11.5px] text-text-muted">
+                  On time until <span className="font-semibold text-text-dark">{doneByLabel({ due_hours: doneBy })}</span>. After that it shows as expired in the app (it can still be submitted).
+                </p>
+              </>
+            );
+          })()}
         </div>
 
         <div>

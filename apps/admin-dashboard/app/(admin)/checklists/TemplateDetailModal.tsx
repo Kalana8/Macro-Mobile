@@ -32,7 +32,7 @@ export function TemplateDetailModal({
         <div className="mt-1">
           Done by:{" "}
           <span className="font-semibold text-text-dark">
-            {doneByLabel(template.day_ends_at_hour)}
+            {doneByLabel(template)}
           </span>
         </div>
       </div>

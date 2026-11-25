@@ -96,6 +96,13 @@ function NavIcon({ name }: { name: string }) {
           <path d="m19.5 19.5 1.5 1.5" />
         </svg>
       );
+    case "deletionRequests":
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="8" r="3.2" /><path d="M2.5 19c1-3.5 4-5.2 6.5-5.2 1.4 0 2.9.5 4.1 1.5" />
+          <path d="m16 14 5 5M21 14l-5 5" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -105,6 +112,8 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard", area: "dashboard" as const },
   { href: "/companies", label: "Companies", icon: "companies", area: "companies" as const },
   { href: "/employees", label: "Employees", icon: "employees", area: "employees" as const },
+  // From the website's Delete Account form (the app's Profile → Delete Account opens it).
+  { href: "/deletion-requests", label: "Delete Account Requests", icon: "deletionRequests", area: "employees" as const },
   { href: "/attendance", label: "Attendance", icon: "attendance", area: "attendance" as const },
   { href: "/audits", label: "Audits", icon: "audits", area: "audits" as const },
   { href: "/checklists", label: "Checklists", icon: "checklists", area: "checklists" as const },

@@ -28,6 +28,8 @@ export interface Site {
   status: "open" | "closed";
   /** Geofence radius, in meters, for site-login/clock-in/clock-out location checks. Defaults to 20. */
   allowed_radius: number;
+  /** Hour (0–23) by which people with a checklist here should clock in; null: no alert (migration 0073). */
+  clock_in_by?: number | null;
   created_at: string;
 }
 
@@ -175,6 +177,8 @@ export interface ChecklistTemplate {
   cycle_repeats?: boolean;
   /** Hour the morning after its day until which it's on time (0 = midnight, 10 = 10:00 next morning). Migration 0068. */
   day_ends_at_hour?: number;
+  /** Done by, as hours after the start of its day: 1–24 the same day (24 = midnight), 25–47 the next day (34 = 10:00 am). Migration 0071. */
+  due_hours?: number;
   /** Last day anything is sent ("End now"). */
   cycle_end?: string | null;
   /** Main areas whose subtasks each carry a frequency and cycle days. */
@@ -198,6 +202,12 @@ export interface Checklist {
   images: string[];
   submitted_at: string | null;
   created_at: string;
+  /** Done by: hour the next morning (0068); kept for older app builds. */
+  day_ends_at_hour?: number;
+  /** Done by, as hours after the start of its day (0071). */
+  due_hours?: number;
+  /** An admin's "Extend to…" for this checklist only, counted the same way (0071). */
+  extended_due_hours?: number | null;
 }
 
 export interface ChecklistAssignment {
@@ -546,7 +556,19 @@ export interface AppPermissions {
   profile: { view: boolean; photo: boolean; inductions: boolean; changePassword?: boolean };
 }
 
+/** Which push alerts a role gets (migration 0074). Missing on roles saved before it: none. */
+export interface NotificationPermissions {
+  checklistSubmitted: boolean;
+  auditSubmitted: boolean;
+  reportSubmitted: boolean;
+  photosSent: boolean;
+  clockInOut: boolean;
+  messages: boolean;
+  attendanceAlerts: boolean;
+}
+
 export interface RolePermissions {
   dashboard: DashboardPermissions;
   app: AppPermissions;
+  notifications?: NotificationPermissions;
 }

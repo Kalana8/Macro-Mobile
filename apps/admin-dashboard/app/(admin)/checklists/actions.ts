@@ -88,9 +88,9 @@ export async function saveCycleTemplateAction(_prev: ChecklistFormState, formDat
   const siteId = String(formData.get("siteId") ?? "").trim();
   const templateId = String(formData.get("templateId") ?? "");
   const specialNote = String(formData.get("specialNote") ?? "").trim() || null;
-  // Done by: the hour the next morning until which the day's checklist is on time.
-  const doneByRaw = Number(formData.get("doneBy") ?? 10);
-  const doneBy = Number.isInteger(doneByRaw) && doneByRaw >= 0 && doneByRaw <= 12 ? doneByRaw : 10;
+  // Done by: hours after the start of the checklist's day (1–24 same day, 25–47 next day; 34 = 10:00 am next day).
+  const doneByRaw = Number(formData.get("doneBy") ?? 34);
+  const doneBy = Number.isInteger(doneByRaw) && doneByRaw >= 1 && doneByRaw <= 47 ? doneByRaw : 34;
   if (!companyId || !siteId) return { error: "Company and site are required.", id: templateId || undefined };
 
   let draft: DraftCycle;
@@ -122,7 +122,9 @@ export async function saveCycleTemplateAction(_prev: ChecklistFormState, formDat
     templateId
       ? supabase.from("checklist_templates").update(v).eq("id", templateId).select("id").single()
       : supabase.from("checklist_templates").insert(v).select("id").single();
-  let { data, error } = await write({ ...values, day_ends_at_hour: doneBy });
+  let { data, error } = await write({ ...values, due_hours: doneBy });
+  // Before migration 0071: the older next-morning hour (same-day times save as midnight).
+  if (error && /due_hours/.test(error.message)) ({ data, error } = await write({ ...values, day_ends_at_hour: Math.max(0, Math.min(12, doneBy - 24)) }));
   // Before migration 0068 there's no done-by column: save the rest (every checklist is then done by 10:00).
   if (error && /day_ends_at_hour/.test(error.message)) ({ data, error } = await write(values));
   if (error || !data) {
@@ -417,4 +419,51 @@ export async function deleteAssignmentAction(formData: FormData): Promise<void> 
   const supabase = await createClient();
   await supabase.from("checklist_assignments").delete().eq("id", id);
   revalidatePath("/checklists");
+}
+
+/**
+ * "Extend to…": gives one expired checklist more time. `hours` counts from
+ * the start of the checklist's day (as done-by does); empty clears it.
+ */
+export async function extendChecklistAction(id: string, hours: number | null): Promise<{ error?: string }> {
+  if (!id) return { error: "Checklist not found." };
+  if (hours !== null && !(Number.isInteger(hours) && hours >= 1 && hours <= 1488)) {
+    return { error: "Pick a date within 2 months of the checklist's day." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.from("checklists").update({ extended_due_hours: hours }).eq("id", id).eq("status", "pending");
+  if (error) {
+    return { error: /extended_due_hours/.test(error.message) ? "Run migration 0071_checklist_done_by_custom.sql in Supabase first." : error.message };
+  }
+  revalidatePath("/checklists");
+  return {};
+}
+
+/**
+ * Pairs two employees on the same checklist (migration 0072): when one
+ * submits it, the other's copy for that day is submitted too. An empty
+ * partner unpairs. Each person is in one pair per checklist at most.
+ */
+export async function setChecklistPairAction(assignmentId: string, partnerAssignmentId: string | null): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const ids = [assignmentId, partnerAssignmentId].filter(Boolean) as string[];
+  const { data: rows, error } = await supabase.from("checklist_assignments").select("id, template_id, pair_id").in("id", ids);
+  if (error) return { error: /pair_id/.test(error.message) ? "Run migration 0072_checklist_pairs.sql in Supabase first." : error.message };
+  const me = rows?.find((r) => r.id === assignmentId);
+  const partner = partnerAssignmentId ? rows?.find((r) => r.id === partnerAssignmentId) : null;
+  if (!me || (partnerAssignmentId && !partner)) return { error: "Assignment not found." };
+  if (partner && partner.template_id !== me.template_id) return { error: "Only people on the same checklist can be paired." };
+
+  // Break up the old pairs of both people first.
+  const oldPairs = [me.pair_id, partner?.pair_id].filter(Boolean) as string[];
+  if (oldPairs.length) {
+    const { error: e } = await supabase.from("checklist_assignments").update({ pair_id: null }).in("pair_id", oldPairs);
+    if (e) return { error: e.message };
+  }
+  if (partner) {
+    const { error: e } = await supabase.from("checklist_assignments").update({ pair_id: randomUUID() }).in("id", [me.id, partner.id]);
+    if (e) return { error: e.message };
+  }
+  revalidatePath("/checklists");
+  return {};
 }

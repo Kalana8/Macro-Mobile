@@ -15,7 +15,9 @@ import { ChecklistDetailModal } from "./ChecklistDetailModal";
 import { EndTemplateButton } from "./EndTemplateButton";
 import { SendNowButton } from "./SendNowButton";
 import { ShareChecklistsModal } from "./ShareChecklistsModal";
-import { templateSubtaskCount } from "./templateContent";
+import { dueMomentLabel, effectiveDueHours, hourNowInBusinessTimezone, hoursSinceDayStart, templateSubtaskCount } from "./templateContent";
+import { ExtendChecklistModal } from "./ExtendChecklistModal";
+import { PairSelect } from "./PairSelect";
 
 interface JoinedChecklist extends Checklist {
   companyName: string;
@@ -26,9 +28,10 @@ interface JoinedTemplate extends ChecklistTemplate {
   site: string;
 }
 
-const TABS = ["submitted", "create", "assign"] as const;
+const TABS = ["submitted", "expired", "create", "assign"] as const;
 const TAB_LABEL: Record<(typeof TABS)[number], string> = {
   submitted: "Daily Submitted Checklist",
+  expired: "Expired Checklists",
   create: "Create Checklist",
   assign: "Assign Checklist",
 };
@@ -36,6 +39,9 @@ const TAB_LABEL: Record<(typeof TABS)[number], string> = {
 interface AssignmentRow {
   id: string;
   templateId: string;
+  employeeId: string;
+  /** Paired assignments share this (migration 0072). */
+  pairId: string | null;
   adminNote: string | null;
   companyName: string;
   employeeName: string;
@@ -44,6 +50,7 @@ interface AssignmentRow {
 
 export function ChecklistsTabs({
   submitted,
+  pending,
   templates,
   assignments,
   companies,
@@ -51,6 +58,8 @@ export function ChecklistsTabs({
   employees,
 }: {
   submitted: JoinedChecklist[];
+  /** Still to do (last 2 months), for the Expired tab. */
+  pending: JoinedChecklist[];
   templates: JoinedTemplate[];
   assignments: AssignmentRow[];
   companies: { id: string; name: string }[];
@@ -62,6 +71,13 @@ export function ChecklistsTabs({
   const [templateDetail, setTemplateDetail] = useState<JoinedTemplate | null>(null);
   const [checklistDetail, setChecklistDetail] = useState<JoinedChecklist | null>(null);
   const [showAssign, setShowAssign] = useState(false);
+  const [extending, setExtending] = useState<JoinedChecklist | null>(null);
+  // Expired: past their done-by time (or extension). Extended: given more time and still on time.
+  const today = todayInBusinessTimezone();
+  const hourNow = hourNowInBusinessTimezone();
+  const lateRows = pending
+    .map((c) => ({ c, due: effectiveDueHours(c), elapsed: hoursSinceDayStart(c.assigned_date, today, hourNow) }))
+    .filter((r) => r.elapsed >= r.due || r.c.extended_due_hours != null);
   const [selected, setSelected] = useState<string[]>([]);
   const [sharing, setSharing] = useState(false);
   const chosen = submitted.filter((c) => selected.includes(c.id));
@@ -163,6 +179,48 @@ export function ChecklistsTabs({
           </>
         ))}
 
+      {tab === "expired" &&
+        (lateRows.length === 0 ? (
+          <EmptyState title="No expired checklists" />
+        ) : (
+          <>
+            <div className="mb-3 text-[13px] text-text-muted">
+              Checklists not submitted by their done-by time (last 2 months). Extend one to give the employee more time; it shows as on time in the app until then.
+            </div>
+            <Table head={["Date", "Company", "Site", "Employee", "Subtasks", "Due", "Actions"]}>
+              {lateRows.map(({ c, due, elapsed }) => {
+                const done = c.areas.reduce((n, a) => n + a.subtasks.filter((t) => t.done).length, 0);
+                const total = c.areas.reduce((n, a) => n + a.subtasks.length, 0);
+                const onTime = elapsed < due;
+                return (
+                  <tr key={c.id} className="border-b border-border last:border-0">
+                    <td className="px-5 py-3.5 text-text-muted">{c.assigned_date}</td>
+                    <td className="px-5 py-3.5 font-semibold text-text-dark">{c.companyName}</td>
+                    <td className="px-5 py-3.5 text-text-muted">{c.site}</td>
+                    <td className="px-5 py-3.5 text-text-muted">{c.employeeName}</td>
+                    <td className="px-5 py-3.5 text-text-muted">{done}/{total}</td>
+                    <td className="px-5 py-3.5 text-[13px] text-text-muted">
+                      <div className="flex flex-col items-start gap-1">
+                        <Badge tone={onTime ? "success" : "error"}>{onTime ? "Extended" : "Expired"}</Badge>
+                        <span>{onTime ? "until" : "was due"} {dueMomentLabel(c.assigned_date, due)}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <button
+                        type="button"
+                        onClick={() => setExtending(c)}
+                        className="rounded-[10px] border border-primary px-3 py-1.5 text-[12.5px] font-bold text-primary"
+                      >
+                        {onTime ? "Change" : "Extend to…"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </Table>
+          </>
+        ))}
+
       {tab === "create" && (
         <div>
           <div className="mb-3 flex justify-end">
@@ -228,19 +286,28 @@ export function ChecklistsTabs({
           </div>
 
           <div className="mb-2 text-xs font-bold text-text-muted">
-            STANDING ASSIGNMENTS — sent automatically on every day of the checklist&apos;s schedule. Send now sends today&apos;s checklist straight away.
+            STANDING ASSIGNMENTS — sent automatically on every day of the checklist&apos;s schedule. Send now sends today&apos;s checklist straight away. Pair two people on the same checklist and one submit covers both.
           </div>
           {assignments.length === 0 ? (
             <div className="mb-6 rounded-[16px] border border-dashed border-border p-6 text-center text-sm text-text-muted">
               No standing assignments yet.
             </div>
           ) : (
-            <Table head={["Company", "Site", "Employee", "Note", "Actions"]}>
+            <Table head={["Company", "Site", "Employee", "Pair", "Note", "Actions"]}>
               {assignments.map((row) => (
                 <tr key={row.id} className="border-b border-border last:border-0">
                   <td className="px-5 py-3.5 font-semibold text-text-dark">{row.companyName}</td>
                   <td className="px-5 py-3.5 text-text-muted">{row.site}</td>
                   <td className="px-5 py-3.5 text-text-muted">{row.employeeName}</td>
+                  <td className="px-5 py-3.5">
+                    <PairSelect
+                      assignmentId={row.id}
+                      pairId={row.pairId}
+                      options={assignments
+                        .filter((o) => o.templateId === row.templateId && o.id !== row.id)
+                        .map((o) => ({ assignmentId: o.id, name: o.employeeName, pairId: o.pairId }))}
+                    />
+                  </td>
                   <td className="px-5 py-3.5 text-[13px] text-text-muted">{row.adminNote ?? "—"}</td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-start gap-2">
@@ -277,6 +344,14 @@ export function ChecklistsTabs({
           companyName={checklistDetail.companyName}
           employeeName={checklistDetail.employeeName}
           onClose={() => setChecklistDetail(null)}
+        />
+      )}
+      {extending && (
+        <ExtendChecklistModal
+          checklist={extending}
+          companyName={extending.companyName}
+          employeeName={extending.employeeName}
+          onClose={() => setExtending(null)}
         />
       )}
       {sharing && chosen.length > 0 && <ShareChecklistsModal checklists={chosen} onClose={() => setSharing(false)} />}

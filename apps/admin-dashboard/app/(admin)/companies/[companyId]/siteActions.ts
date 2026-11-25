@@ -17,6 +17,8 @@ export async function createSiteAction(_prev: SiteFormState, formData: FormData)
   const lat = readCoord(formData.get("lat"));
   const lng = readCoord(formData.get("lng"));
   const allowedRadius = Number(formData.get("allowedRadius") ?? 35);
+  const clockInByRaw = String(formData.get("clockInBy") ?? "");
+  const clockInBy = /^\d{1,2}$/.test(clockInByRaw) && Number(clockInByRaw) <= 23 ? Number(clockInByRaw) : null;
 
   if (!companyId || !name) return { error: "Site name is required." };
   if (coordsMissing(lat, lng)) {
@@ -30,9 +32,10 @@ export async function createSiteAction(_prev: SiteFormState, formData: FormData)
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("sites")
-    .insert({ company_id: companyId, name, address, lat, lng, status, allowed_radius: allowedRadius });
+  const row = { company_id: companyId, name, address, lat, lng, status, allowed_radius: allowedRadius };
+  let { error } = await supabase.from("sites").insert({ ...row, clock_in_by: clockInBy });
+  // Before migration 0073 there's no clock-in-by time.
+  if (error && /clock_in_by/.test(error.message)) ({ error } = await supabase.from("sites").insert(row));
 
   if (error) return { error: error.message };
 
@@ -49,6 +52,8 @@ export async function updateSiteAction(_prev: SiteFormState, formData: FormData)
   const lat = readCoord(formData.get("lat"));
   const lng = readCoord(formData.get("lng"));
   const allowedRadius = Number(formData.get("allowedRadius") ?? 35);
+  const clockInByRaw = String(formData.get("clockInBy") ?? "");
+  const clockInBy = /^\d{1,2}$/.test(clockInByRaw) && Number(clockInByRaw) <= 23 ? Number(clockInByRaw) : null;
 
   if (!id || !name) return { error: "Site name is required." };
   if (coordsMissing(lat, lng)) {
@@ -62,10 +67,10 @@ export async function updateSiteAction(_prev: SiteFormState, formData: FormData)
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("sites")
-    .update({ name, address, lat, lng, status, allowed_radius: allowedRadius })
-    .eq("id", id);
+  const changes = { name, address, lat, lng, status, allowed_radius: allowedRadius };
+  let { error } = await supabase.from("sites").update({ ...changes, clock_in_by: clockInBy }).eq("id", id);
+  // Before migration 0073 there's no clock-in-by time.
+  if (error && /clock_in_by/.test(error.message)) ({ error } = await supabase.from("sites").update(changes).eq("id", id));
 
   if (error) return { error: error.message };
 
